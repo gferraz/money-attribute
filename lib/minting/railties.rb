@@ -7,8 +7,15 @@ module Mint
     end
 
     config.to_prepare do
-      Mint.config.added_currencies do |currency_data|
-        Mint.register_currency(*currency_data)
+      Array(Mint.config.added_currencies).each do |currency_data|
+        if currency_data.respond_to?(:values_at)
+          code = currency_data[:currency] || currency_data['currency']
+          subunit = currency_data[:subunit] || currency_data['subunit']
+          symbol = currency_data[:symbol] || currency_data['symbol']
+        else
+          code, subunit, symbol = *currency_data
+        end
+        Mint.register_currency(code, subunit:, symbol:)
       end
     end
   end

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    minting-rails (0.3.3)
+    minting-rails (0.4.0)
       minting (>= 1.0.0)
       rails (>= 7.1.3.2)
 

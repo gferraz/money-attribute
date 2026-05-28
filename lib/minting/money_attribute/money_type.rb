@@ -10,7 +10,7 @@ module Mint
 
     def assert_valid_value(value)
       case value
-      when Numeric, String
+      when NilClass, Numeric, String
         return
       when Mint::Money
         return if value.currency == @currency
@@ -27,7 +27,7 @@ module Mint
     end
 
     def serialize(value)
-      value.to_d
+      value&.to_d
     end
 
     def self.type

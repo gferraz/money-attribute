@@ -27,10 +27,11 @@ module Mint
   end
 
   def self.assert_valid_currency!(currency)
-    currency = Mint.currency(currency)
-    return currency if config.valid_currency?(currency)
+    code = currency.is_a?(Mint::Currency) ? currency.code : currency.to_s
+    currency = Mint.currency(code)
+    return currency if Mint.valid_currency?(currency)
 
-    raise ArgumentError, "Invalid currency '#{currency.code}'. Please select a registered currency"
+    raise ArgumentError, "Invalid currency '#{code}'. Please select a registered currency"
   end
 
   def self.default_currency
@@ -38,7 +39,11 @@ module Mint
   end
 
   def self.valid_currency?(currency)
-    currencies = config.enabled_currencies == :all ? Mint.currencies : config.enabled_currencies
-    currencies.include?(currency)
+    return false if currency.nil?
+
+    code = currency.is_a?(Mint::Currency) ? currency.code : currency.to_s
+    currencies = config.enabled_currencies == :all ? Mint.currencies.keys : config.enabled_currencies
+
+    currencies.map(&:to_s).include?(code)
   end
 end

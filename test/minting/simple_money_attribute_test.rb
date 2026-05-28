@@ -24,7 +24,14 @@ module Mint
       assert_equal 12.to_money('USD'), offer.price
     end
 
-    test 'money attribute are saved correctly' do
+    test 'money attribute allows nil values' do
+      offer = SimpleOffer.new(price: nil, discount: nil)
+
+      assert_nil offer.price
+      assert_nil offer.discount
+    end
+
+    test 'money attribute is saved correctly' do
       offer = SimpleOffer.new(price: 15.mint(:USD), discount: 45.01)
       offer.save!
 
@@ -32,6 +39,15 @@ module Mint
 
       assert_equal offer.price, found.price
       assert_equal offer.discount, found.discount
+    end
+
+    test 'money attribute serializes nil values' do
+      offer = SimpleOffer.create!(price: nil, discount: nil)
+
+      found = SimpleOffer.find(offer.id)
+
+      assert_nil found.price
+      assert_nil found.discount
     end
   end
 end

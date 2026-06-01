@@ -39,11 +39,8 @@ module Mint
   end
 
   def self.valid_currency?(currency)
-    return false if currency.nil?
-
-    code = currency.is_a?(Mint::Currency) ? currency.code : currency.to_s
-    currencies = config.enabled_currencies == :all ? Mint.currencies.keys : config.enabled_currencies
-
-    currencies.map(&:to_s).include?(code)
+    enabled = config.enabled_currencies
+    currency = Mint.currency(currency)
+    currency && (enabled == :all || enabled.include?(currency.code))
   end
 end

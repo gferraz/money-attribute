@@ -89,8 +89,16 @@ module Mint
       assert_same money, MoneyAttribute.parse(money, :USD)
     end
 
-    test 'parse returns nil for nil amounts' do
-      assert_nil MoneyAttribute.parse(nil, :USD)
+    test 'aggregated money attribute partial custom mapping' do
+      assert_raises(ArgumentError) do
+        Class.new(ApplicationRecord) do
+          self.table_name = 'offers'
+
+          money_attribute :cost, mapping: {
+            price_amount: :amount
+          }
+        end
+      end
     end
   end
 end

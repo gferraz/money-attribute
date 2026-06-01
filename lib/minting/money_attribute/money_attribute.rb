@@ -40,20 +40,17 @@ module Mint
 
     def self.parse(amount, currency)
       money = case amount
-              when NilClass
-                nil
-              when Mint::Money
-                amount
-              when Numeric
-                Mint.money(amount, currency)
+              when NilClass    then nil
+              when Mint::Money then amount
+              when Numeric     then Mint.money(amount, currency)
+              when String      then Mint.money(amount.to_r, currency)
               else
                 if amount.respond_to? :to_money
                   amount.to_money(currency)
                 else
-                  Mint.money(amount.to_s.split[0].to_r, currency)
+                  Mint.parse(amount, currency)
                 end
               end
-      # puts "parse(#{amount}, #{currency.inspect}) => #{money.inspect}"
       Mint.assert_valid_currency!(currency)
       money
     end

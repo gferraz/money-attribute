@@ -18,7 +18,9 @@ module Mint
       assert_equal Mint.currency('BRL'), Mint.assert_valid_currency!('BRL')
       assert_equal Mint.currency('USD'), Mint.assert_valid_currency!('USD')
       assert_raises(ArgumentError) {  Mint.assert_valid_currency!('XPX') }
-      assert_raises(ArgumentError) {  Mint.assert_valid_currency!('UTS') }
+      assert_raises(ArgumentError) {  Mint.assert_valid_currency!('XPX') }
+      assert_raises(ArgumentError) {  Mint.assert_valid_currency!(12) }
+      assert_raises(ArgumentError) {  Mint.assert_valid_currency!(nil) }
     end
 
     test 'custom currencies from configuration are registered' do

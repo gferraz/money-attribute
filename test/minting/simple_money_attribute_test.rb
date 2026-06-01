@@ -3,6 +3,7 @@
 require 'test_helper'
 
 module Mint
+  using Mint
   class SimpleMoneyAttributeTest < ActiveSupport::TestCase
     test 'Money attribute is enabled' do
       assert SimpleOffer.attribute :price

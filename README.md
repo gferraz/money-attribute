@@ -166,6 +166,68 @@ offer.price_currency
 # => "EUR"
 ```
 
+### Integer storage
+
+By default, money attributes are stored as `decimal` columns. If you prefer to store amounts as integer subunits (cents, pence, etc.), use a `bigint` or `integer` column instead. Minting::Rails detects the column type automatically and adapts serialization accordingly.
+
+Migration:
+
+```ruby
+class CreateOrders < ActiveRecord::Migration[7.1]
+  def change
+    create_table :orders do |t|
+      t.bigint  :total_amount
+      t.string  :total_currency
+
+      t.timestamps
+    end
+  end
+end
+```
+
+Model:
+
+```ruby
+class Order < ApplicationRecord
+  money_attribute :total
+end
+```
+
+The amount is stored and retrieved in subunits:
+
+```ruby
+order = Order.new(total: 19.99.to_money(:USD))
+
+order.total
+# => #<Mint::Money ... USD 19.99>
+
+order.total_amount
+# => 1999
+
+order.total_currency
+# => "USD"
+```
+
+The same applies to single-column fixed-currency attributes:
+
+```ruby
+class Ticket < ApplicationRecord
+  money_attribute :price, currency: 'USD'
+end
+```
+
+Migration:
+
+```ruby
+t.bigint :price
+```
+
+No model change is needed. The column type drives the behavior.
+
+> **Note:** Integer storage avoids decimal rounding issues and is more efficient for large tables. 
+
+### Default Currency
+
 When you assign a plain number or string, Minting::Rails uses `Mint.default_currency`:
 
 ```ruby

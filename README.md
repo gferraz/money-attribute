@@ -45,6 +45,7 @@ Configure Minting in `config/initializers/minting.rb`:
 Mint.configure do |config|
   config.enabled_currencies = :all
   config.default_currency = 'USD'
+  config.default_format = '%<symbol>s%<amount>f'
 end
 ```
 
@@ -63,7 +64,7 @@ You can also register custom currencies before enabling or using them:
 Mint.configure do |config|
   config.added_currencies = [
     { currency: 'CRC', subunit: 2, symbol: 'CRC' },
-    { currency: 'NGN', subunit: 2, symbol: 'NGN' }
+    { currency: 'NGN', subunit: 2, symbol: 'NGN' } # subunit is the number of digits after the decimal; USD has 2, JPY has 0, BHD has 3
   ]
 
   config.enabled_currencies = :all
@@ -280,6 +281,8 @@ Minting::Rails adds a few small helpers:
 12.to_money(:USD)
 12.mint(:BRL)
 12.dollars
+1.dollar
+1.euro
 12.euros
 '12.50'.to_money(:USD)
 '12.50'.mint(:BRL)
@@ -302,16 +305,6 @@ bundle exec rake test
 ```
 
 The repository includes a dummy Rails application under `test/dummy` for exercising the engine in a Rails environment.
-
-## Releasing
-
-Update the version in `lib/minting/money_attribute/version.rb`, update release notes, and build the gem:
-
-```sh
-gem build minting-rails.gemspec
-```
-
-Publishing is configured for RubyGems.org.
 
 ## Contributing
 

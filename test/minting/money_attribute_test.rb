@@ -61,7 +61,6 @@ module Mint
       assert_equal 45.34.dollars, transaction.value
       assert_equal 4534, transaction.amount
       assert_equal 'USD', transaction.currency
-      binding.irb
     end
 
     test 'aggregated money attribute supports custom mappings' do

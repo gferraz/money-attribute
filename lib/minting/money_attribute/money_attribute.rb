@@ -29,12 +29,11 @@ module Mint
 
       def amount_extractor_for(column_name)
         col = columns.find { |c| c.name == column_name.to_s }
-        return :to_d unless col # safe default
 
-        case col.type # :integer, :decimal, :float — already adapter-normalized
-        when :bigint | :integer | :bigint
+        case col&.type
+        when :bigint, :integer
           :fractional
-        when :decimal | :numeric
+        when :decimal, :numeric
           :to_d
         else
           :to_d # :decimal, :numeric, unknown

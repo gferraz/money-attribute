@@ -32,8 +32,12 @@ module Mint
         return :to_d unless col # safe default
 
         case col.type # :integer, :decimal, :float — already adapter-normalized
-        when :integer then :fractional
-        else :to_d # :decimal, :numeric, unknown
+        when :bigint | :integer | :bigint
+          :fractional
+        when :decimal | :numeric
+          :to_d
+        else
+          :to_d # :decimal, :numeric, unknown
         end
       end
 

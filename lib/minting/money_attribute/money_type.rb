@@ -3,21 +3,21 @@
 module Mint
   # MintMoneyType
   class MintMoneyType < ActiveRecord::Type::Value
-    def initialize(currency:)
-      @currency = Mint.currency currency
+    def initialize(currency:, column_type: ActiveRecord::Type::Decimal.new)
+      @currency = currency
+      @column_type = column_type
       super()
     end
 
     def assert_valid_value(value)
       case value
-      when NilClass, Numeric, String
-        return
+      when NilClass, Numeric, String then return
       when Mint::Money
         return if value.currency == @currency
 
         message = "'#{value.inspect}' has different currency. Only #{@currency.code} allowed."
       else
-        message = "'#{value}' is not a valid type for the attribute."
+        message = "'#{value.inspect}' is not a valid type for the attribute."
       end
       raise ArgumentError, message
     end
@@ -27,7 +27,13 @@ module Mint
     end
 
     def serialize(value)
-      value&.to_d
+      return nil unless value
+
+      if @column_type.is_a?(ActiveRecord::Type::Integer)
+        value.fractional
+      else
+        value.to_d
+      end
     end
 
     def self.type

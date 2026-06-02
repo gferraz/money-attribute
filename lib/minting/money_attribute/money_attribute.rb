@@ -9,7 +9,7 @@ module Mint
       # Money attribute
       def money_attribute(name, currency: Mint.default_currency, mapping: nil)
         currency = Mint.assert_valid_currency!(currency)
-        parser = proc { |amount, code = currency| MoneyAttribute.parse(amount, code) }
+        parser = Parser.new(currency)
         if attribute_names.include? name.to_s
           attribute(name, :mint_money, currency:)
           normalizes(name, with: parser)
@@ -36,23 +36,6 @@ module Mint
 
         composite
       end
-    end
-
-    def self.parse(amount, currency)
-      money = case amount
-              when NilClass    then nil
-              when Mint::Money then amount
-              when Numeric     then Mint.money(amount, currency)
-              when String      then Mint.money(amount.to_r, currency)
-              else
-                if amount.respond_to? :to_money
-                  amount.to_money(currency)
-                else
-                  Mint.parse(amount, currency)
-                end
-              end
-      Mint.assert_valid_currency!(currency)
-      money
     end
   end
 end

@@ -224,7 +224,7 @@ t.bigint :price
 
 No model change is needed. The column type drives the behavior.
 
-> **Note:** Integer storage avoids decimal rounding issues and is more efficient for large tables. 
+> **Note:** Integer storage is more efficient for large tables. Use Decimal when you need to stay close to SQL standards for interoperability with other systems
 
 ### Default Currency
 

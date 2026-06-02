@@ -23,7 +23,13 @@ module Mint
     end
 
     def deserialize(value)
-      value && Mint.money(value, @currency)
+      return nil unless value
+
+      if @column_type.is_a?(ActiveRecord::Type::Integer)
+        Mint.money(value * @currency.multiplier, @currency)
+      else
+        Mint.money(value, @currency)
+      end
     end
 
     def serialize(value)

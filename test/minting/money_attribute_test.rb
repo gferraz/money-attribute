@@ -92,9 +92,14 @@ module Mint
     end
 
     test 'parse keeps money values unchanged' do
-      money = 23.euros
+      parser = MoneyAttribute::Parser.new('USD')
 
-      assert_same money, MoneyAttribute::Parser.new.parse(money, 'USD')
+      assert_equal 23.euros, parser.parse("+23.00", 'EUR')
+      assert_equal 23.euros, parser.parse(23, 'EUR')
+      assert_equal (-25.34).dollars, parser.parse("-25.34")
+      assert_equal (-25.34).dollars, parser.parse("-25.34 EUR")
+      assert_nil MoneyAttribute::Parser.new.parse(nil, 'USD')
+      assert_raises(TypeError) { parser.parse(23.euros, 'USD') }
     end
 
     test 'aggregated money attribute partial custom mapping' do

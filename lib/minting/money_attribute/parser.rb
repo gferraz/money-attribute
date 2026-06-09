@@ -12,15 +12,13 @@ module Mint
         currency = Mint.assert_valid_currency!(currency)
         case amount
         when NilClass    then nil
-        when Mint::Money then amount
         when Numeric     then Mint::Money.create(amount, currency)
         when String      then Mint::Money.create(amount.to_r, currency)
+        when Mint::Money
+         return amount if amount.currency == currency
+         raise TypeError, "Cannot automatically convert #{amount} to #{currency.code}"
         else
-          if amount.respond_to? :to_money
-            amount.to_money(currency)
-          else
-            Mint.parse(amount, currency)
-          end
+          Mint.parse(amount, currency)
         end
       end
       alias_method  :call, :parse

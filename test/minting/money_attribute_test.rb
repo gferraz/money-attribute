@@ -28,17 +28,9 @@ module Mint
       offer = Offer.new(price: 15.euros)
       offer.save!
 
-      found = Offer.where(price: 15.euros).first
-
-      assert_equal offer.price, found.price
-
-      found = Offer.where(price_amount: 15.00, price_currency: 'EUR').first
-
-      assert_equal offer.price, found.price
-
-      found = Offer.where(price: 15.dollars)
-
-      assert_empty found
+      assert_equal offer.price, Offer.where(price: 15.euros).first
+      assert_equal offer.price, Offer.where(price_amount: 15.00, price_currency: 'EUR').first
+      assert_empty Offer.where(price: 15.dollars)
     end
 
     test 'aggregated money attribute reads from mapped amount and currency columns' do

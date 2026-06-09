@@ -60,8 +60,8 @@ module Mint
         self.table_name = 'offers'
 
         money_attribute :cost, mapping: {
-          price_amount: :amount,
-          price_currency: :currency
+          amount: :price_amount,
+          currency: :price_currency
         }
       end
 
@@ -100,7 +100,7 @@ module Mint
           self.table_name = 'offers'
 
           money_attribute :cost, mapping: {
-            price_amount: :amount
+            amount: :price_amount
           }
         end
       end

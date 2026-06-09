@@ -245,13 +245,13 @@ If your amount and currency columns do not follow the `<name>_amount` and `<name
 ```ruby
 class Invoice < ApplicationRecord
   money_attribute :total, mapping: {
-    total_amount: :amount,
-    currency_code: :currency
+    amount: :total_amount,
+    currency: :currency_code
   }
 end
 ```
 
-The mapping keys are your database columns. The values must identify which column stores the `:amount` and which stores the `:currency`.
+The mapping keys are `:amount` and `:currency`. The values are your database columns.
 
 ## Querying
 

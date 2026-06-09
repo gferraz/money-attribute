@@ -42,7 +42,7 @@ module Mint
 
       def find_money_attributes(name, mapping:)
         composite = if mapping.present?
-                      { amount: mapping.key(:amount).to_s, currency: mapping.key(:currency).to_s }
+                      { amount: mapping[:amount].to_s, currency: mapping[:currency].to_s }
                     else
                       { amount: "#{name}_amount", currency: "#{name}_currency" }
                     end

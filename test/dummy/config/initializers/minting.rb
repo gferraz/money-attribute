@@ -10,8 +10,8 @@ Mint.configure do |config|
   #    {currency: 'NGN', subunit: 3, symbol: '₦'}
   #   ]
   config.added_currencies = [
-    {currency: 'CRC', subunit: 2, symbol: '₡'},
-    {currency: 'NGN', subunit: 3, symbol: '₦'}
+    {currency: 'CRCA', subunit: 2, symbol: '₡'},
+    {currency: 'NGNA', subunit: 3, symbol: '₦'}
   ]
 
   # Enable currencies

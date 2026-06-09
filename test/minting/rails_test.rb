@@ -32,8 +32,8 @@ module Mint
       with_mint_config(enabled_currencies: %w[USD], default_currency: 'USD') do
         assert Mint.valid_currency?(Mint.currency('USD'))
         assert_not Mint.valid_currency?(Mint.currency('BRL'))
-        assert_equal Mint.currency('USD'), Mint.assert_valid_currency!(:USD)
-        assert_raises(ArgumentError) { Mint.assert_valid_currency!(:BRL) }
+        assert_equal Mint.currency('USD'), Mint.assert_valid_currency!('USD')
+        assert_raises(ArgumentError) { Mint.assert_valid_currency!('BRL') }
       end
     end
 

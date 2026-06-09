@@ -42,7 +42,7 @@ module Mint
     end
 
     test 'aggregated money attribute reads from mapped amount and currency columns' do
-      offer = Offer.new(price_amount: 17.01, price_currency: :USD)
+      offer = Offer.new(price_amount: 17.01, price_currency: 'USD')
 
       assert_equal 17.01.dollars, offer.price
     end
@@ -94,7 +94,7 @@ module Mint
     test 'parse keeps money values unchanged' do
       money = 23.euros
 
-      assert_same money, Mint::MoneyAttribute::Parser.new('USD').call(money, :USD)
+      assert_same money, MoneyAttribute.parse(money, 'USD')
     end
 
     test 'aggregated money attribute partial custom mapping' do

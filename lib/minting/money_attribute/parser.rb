@@ -4,11 +4,11 @@ module Mint
   # MoneyAttribute
   module MoneyAttribute
     class Parser
-      def initialize(currency)
+      def initialize(currency = Mint.default_currency)
         @default_currency = currency
       end
 
-      def call(amount, currency = @default_currency)
+      def parse(amount, currency = @default_currency)
         currency = Mint.assert_valid_currency!(currency)
         case amount
         when NilClass    then nil
@@ -23,6 +23,7 @@ module Mint
           end
         end
       end
+      alias_method  :call, :parse
     end
   end
 end

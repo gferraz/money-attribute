@@ -10,12 +10,12 @@ module Mint
     end
 
     test 'money attribute updates mapped attributes' do
-      offer = SimpleOffer.new(price: 12.mint(:USD), discount: 15)
+      offer = SimpleOffer.new(price: 12.mint('USD'), discount: 15)
 
-      assert_equal 12.mint(:USD), offer.price
-      assert_equal 15.mint(:USD), offer.discount
+      assert_equal 12.mint('USD'), offer.price
+      assert_equal 15.mint('USD'), offer.discount
 
-      assert_raises(ArgumentError) { SimpleOffer.new(price: 12.mint(:USD), discount: 15.euros) }
+      assert_raises(ArgumentError) { SimpleOffer.new(price: 12.mint('USD'), discount: 15.euros) }
     end
 
     test 'money attribute parses any amount to the default currency' do
@@ -32,10 +32,10 @@ module Mint
     end
 
     test 'money attribute is saved correctly' do
-      offer = SimpleOffer.new(price: 15.mint(:USD), discount: 45.01)
+      offer = SimpleOffer.new(price: 15.mint('USD'), discount: 45.01)
       offer.save!
 
-      found = SimpleOffer.where(price: 15.mint(:USD)).first
+      found = SimpleOffer.where(price: 15.mint('USD')).first
 
       assert_equal offer.price, found.price
       assert_equal offer.discount, found.discount

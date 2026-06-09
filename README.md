@@ -2,7 +2,7 @@
 
 Minting::Rails brings [Minting](https://github.com/gferraz/minting) money objects to Active Record models.
 
-It adds a `money_attribute` model helper, registers a `:mint_money` Active Record type, and includes small convenience methods such as `12.to_money(:USD)`, `12.dollars`, and `'12.00'.mint(:BRL)`.
+It adds a `money_attribute` model helper, registers a `:mint_money` Active Record type, and includes small convenience methods such as `12.to_money('USD')`, `12.dollars`, and `'12.00'.mint('BRL')`.
 
 ## What it does
 
@@ -15,7 +15,7 @@ It adds a `money_attribute` model helper, registers a `:mint_money` Active Recor
 
 - Ruby 3.3 or newer.
 - Rails 7.1.3.2 or newer.
-- Minting 1.0.0 or newer.
+- Minting 1.6.0 or newer.
 
 ## Installation
 
@@ -120,7 +120,7 @@ product.discount
 Assigning a `Mint::Money` with a different currency raises `ArgumentError`:
 
 ```ruby
-Product.new(price: 12.to_money(:EUR))
+Product.new(price: 12.to_money('EUR'))
 # raises ArgumentError because the attribute only accepts USD
 ```
 
@@ -154,7 +154,7 @@ end
 The attribute is composed from `price_amount` and `price_currency`:
 
 ```ruby
-offer = Offer.new(price: 15.to_money(:EUR))
+offer = Offer.new(price: 15.to_money('EUR'))
 
 offer.price
 # => #<Mint::Money ... EUR 15.00>
@@ -195,13 +195,13 @@ The mapping keys are your database columns. The values must identify which colum
 Fixed-currency attributes can be queried with `Mint::Money` values:
 
 ```ruby
-Product.where(price: 15.to_money(:USD))
+Product.where(price: 15.to_money('USD'))
 ```
 
 Composed attributes can also be queried with a money object:
 
 ```ruby
-Offer.where(price: 15.to_money(:EUR))
+Offer.where(price: 15.to_money('EUR'))
 ```
 
 You can still query the backing columns directly when that is clearer:
@@ -215,12 +215,12 @@ Offer.where(price_amount: 15, price_currency: 'EUR')
 Minting::Rails adds a few small helpers:
 
 ```ruby
-12.to_money(:USD)
-12.mint(:BRL)
+12.to_money('USD')
+12.mint('BRL')
 12.dollars
 12.euros
-'12.50'.to_money(:USD)
-'12.50'.mint(:BRL)
+'12.50'.to_money('USD')
+'12.50'.mint('BRL')
 ```
 
 These return `Mint::Money` instances.

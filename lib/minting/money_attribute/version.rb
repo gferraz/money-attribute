@@ -2,6 +2,6 @@
 
 module Mint
   module MoneyAttribute
-    VERSION = '0.4.5'
+    VERSION = '0.5.0'
   end
 end

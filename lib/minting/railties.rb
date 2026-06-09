@@ -15,7 +15,7 @@ module Mint
         else
           code, subunit, symbol = *currency_data
         end
-        Mint.register_currency(code:, subunit:, symbol:)
+        Mint.register_currency(code:, subunit:, symbol:) 
       end
     end
   end

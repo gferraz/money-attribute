@@ -28,17 +28,9 @@ module Mint
       offer = Offer.new(price: 15.euros)
       offer.save!
 
-      found = Offer.where(price: 15.euros).first
-
-      assert_equal offer.price, found.price
-
-      found = Offer.where(price_amount: 15.00, price_currency: 'EUR').first
-
-      assert_equal offer.price, found.price
-
-      found = Offer.where(price: 15.dollars)
-
-      assert_empty found
+      assert_equal offer.price, Offer.where(price: 15.euros).first.price
+      assert_equal offer.price, Offer.where(price_amount: 15.00, price_currency: 'EUR').first.price
+      assert_empty Offer.where(price: 15.dollars)
     end
 
     test 'aggregated money attribute reads from mapped amount and currency columns' do
@@ -53,6 +45,14 @@ module Mint
       assert_nil offer.price
       assert_nil offer.price_amount
       assert_nil offer.price_currency
+    end
+
+    test 'aggregated money attribute with integer amount column' do
+      transaction = FinancialTransaction.new(value: 45.34.dollars)
+
+      assert_equal 45.34.dollars, transaction.value
+      assert_equal 4534, transaction.amount
+      assert_equal 'USD', transaction.currency
     end
 
     test 'aggregated money attribute supports custom mappings' do
@@ -84,9 +84,14 @@ module Mint
     end
 
     test 'parse keeps money values unchanged' do
-      money = 23.euros
+      parser = MoneyAttribute::Parser.new('USD')
 
-      assert_same money, MoneyAttribute.parse(money, 'USD')
+      assert_equal 23.euros, parser.parse("+23.00", 'EUR')
+      assert_equal 23.euros, parser.parse(23, 'EUR')
+      assert_equal (-25.34).dollars, parser.parse("-25.34")
+      assert_equal (-25.34).dollars, parser.parse("-25.34 EUR")
+      assert_nil MoneyAttribute::Parser.new.parse(nil, 'USD')
+      assert_raises(TypeError) { parser.parse(23.euros, 'USD') }
     end
 
     test 'aggregated money attribute partial custom mapping' do

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # :nodoc
 class Numeric
   def to_money(currency)

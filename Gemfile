@@ -11,3 +11,13 @@ gem 'sqlite3', '>= 2.0'
 
 # Start debugger with binding.b [https://github.com/ruby/debug]
 # gem "debug", ">= 1.0.0"
+#
+group :development do
+  gem 'rubocop'
+  gem 'rubocop-minitest'
+  gem 'rubocop-packaging'
+  gem 'rubocop-performance'
+  gem 'rubocop-rails'
+  gem 'rubocop-rake'
+  gem 'rubocop-thread_safety'
+end

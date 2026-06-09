@@ -1,14 +1,16 @@
-require:
+plugins:
   - rubocop-minitest
   - rubocop-performance
+  - rubocop-packaging
   - rubocop-rake
-
+  - rubocop-rails
+  - rubocop-thread_safety
 
 inherit_from: .rubocop_todo.yml
 
 AllCops:
   Exclude:
-    - 'test/dummy/**/*'
+    - "test/dummy/**/*"
   NewCops: enable
   TargetRubyVersion: 3.3
 

@@ -28,8 +28,8 @@ module Mint
       offer = Offer.new(price: 15.euros)
       offer.save!
 
-      assert_equal offer.price, Offer.where(price: 15.euros).first
-      assert_equal offer.price, Offer.where(price_amount: 15.00, price_currency: 'EUR').first
+      assert_equal offer.price, Offer.where(price: 15.euros).first.price
+      assert_equal offer.price, Offer.where(price_amount: 15.00, price_currency: 'EUR').first.price
       assert_empty Offer.where(price: 15.dollars)
     end
 

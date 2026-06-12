@@ -15,8 +15,9 @@ module Mint
         when Numeric     then Mint::Money.create(amount, currency)
         when String      then Mint::Money.create(amount.to_r, currency)
         when Mint::Money
-         return amount if amount.currency == currency
-         raise TypeError, "Cannot automatically convert #{amount} to #{currency.code}"
+          return amount if amount.currency == currency
+
+          raise TypeError, "Cannot automatically convert #{amount} to #{currency.code}"
         else
           Mint.parse(amount, currency)
         end

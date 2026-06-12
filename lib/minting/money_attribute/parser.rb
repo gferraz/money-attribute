@@ -22,7 +22,7 @@ module Mint
           Mint.parse(amount, currency)
         end
       end
-      alias_method  :call, :parse
+      alias call parse
     end
   end
 end

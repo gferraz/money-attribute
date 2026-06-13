@@ -42,10 +42,10 @@ module Mint
 
       def find_money_attributes(name, mapping:)
         if mapping.present?
-          missing_keys = ([:amount, :currency] - mapping.keys).join(', ')
+          missing_keys = (%i[amount currency] - mapping.keys).join(', ')
           if missing_keys.present?
             raise ArgumentError,
-              "Mapping for :#{name} money attribute is missing required keys: #{missing_keys}"
+                  "Mapping for :#{name} money attribute is missing required keys: #{missing_keys}"
           end
           composite = { amount: mapping[:amount].to_s, currency: mapping[:currency].to_s }
         else
@@ -55,9 +55,9 @@ module Mint
         missing = composite.values - attribute_names
         if missing.any?
           raise ArgumentError,
-            "Could not find columns for :#{name} money attribute. " \
-            "Expected: #{composite.values.join(', ')}, " \
-            "Found: #{attribute_names.join(', ')}"
+                "Could not find columns for :#{name} money attribute. " \
+                "Expected: #{composite.values.join(', ')}, " \
+                "Found: #{attribute_names.join(', ')}"
         end
 
         composite

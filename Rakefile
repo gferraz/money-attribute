@@ -14,11 +14,11 @@ Rake::TestTask.new(:test_run) do |t|
 end
 
 desc 'Migrate test database'
-task :test_db_migrate do
+task test_db_migrate: :environment do
   Dir.chdir('test/dummy') do
     sh({ 'RAILS_ENV' => 'test' }, 'bin/rails', 'db:migrate')
   end
 end
 
 desc 'Run tests (migrates test DB first)'
-task test: [:test_db_migrate, :test_run]
+task test: %i[test_db_migrate test_run]

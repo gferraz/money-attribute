@@ -6,7 +6,7 @@ module Mint
       require 'generators/minting/initializer_generator'
     end
 
-    config.to_prepare do
+    config.after_initialize do
       Array(Mint.config.added_currencies).each do |currency_data|
         if currency_data.respond_to?(:values_at)
           code = currency_data[:currency] || currency_data['currency']

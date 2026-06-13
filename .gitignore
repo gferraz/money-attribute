@@ -1,5 +1,7 @@
 /.bundle/
 /doc/
+doc/*
+!doc/agents/
 /log/*.log
 /pkg/
 /tmp/

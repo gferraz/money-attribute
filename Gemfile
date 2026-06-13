@@ -21,3 +21,8 @@ group :development do
   gem 'rubocop-rake'
   gem 'rubocop-thread_safety'
 end
+
+group :benchmark do
+  gem 'benchmark'
+  gem 'money-rails'
+end

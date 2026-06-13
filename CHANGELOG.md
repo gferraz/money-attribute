@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [v0.7.1](https://github.com/gferraz/minting-rails/releases/tag/v0.7.1) (2026-06-09)
+
+[Full Changelog](https://github.com/gferraz/minting-rails/compare/v0.7.0...v0.7.1)
+
 # Improvementes
 - Enabled github CI
 - Update minting to 1.7.0

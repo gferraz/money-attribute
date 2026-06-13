@@ -4,7 +4,7 @@ require 'bundler/setup'
 require 'bundler/gem_tasks'
 require 'rake/testtask'
 
-task default: :test
+task default: :test_run
 
 Rake::TestTask.new(:test_run) do |t|
   t.libs << 'test'

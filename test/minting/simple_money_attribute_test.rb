@@ -49,5 +49,30 @@ module Mint
       assert_nil found.price
       assert_nil found.discount
     end
+
+    test 'single-column money attribute rejects different currency' do
+      error = assert_raises(ArgumentError) { SimpleOffer.new(price: 15.euros) }
+      assert_match(/different currency/, error.message)
+    end
+
+    test 'single-column money attribute normalizes string inputs' do
+      offer = SimpleOffer.new(price: '12.50')
+
+      assert_equal 12.50.mint('USD'), offer.price
+    end
+
+    test 'single-column money attribute accepts zero' do
+      offer = SimpleOffer.new(price: 0.mint('USD'))
+      assert_equal 0.mint('USD'), offer.price
+      offer.save!
+      assert_equal 0.mint('USD'), offer.reload.price
+    end
+
+    test 'single-column money attribute accepts negative values' do
+      offer = SimpleOffer.new(price: (-5.50).mint('USD'))
+      assert_equal (-5.50).mint('USD'), offer.price
+      offer.save!
+      assert_equal (-5.50).mint('USD'), offer.reload.price
+    end
   end
 end

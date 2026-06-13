@@ -1,86 +1,89 @@
 # Minting::Rails
 
-Minting::Rails brings [Minting](https://github.com/gferraz/minting) money objects to Active Record models.
+[![CI](https://github.com/gferraz/minting-rails/actions/workflows/ci.yml/badge.svg)](https://github.com/gferraz/minting-rails/actions/workflows/ci.yml)
+[![Gem Version](https://badge.fury.io/rb/minting-rails.svg)](https://badge.fury.io/rb/minting-rails)
 
-It adds a `money_attribute` model helper, registers a `:mint_money` Active Record type, and includes small convenience methods such as `12.to_money('USD')`, `12.dollars`, and `'12.00'.mint('BRL')`.
-
-## What it does
-
-- Stores and reads model attributes as `Mint::Money` objects.
-- Supports composed money attributes backed by amount and currency columns.
-- Normalizes numeric, string, and `Mint::Money` assignments.
-- Validates currencies against the currencies enabled in Minting.
-
-## Requirements
-
-- Ruby 3.3 or newer.
-- Rails 7.1.3.2 or newer.
-- Minting 1.6.0 or newer.
-
-## Installation
-
-Add the gem to your Rails application's `Gemfile`:
+Store and read Active Record attributes as `Mint::Money` objects with a single `money_attribute` declaration. No manual serialization, no boilerplate.
 
 ```ruby
-gem 'minting-rails'
+class Product < ApplicationRecord
+  money_attribute :price, currency: 'USD'   # fixed currency, single column
+  money_attribute :total                    # multi-currency, two columns
+end
+
+Product.new(price: 12).price  # => #<Mint::Money USD 12.00>
 ```
 
-Install it:
+## Quick start
 
 ```sh
-bundle install
-```
-
-Generate the initializer:
-
-```sh
+bundle add minting-rails
 bin/rails g mint:initializer
 ```
 
+```ruby
+# app/models/product.rb
+class Product < ApplicationRecord
+  money_attribute :price, currency: 'USD'
+end
+```
+
+That's it. `Product.new(price: 12).price` is a `Mint::Money`.
+
+## Why Minting::Rails?
+
+- **No serialization boilerplate** — declare once, read/write `Mint::Money` everywhere.
+- **Two storage modes** — single column for fixed-currency apps (simpler), amount+currency columns for multi-currency records (more flexible).
+- **Integer or decimal columns** — auto-detects the column type and adjusts serialization (e.g. integer stores cents, decimal stores unit value).
+- **Normalizes everything** — pass a number, string, or `Mint::Money`; always get a `Mint::Money` back.
+- **Currency enforcement** — fixed-currency attributes reject wrong currencies at assignment time.
+- **Built on Rails primitives** — uses `ActiveRecord::Type`, `composed_of`, and `normalizes` under the hood. No monkey-patching of core classes.
+
+## Requirements
+
+- Ruby 3.3+
+- Rails 7.1.3.2+
+- [Minting](https://github.com/gferraz/minting) 1.6.0+
+
+## Installation
+
+```ruby
+# Gemfile
+gem 'minting-rails'
+```
+
+```sh
+bundle install
+bin/rails g mint:initializer
+```
+
+The generator creates `config/initializers/minting.rb`.
+
 ## Configuration
 
-Configure Minting in `config/initializers/minting.rb`:
-
 ```ruby
+# config/initializers/minting.rb
 Mint.configure do |config|
-  config.enabled_currencies = :all
   config.default_currency = 'USD'
-  config.default_format = '%<symbol>s%<amount>f'
-end
-```
-
-You can limit the currencies that may be used:
-
-```ruby
-Mint.configure do |config|
-  config.enabled_currencies = %w[USD EUR BRL]
-  config.default_currency = 'USD'
-end
-```
-
-You can also register custom currencies before enabling or using them:
-
-```ruby
-Mint.configure do |config|
-  config.added_currencies = [
-    { currency: 'CRC', subunit: 2, symbol: 'CRC' },
-    { currency: 'NGN', subunit: 2, symbol: 'NGN' } # subunit is the number of digits after the decimal; USD has 2, JPY has 0, BHD has 3
-  ]
-
   config.enabled_currencies = :all
-  config.default_currency = 'CRC'
 end
 ```
 
-The default currency must be registered and included in `enabled_currencies`.
+See the [Minting gem](https://github.com/gferraz/minting) for full configuration options (custom currencies, formatting, rounding).
 
-## Usage
+## Usage — Two modes
 
-Declare money attributes in your Active Record models with `money_attribute`.
+### Decision table
 
-### Single-column fixed currency
+| | Fixed currency (single column) | Multi-currency (amount + currency) |
+|---|---|---|
+| **Migration** | `t.decimal :price` | `t.decimal :price_amount` + `t.string :price_currency` |
+| **Model** | `money_attribute :price, currency: 'USD'` | `money_attribute :price` |
+| **When to use** | Column always holds the same currency | Each row can hold a different currency |
+| **Column type** | `decimal`, `integer`, or `bigint` | `decimal`, `integer`, or `bigint` for amount; `string` for currency |
+| **Query** | `Product.where(price: 10.mint('USD'))` — full type support | `Offer.where(price: 10.mint('EUR'))` — equality only |
 
-Use this when a column always stores one currency, such as a `price` column that is always USD.
+### Fixed currency (single column)
 
 Migration:
 
@@ -90,7 +93,6 @@ class CreateProducts < ActiveRecord::Migration[7.1]
     create_table :products do |t|
       t.decimal :price
       t.decimal :discount
-
       t.timestamps
     end
   end
@@ -110,24 +112,18 @@ Assignments are normalized to `Mint::Money`:
 
 ```ruby
 product = Product.new(price: 12, discount: '3.50')
-
-product.price
-# => #<Mint::Money ... USD 12.00>
-
-product.discount
-# => #<Mint::Money ... USD 3.50>
+product.price    # => #<Mint::Money USD 12.00>
+product.discount # => #<Mint::Money USD 3.50>
 ```
 
-Assigning a `Mint::Money` with a different currency raises `ArgumentError`:
+A currency mismatch raises `ArgumentError`:
 
 ```ruby
 Product.new(price: 12.to_money('EUR'))
-# raises ArgumentError because the attribute only accepts USD
+# => ArgumentError: ... has different currency. Only USD allowed.
 ```
 
-### Amount and currency columns
-
-Use this when each row can store a different currency per record.
+### Multi-currency (amount + currency columns)
 
 Migration:
 
@@ -136,8 +132,7 @@ class CreateOffers < ActiveRecord::Migration[7.1]
   def change
     create_table :offers do |t|
       t.decimal :price_amount
-      t.string :price_currency
-
+      t.string  :price_currency
       t.timestamps
     end
   end
@@ -156,166 +151,124 @@ The attribute is composed from `price_amount` and `price_currency`:
 
 ```ruby
 offer = Offer.new(price: 15.to_money('EUR'))
-
-offer.price
-# => #<Mint::Money ... EUR 15.00>
-
-offer.price_amount
-# => 15.0
-
-offer.price_currency
-# => "EUR"
+offer.price          # => #<Mint::Money EUR 15.00>
+offer.price_amount   # => 15.0
+offer.price_currency # => "EUR"
 ```
 
-### Integer storage
-
-By default, money attributes are stored as `decimal` columns. If you prefer to store amounts as integer subunits (cents, pence, etc.), use a `bigint` or `integer` column instead. Minting::Rails detects the column type automatically and adapts serialization accordingly.
-
-Migration:
-
-```ruby
-class CreateOrders < ActiveRecord::Migration[7.1]
-  def change
-    create_table :orders do |t|
-      t.bigint  :total_amount
-      t.string  :total_currency
-
-      t.timestamps
-    end
-  end
-end
-```
-
-Model:
-
-```ruby
-class Order < ApplicationRecord
-  money_attribute :total
-end
-```
-
-The amount is stored and retrieved in subunits:
-
-```ruby
-order = Order.new(total: 19.99.to_money(:USD))
-
-order.total
-# => #<Mint::Money ... USD 19.99>
-
-order.total_amount
-# => 1999
-
-order.total_currency
-# => "USD"
-```
-
-The same applies to single-column fixed-currency attributes:
-
-```ruby
-class Ticket < ApplicationRecord
-  money_attribute :price, currency: 'USD'
-end
-```
-
-Migration:
-
-```ruby
-t.bigint :price
-```
-
-No model change is needed. The column type drives the behavior.
-
-> **Note:** Integer storage is more efficient for large tables. Use Decimal when you need to stay close to SQL standards for interoperability with other systems
-
-### Default Currency
-
-When you assign a plain number or string, Minting::Rails uses `Mint.default_currency`:
+When assigning a plain number or string, `Mint.default_currency` is used:
 
 ```ruby
 offer = Offer.new(price: '12')
-
-offer.price.currency_code
-# => "USD"
+offer.price.currency.code # => "USD"
 ```
 
-### Custom column names
+## Column type detection
 
-If your amount and currency columns do not follow the `<name>_amount` and `<name>_currency` convention, pass a mapping:
+Declare the column as `decimal`, `integer`, or `bigint` — the gem adapts:
+
+```ruby
+# Migration
+create_table :orders do |t|
+  t.bigint  :total_amount  # stored as cents (subunits)
+  t.string  :total_currency
+end
+
+# Model
+class Order < ApplicationRecord
+  money_attribute :total
+end
+
+Order.new(total: 19.99.to_money('USD')).total_amount # => 1999
+```
+
+Same for fixed-currency attributes:
+
+```ruby
+# Migration
+t.bigint :price
+
+# Model (no change needed)
+money_attribute :price, currency: 'USD'
+```
+
+> Use `integer`/`bigint` for large tables (faster, smaller). Use `decimal` when SQL-level readability matters.
+
+## Custom column names
+
+If your columns don't follow the `<name>_amount` / `<name>_currency` convention:
 
 ```ruby
 class Invoice < ApplicationRecord
   money_attribute :total, mapping: {
-    amount: :total_amount,
+    amount:   :total_amount,
     currency: :currency_code
   }
 end
 ```
 
-The mapping keys are `:amount` and `:currency`. The values are your database columns.
+The mapping keys are `:amount` and `:currency`; values are your database column names.
 
 ## Querying
 
-Fixed-currency attributes can be queried with `Mint::Money` values:
+Fixed-currency attributes support Rails-native querying through the custom type:
 
 ```ruby
-Product.where(price: 15.to_money('USD'))
+# Equality
+Product.where(price: 10.mint('USD'))
+
+# IN clause
+Product.where(price: [10.mint('USD'), 20.mint('USD')])
+
+# BETWEEN
+Product.where(price: 10.mint('USD')..20.mint('USD'))
+
+# Ordering
+Product.order(price: :desc)
+
+# Aggregation
+Product.where(price: 10.mint('USD')).sum(:price)
 ```
 
-Composed attributes can also be queried with a money object:
+Multi-currency attributes support equality queries via `composed_of`:
 
 ```ruby
-Offer.where(price: 15.to_money('EUR'))
+Offer.where(price: 10.mint('EUR'))
 ```
 
-You can still query the backing columns directly when that is clearer:
+For comparisons on multi-currency attributes, use the backing columns directly:
 
 ```ruby
-Offer.where(price_amount: 15, price_currency: 'EUR')
+Offer.where(price_amount: 10..20, price_currency: 'EUR')
+Offer.where('price_amount > ? AND price_currency = ?', 10, 'EUR')
 ```
 
 ## Convenience methods
 
-Minting::Rails adds a few small helpers:
+Minting::Rails adds small helpers on `Numeric` and `String`:
 
 ```ruby
-12.to_money('USD')
-12.mint('BRL')
-12.dollars
-1.dollar
-1.euro
-12.euros
-'12.50'.to_money('USD')
-'12.50'.mint('BRL')
+12.to_money('USD')    # => #<Mint::Money USD 12.00>
+12.dollars            # => #<Mint::Money USD 12.00>
+12.euros              # => #<Mint::Money EUR 12.00>
+'12.50'.mint('BRL')   # => #<Mint::Money BRL 12.50>
 ```
 
-These return `Mint::Money` instances.
+> If you prefer not to extend core classes, use `Mint::Money.money(12, 'USD')` instead.
 
 ## Development
 
-Clone the repository and install dependencies:
-
 ```sh
 bundle install
-```
-
-Run the test suite:
-
-```sh
 bundle exec rake test
 ```
 
-The repository includes a dummy Rails application under `test/dummy` for exercising the engine in a Rails environment.
+The dummy Rails app under `test/dummy` exercises the engine in a full Rails environment.
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at [gferraz/minting-rails](https://github.com/gferraz/minting-rails).
-
-Before opening a pull request, please run:
-
-```sh
-bundle exec rake test
-```
+Bug reports and pull requests welcome at [gferraz/minting-rails](https://github.com/gferraz/minting-rails).
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](MIT-LICENSE).
+[MIT](MIT-LICENSE)

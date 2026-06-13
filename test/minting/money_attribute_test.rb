@@ -99,16 +99,20 @@ module Mint
 
     test 'composite money attribute accepts zero' do
       offer = Offer.new(price: 0.dollars)
+
       assert_equal 0.dollars, offer.price
       offer.save!
+
       assert_equal 0.dollars, offer.reload.price
     end
 
     test 'composite money attribute accepts negative values' do
-      offer = Offer.new(price: (-5.50).dollars)
-      assert_equal (-5.50).dollars, offer.price
+      offer = Offer.new(price: -5.50.dollars)
+
+      assert_equal(-5.50.dollars, offer.price)
       offer.save!
-      assert_equal (-5.50).dollars, offer.reload.price
+
+      assert_equal(-5.50.dollars, offer.reload.price)
     end
 
     test 'find_money_attributes error lists missing mapping keys' do
@@ -148,10 +152,10 @@ module Mint
     test 'parse keeps money values unchanged' do
       parser = MoneyAttribute::Parser.new('USD')
 
-      assert_equal 23.euros, parser.parse("+23.00", 'EUR')
+      assert_equal 23.euros, parser.parse('+23.00', 'EUR')
       assert_equal 23.euros, parser.parse(23, 'EUR')
-      assert_equal (-25.34).dollars, parser.parse("-25.34")
-      assert_equal (-25.34).dollars, parser.parse("-25.34 EUR")
+      assert_equal(-25.34.dollars, parser.parse('-25.34'))
+      assert_equal(-25.34.dollars, parser.parse('-25.34 EUR'))
       assert_nil MoneyAttribute::Parser.new.parse(nil, 'USD')
       assert_raises(TypeError) { parser.parse(23.euros, 'USD') }
     end

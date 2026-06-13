@@ -63,16 +63,20 @@ module Mint
 
     test 'single-column money attribute accepts zero' do
       offer = SimpleOffer.new(price: 0.mint('USD'))
+
       assert_equal 0.mint('USD'), offer.price
       offer.save!
+
       assert_equal 0.mint('USD'), offer.reload.price
     end
 
     test 'single-column money attribute accepts negative values' do
-      offer = SimpleOffer.new(price: (-5.50).mint('USD'))
-      assert_equal (-5.50).mint('USD'), offer.price
+      offer = SimpleOffer.new(price: -5.50.mint('USD'))
+
+      assert_equal(-5.50.mint('USD'), offer.price)
       offer.save!
-      assert_equal (-5.50).mint('USD'), offer.reload.price
+
+      assert_equal(-5.50.mint('USD'), offer.reload.price)
     end
   end
 end

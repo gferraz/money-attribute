@@ -20,6 +20,7 @@ group :development do
   gem 'rubocop-rails'
   gem 'rubocop-rake'
   gem 'rubocop-thread_safety'
+  gem "solargraph"
 end
 
 group :benchmark do

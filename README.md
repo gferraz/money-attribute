@@ -39,7 +39,22 @@ That's it. `Product.new(price: 12).price` is a `Mint::Money`.
 - **Currency enforcement** — fixed-currency attributes reject wrong currencies at assignment time.
 - **Built on Rails primitives** — uses `ActiveRecord::Type`, `composed_of`, and `normalizes` under the hood. No monkey-patching of core classes.
 
-## Requirements
+### At a glance — vs money-rails
+
+| Feature | minting-rails | money-rails |
+|---|---|---|
+| **Declaration** | `money_attribute :price` | `monetize :price_cents` |
+| **Column types** | `integer`, `decimal`, `bigint` — auto-detected | `integer` cents only |
+| **Storage modes** | Single column, composite (amount+currency)| Single cents column, composite (cents+currency) |
+| **Decimal columns** | Native — `t.decimal :price` | Not supported — must convert to cents manually |
+| **Multi-currency** | `money_attribute :price` (convention: `<name>_amount` + `<name>_currency`) | `monetize :price_cents, with_currency: :price_currency` |
+| **Rails integration** | `ActiveRecord::Type` + `composed_of` — no monkey-patches | `monetize` overrides reader/writer methods |
+| **Query (fixed)** | `Model.where(price: money)` — `=`, `IN`, `BETWEEN`, `ORDER`, `SUM` | Through cents column (`price_cents`) |
+| **Query (multi)** | `Model.where(price: money)` | `Model.where(price_cents:, price_currency:)` |
+| **Internal amount** | `Rational`  | `BigDecimal` |
+| **Performance** | See [BENCHMARKS.md](BENCHMARKS.md) — wins 9/11 cells |  |
+
+
 
 - Ruby 3.3+
 - Rails 7.1.3.2+
@@ -255,6 +270,168 @@ Minting::Rails adds small helpers on `Numeric` and `String`:
 ```
 
 > If you prefer not to extend core classes, use `Mint::Money.money(12, 'USD')` instead.
+
+## vs money-rails
+
+[Money-rails](https://github.com/RubyMoney/money-rails) is the most popular money-in-Rails gem. Here's how they compare side-by-side.
+
+### Model declaration
+
+```ruby
+# minting-rails
+class Product < ApplicationRecord
+  money_attribute :price, currency: 'USD'          # single column, fixed currency
+  money_attribute :total                           # two columns, multi-currency
+end
+
+# money-rails
+class Product < ApplicationRecord
+  monetize :price_cents                            # single cents column, fixed currency
+  monetize :total_cents, with_currency: :total_currency  # two columns, multi-currency
+end
+```
+
+### Migration
+
+```ruby
+# minting-rails — any numeric column type
+create_table :products do |t|
+  t.decimal :price              # stores 12.34
+  t.integer :discount           # stores 1234 (cents)
+  t.bigint  :total_amount       # stores 1999 (cents)
+  t.string  :total_currency
+end
+
+# money-rails — integer cents only
+create_table :products do |t|
+  t.integer :price_cents        # stores 1234 (cents)
+  t.integer :discount_cents     # stores 350 (cents)
+  t.integer :total_cents
+  t.string  :total_currency
+end
+```
+
+### Reading & writing
+
+```ruby
+# minting-rails — pass any type, always get Mint::Money
+product.price = 12.34          # stores 12.34 in decimal column
+product.price = 1234           # stores 1234 in integer column
+product.price = '$12.34'       # parses string
+product.price                  # => #<Mint::Money USD 12.34>
+
+# money-rails — pass any type, always get Money
+product.price_cents = 1234     # stores 1234
+product.price = Money.new(1234, 'USD')
+product.price                  # => #<Money USD 12.34>
+```
+
+### Querying
+
+```ruby
+# minting-rails (fixed-currency) — full type-aware querying
+Product.where(price: 10.mint('USD'))
+Product.where(price: [5.mint('USD'), 10.mint('USD')])
+Product.where(price: 5.mint('USD')..15.mint('USD'))
+Product.order(price: :desc)
+Product.where(price: 10.mint('USD')).sum(:price)
+
+# money-rails — query through cents column
+Product.where(price_cents: 1000)
+Product.where(price_cents: [500, 1000])
+Product.where(price_cents: 500..1500)
+Product.order(:price_cents)
+```
+
+### Decimal columns
+
+```ruby
+# minting-rails — works with decimal columns out of the box
+# migration: t.decimal :price
+money_attribute :price, currency: 'USD'
+
+product.price = 12.34
+product.price           # => #<Mint::Money USD 12.34>
+product.read_attribute(:price)  # => 12.34 (Rational in memory, BigDecimal in DB)
+
+# money-rails — no decimal column support
+# migration: t.decimal :price  ← not supported
+# Must use integer cents:
+# migration: t.integer :price_cents
+monetize :price_cents
+product.price_cents = 1234
+product.price           # => #<Money USD 12.34>
+```
+
+### Multi-currency
+
+```ruby
+# minting-rails
+money_attribute :price   # expects price_amount + price_currency columns
+
+offer = Offer.new(price: 15.to_money('EUR'))
+offer.price             # => #<Mint::Money EUR 15.00>
+offer.price_amount      # => 15.0
+offer.price_currency    # => "EUR"
+
+# money-rails
+monetize :price_cents, with_currency: :price_currency
+
+offer = Offer.new(price: Money.new(1500, 'EUR'))
+offer.price             # => #<Money EUR 15.00>
+offer.price_cents       # => 1500
+offer.price_currency    # => "EUR"
+```
+
+### Column type auto-detection
+
+```ruby
+# minting-rails — same declaration works with any column type
+money_attribute :price, currency: 'USD'
+
+# t.decimal :price   → stores human-readable value (12.34)
+# t.integer :price   → stores cents (1234)
+# t.bigint  :price   → stores cents (1234)
+
+# money-rails — must always match the column name
+monetize :price_cents   # column must be price_cents
+monetize :price         # column must be price — no support for other types
+```
+
+### Performance
+
+See [BENCHMARKS.md](BENCHMARKS.md) for detailed results across instantiation, persistence, reads, queries, arithmetic, and mass inserts. Minting-rails wins 9 of 11 benchmark cells, with the largest advantages in reads (up to 14× faster), arithmetic (6.6×), and mass inserts (1.6×).
+
+### What money-rails has (and minting-rails doesn't)
+
+Minting-rails is intentionally minimal — it focuses on storing and reading money attributes with Rails primitives. Money-rails is a more mature gem (12+ years, 1.9k stars) with a broader feature set that minting-rails does not currently provide:
+
+| Feature | money-rails | minting-rails |
+|---|---|---|
+| **Mongoid support** | Yes | ActiveRecord only |
+| **Migration helpers** | `add_monetize :products, :price` | None |
+| **View helpers** | `humanized_money`, `money_without_cents`, etc. | None |
+| **I18n / locale files** | Built-in locale-aware formatting | None |
+| **Test matcher** | `monetize(:price_cents)` RSpec matcher | None |
+| **Currency exchange** | `default_bank`, `add_rate`, EuCentralBank | None |
+| **Custom currencies** | `register_currency` for non-ISO codes | Via `minting` gem config |
+| **Validation integration** | `validates_numericality_of` auto-added | Must add manually |
+| **Rounding mode** | Configurable `rounding_mode` | None |
+| **Per-request currency** | Lambda-based for multi-tenant apps | Static default only |
+| **Allow nil** | `monetize :x, allow_nil: true` | Must handle nil manually |
+| **Parse error control** | `raise_error_on_money_parsing` option | Always raises |
+| **Community** | 1.9k stars, 386 forks, 897 commits | New gem |
+
+If you need any of these features today, money-rails may be a better fit. minting-rails fills a specific niche: a lightweight, performant money-in-Rails solution built on standard Rails primitives.
+
+## Roadmap
+
+1. **Allow nil** — `money_attribute :price, currency: 'USD', allow_nil: true`
+1. **Method-level currency** — lambda-based currency resolution for multi-tenant and instance-level scenarios
+1. **Migration helper**
+1. **Internationalization**
+
+Contributions and suggestions are welcome — open an issue or PR at [gferraz/minting-rails](https://github.com/gferraz/minting-rails).
 
 ## Development
 

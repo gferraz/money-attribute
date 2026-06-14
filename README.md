@@ -11,7 +11,7 @@ class Product < ApplicationRecord
   money_attribute :total                    # multi-currency, two columns
 end
 
-Product.new(price: 12).price  # => #<Mint::Money USD 12.00>
+Product.new(price: 12).price  # => [USD 12.00]
 ```
 
 ## Quick start
@@ -54,7 +54,7 @@ That's it. `Product.new(price: 12).price` is a `Mint::Money`.
 | **Internal amount** | `Rational`  | `BigDecimal` |
 | **Performance** | See [BENCHMARKS.md](BENCHMARKS.md) — wins 9/11 cells |  |
 
-
+## Requirements
 
 - Ruby 3.3+
 - Rails 7.1.3.2+
@@ -127,8 +127,8 @@ Assignments are normalized to `Mint::Money`:
 
 ```ruby
 product = Product.new(price: 12, discount: '3.50')
-product.price    # => #<Mint::Money USD 12.00>
-product.discount # => #<Mint::Money USD 3.50>
+product.price    # => [USD 12.00]
+product.discount # => [USD 3.50]
 ```
 
 A currency mismatch raises `ArgumentError`:
@@ -166,7 +166,7 @@ The attribute is composed from `price_amount` and `price_currency`:
 
 ```ruby
 offer = Offer.new(price: 15.to_money('EUR'))
-offer.price          # => #<Mint::Money EUR 15.00>
+offer.price          # => [EUR 15.00]
 offer.price_amount   # => 15.0
 offer.price_currency # => "EUR"
 ```
@@ -263,10 +263,10 @@ Offer.where('price_amount > ? AND price_currency = ?', 10, 'EUR')
 Minting::Rails adds small helpers on `Numeric` and `String`:
 
 ```ruby
-12.to_money('USD')    # => #<Mint::Money USD 12.00>
-12.dollars            # => #<Mint::Money USD 12.00>
-12.euros              # => #<Mint::Money EUR 12.00>
-'12.50'.mint('BRL')   # => #<Mint::Money BRL 12.50>
+12.to_money('USD')    # => [USD 12.00]
+12.dollars            # => [USD 12.00]
+12.euros              # => [EUR 12.00]
+'12.50'.mint('BRL')   # => [BRL 12.50]
 ```
 
 > If you prefer not to extend core classes, use `Mint::Money.money(12, 'USD')` instead.
@@ -318,12 +318,12 @@ end
 product.price = 12.34          # stores 12.34 in decimal column
 product.price = 1234           # stores 1234 in integer column
 product.price = '$12.34'       # parses string
-product.price                  # => #<Mint::Money USD 12.34>
+product.price                  # => [USD 12.34]
 
 # money-rails — pass any type, always get Money
 product.price_cents = 1234     # stores 1234
 product.price = Money.new(1234, 'USD')
-product.price                  # => #<Money USD 12.34>
+product.price                  # => #<Money fractional:1234 currency:USD>
 ```
 
 ### Querying
@@ -351,8 +351,8 @@ Product.order(:price_cents)
 money_attribute :price, currency: 'USD'
 
 product.price = 12.34
-product.price           # => #<Mint::Money USD 12.34>
-product.read_attribute(:price)  # => 12.34 (Rational in memory, BigDecimal in DB)
+product.price           # => [USD 12.34]
+product.read_attribute(:price)  # => [USD 12.34]
 
 # money-rails — no decimal column support
 # migration: t.decimal :price  ← not supported
@@ -360,7 +360,7 @@ product.read_attribute(:price)  # => 12.34 (Rational in memory, BigDecimal in DB
 # migration: t.integer :price_cents
 monetize :price_cents
 product.price_cents = 1234
-product.price           # => #<Money USD 12.34>
+product.price           # => #<Money fractional:1234 currency:USD>
 ```
 
 ### Multi-currency
@@ -370,7 +370,7 @@ product.price           # => #<Money USD 12.34>
 money_attribute :price   # expects price_amount + price_currency columns
 
 offer = Offer.new(price: 15.to_money('EUR'))
-offer.price             # => #<Mint::Money EUR 15.00>
+offer.price             # => [EUR 15.00]
 offer.price_amount      # => 15.0
 offer.price_currency    # => "EUR"
 
@@ -378,7 +378,7 @@ offer.price_currency    # => "EUR"
 monetize :price_cents, with_currency: :price_currency
 
 offer = Offer.new(price: Money.new(1500, 'EUR'))
-offer.price             # => #<Money EUR 15.00>
+offer.price             # => #<Money fractional:1500 currency:EUR>
 offer.price_cents       # => 1500
 offer.price_currency    # => "EUR"
 ```

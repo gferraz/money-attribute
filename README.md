@@ -65,7 +65,7 @@ The generator creates `config/initializers/minting.rb`.
 # config/initializers/minting.rb
 Mint.configure do |config|
   config.default_currency = 'USD'
-  config.enabled_currencies = :all
+  # enabled_currencies removed — all registered currencies are valid
 end
 ```
 

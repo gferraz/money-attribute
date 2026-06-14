@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Breaking changes
+- Removed `enabled_currencies` configuration option. All registered currencies are now always valid.
+
 ### Improvements
 - AI suggested refactorings (see [review](doc/agents/review-2026-06-12.md))
 

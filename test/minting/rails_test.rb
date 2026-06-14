@@ -14,7 +14,6 @@ module Mint
     end
 
     test 'enable currencies configuration' do
-      assert_equal :all, Mint.config.enabled_currencies
       assert_equal Mint.currency('BRL'), Mint.assert_valid_currency!('BRL')
       assert_equal Mint.currency('USD'), Mint.assert_valid_currency!('USD')
       assert_raises(ArgumentError) {  Mint.assert_valid_currency!('XPX') }
@@ -26,15 +25,6 @@ module Mint
     test 'custom currencies from configuration are registered' do
       assert_equal Mint.currency('CRC'), Mint.assert_valid_currency!('CRC')
       assert_equal Mint.currency('NGN'), Mint.assert_valid_currency!('NGN')
-    end
-
-    test 'enabled currencies can limit valid currencies' do
-      with_mint_config(enabled_currencies: %w[USD], default_currency: 'USD') do
-        assert Mint.valid_currency?(Mint.currency('USD'))
-        assert_not Mint.valid_currency?(Mint.currency('BRL'))
-        assert_equal Mint.currency('USD'), Mint.assert_valid_currency!('USD')
-        assert_raises(ArgumentError) { Mint.assert_valid_currency!('BRL') }
-      end
     end
 
     test 'configure resets cached default currency' do
@@ -49,7 +39,6 @@ module Mint
       config = Mint::MoneyAttribute::Configuration.new
 
       assert_empty config.added_currencies
-      assert_equal :all, config.enabled_currencies
       assert_equal 'USD', config.default_currency
       assert_nil config.rounding_mode
       assert_nil config.default_format
@@ -60,7 +49,6 @@ module Mint
     def with_mint_config(overrides)
       original = {
         added_currencies: Mint.config.added_currencies,
-        enabled_currencies: Mint.config.enabled_currencies,
         default_currency: Mint.config.default_currency,
         rounding_mode: Mint.config.rounding_mode,
         default_format: Mint.config.default_format

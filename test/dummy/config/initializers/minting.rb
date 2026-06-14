@@ -14,14 +14,6 @@ Mint.configure do |config|
     {currency: 'NGNA', subunit: 3, symbol: '₦'}
   ]
 
-  # Enable currencies
-  # Only these currencies amounts can be created
-  # Example:
-  # config.enabled_currencies = :all
-
-  config.enabled_currencies = :all
-
-
   # To set the default currency
   #
   # It must be a registered currency

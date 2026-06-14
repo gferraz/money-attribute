@@ -23,5 +23,13 @@ Metrics/MethodLength:
 Minitest/MultipleAssertions:
   Max: 4
 
+Style/Documentation:
+  Exclude:
+    - 'lib/generators/minting/initializer_generator.rb'
+    - 'lib/minting/money_attribute/configuration.rb'
+    - 'lib/minting/money_attribute/parser.rb'
+    - 'lib/minting/railties.rb'
+    - 'test/**/*'
+
 Style/FrozenStringLiteralComment:
   EnforcedStyle: always

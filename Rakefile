@@ -14,7 +14,7 @@ Rake::TestTask.new(:test_run) do |t|
 end
 
 desc 'Migrate test database'
-task test_db_migrate: :environment do
+task :test_db_migrate do
   Dir.chdir('test/dummy') do
     sh({ 'RAILS_ENV' => 'test' }, 'bin/rails', 'db:migrate')
   end

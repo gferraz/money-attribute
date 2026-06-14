@@ -27,9 +27,7 @@ module Mint
 
   def self.assert_valid_currency!(currency)
     currency = Mint.currency(currency)
-    unless currency
-      raise ArgumentError, 'Invalid currency code. Please select a registered currency'
-    end
+    raise ArgumentError, "Invalid currency code #{currency}." unless currency
 
     currency
   end

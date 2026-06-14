@@ -188,6 +188,50 @@ Benchmark.bm(40) do |x|
   end
 end
 
+# ── 6. Caching (repeated access) ────────────────────────────────
+puts '-' * 60
+puts 'Repeated access ×1000 (caching demonstration)'
+puts '-' * 60
+puts 'Both cache the Money object, but composed_of returns it with zero allocation.'
+puts 'Money-rails re-runs currency lookups and comparisons on every read.'
+puts
+
+mcc = MintingComposite.create!(price: MINTING_MONEY)
+mrcc = MoneyRailsComposite.create!(price: MONEY_RAILS_MONEY)
+
+# Show that minting-rails returns the same object on repeated access
+first = mcc.price
+second = mcc.price
+puts "minting-rails same object? #{first.equal?(second)} (object_id: #{first.object_id})"
+
+first_mr = mrcc.price
+second_mr = mrcc.price
+puts "money-rails   same object? #{first_mr.equal?(second_mr)} (object_id: #{first_mr.object_id})"
+puts
+
+Benchmark.bm(40) do |x|
+  x.report('minting-rails  (composite):') do
+    ITERATIONS.times { mcc.price }
+  end
+  x.report('money-rails   (composite):') do
+    ITERATIONS.times { mrcc.price }
+  end
+end
+
+# Object allocation count
+alloc_before = GC.stat(:total_allocated_objects)
+ITERATIONS.times { mcc.price }
+minting_alloc = GC.stat(:total_allocated_objects) - alloc_before
+
+alloc_before = GC.stat(:total_allocated_objects)
+ITERATIONS.times { mrcc.price }
+money_alloc = GC.stat(:total_allocated_objects) - alloc_before
+
+puts
+puts format('%-40s %10s', 'minting-rails objects allocated:', minting_alloc.to_s)
+puts format('%-40s %10s', 'money-rails objects allocated:', money_alloc.to_s)
+puts
+
 # ── Mass insert ─────────────────────────────────────────────────
 puts
 puts '─' * 60

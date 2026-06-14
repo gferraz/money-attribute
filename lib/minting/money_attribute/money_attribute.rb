@@ -33,8 +33,6 @@ module Mint
         case col&.type
         when :bigint, :integer
           :fractional
-        when :decimal, :numeric
-          :to_d
         else
           :to_d # :decimal, :numeric, unknown
         end

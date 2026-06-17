@@ -1,8 +1,0 @@
-en:
-  number:
-    currency:
-      format:
-        format: "%u%n"
-        separator: "."
-        delimiter: ","
-        unit: "$"

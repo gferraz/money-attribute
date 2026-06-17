@@ -86,6 +86,25 @@ end
 
 See the [Minting gem](https://github.com/gferraz/minting) for full configuration options (custom currencies, formatting, rounding).
 
+### I18n / Locale-aware formatting
+
+Minting-rails integrates with Rails I18n to automatically format money amounts according to the current locale.
+
+With `I18n.locale` set to `:en`:
+```ruby
+Mint.money(1234.56, 'USD').to_s  # => "$1,234.56"
+```
+
+Switch to `:'pt-BR'` and the separators change automatically (requires [`rails-i18n`](https://github.com/svenfuchs/rails-i18n) or your own locale file):
+```ruby
+I18n.locale = :'pt-BR'
+Mint.money(1234.56, 'USD').to_s  # => "$1.234,56"
+```
+
+The locale backend reads `number.currency.format` from your I18n translations and maps Rails format syntax (`%n` for amount, `%u` for unit) to `Mint::Money#to_s`. If the translation key is missing (no locale file for that language), it falls back to hardcoded defaults (`.` decimal, `,` thousand, `%<symbol>s%<amount>f` format).
+
+> Formatting respects the currency's own `subunit` for decimal precision — `I18n` locale settings for `precision` are ignored since that is a currency property, not a locale one.
+
 ## Usage — Two modes
 
 ### Decision table
@@ -411,7 +430,7 @@ Minting-rails is intentionally minimal — it focuses on storing and reading mon
 | **Mongoid support** | Yes | ActiveRecord only |
 | **Migration helpers** | `add_monetize :products, :price` | None |
 | **View helpers** | `humanized_money`, `money_without_cents`, etc. | None |
-| **I18n / locale files** | Built-in locale-aware formatting | None |
+| **I18n / locale files** | Locale-aware formatting via I18n `number.currency.format` — reads your existing translations, no extra setup | Built-in locale-aware formatting with bundled translations |
 | **Test matcher** | `monetize(:price_cents)` RSpec matcher | None |
 | **Currency exchange** | `default_bank`, `add_rate`, EuCentralBank | None |
 | **Custom currencies** | `register_currency` for non-ISO codes | Via `minting` gem config |
@@ -429,7 +448,6 @@ If you need any of these features today, money-rails may be a better fit. mintin
 1. **Allow nil** — `money_attribute :price, currency: 'USD', allow_nil: true`
 1. **Method-level currency** — lambda-based currency resolution for multi-tenant and instance-level scenarios
 1. **Migration helper**
-1. **Internationalization**
 
 Contributions and suggestions are welcome — open an issue or PR at [gferraz/minting-rails](https://github.com/gferraz/minting-rails).
 

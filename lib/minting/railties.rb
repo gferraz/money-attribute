@@ -6,11 +6,6 @@ module Mint
       require 'generators/minting/initializer_generator'
     end
 
-    initializer 'minting-rails.i18n' do |app|
-      locale_dir = File.expand_path('../../config/locales', __dir__)
-      app.config.i18n.load_path += Dir[File.join(locale_dir, '*.yml')]
-    end
-
     config.after_initialize do
       Mint.locale_backend = -> {
         fmt = I18n.t('number.currency.format', default: {})

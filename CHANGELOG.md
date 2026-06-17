@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [v0.8.1](https://github.com/gferraz/minting-rails/releases/tag/v0.8.1) (2026-06-17)
+
+[Full Changelog](https://github.com/gferraz/minting-rails/compare/v0.8.0...v0.8.1)
+
+### Breaking changes
+- Bumped minimum `minting` dependency to `>= 1.8.1`.
+
+### Improvements
+- Removed `Mint.assert_valid_currency!` — replaced with `Currency.resolve!`.
+- Removed `Mint.currency` usage — replaced with `Currency.resolve` / `Currency.for_code`.
+- Removed `Mint.register_currency` usage — replaced with `Currency.register`.
+- Removed `Mint::Money.create` calls — replaced with `Mint::Money.from`.
+
+### Bug fixes
+- Fixed `@currency.multiplier` → `@currency.fractional_multiplier` to match `Currency` Data.define API.
+- Fixed zero-money serialization crash (`Integer#to_d` argument error in bigdecimal 4.1.2).
+
 ## [v0.8.0](https://github.com/gferraz/minting-rails/releases/tag/v0.8.0) (2026-06-14)
 
 [Full Changelog](https://github.com/gferraz/minting-rails/compare/v0.7.1...v0.8.0)

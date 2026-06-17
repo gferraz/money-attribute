@@ -103,6 +103,32 @@ Mint.money(1234.56, 'USD').to_s  # => "$1.234,56"
 
 The locale backend reads `number.currency.format` from your I18n translations and maps Rails format syntax (`%n` for amount, `%u` for unit) to `Mint::Money#to_s`. If the translation key is missing (no locale file for that language), it falls back to hardcoded defaults (`.` decimal, `,` thousand, `%<symbol>s%<amount>f` format).
 
+You can configure per-sign formatting by adding `positive`, `negative`, and `zero` keys to your locale:
+
+```yaml
+# config/locales/minting-rails.en.yml
+en:
+  number:
+    currency:
+      format:
+        format: "%u%n"           # fallback when no per-sign key matches
+        positive: "%u%n"         # "$1,234.56"
+        negative: "(%u%n)"       # "($1,234.56)"
+        zero: "--"               # "--"
+        separator: "."
+        delimiter: ","
+```
+
+When any of `positive`, `negative`, or `zero` is present, a Hash format is built. Missing keys fall back to `format`:
+
+```ruby
+Mint.money(1234.56, 'USD').to_s  # => "$1,234.56"
+Mint.money(-1234.56, 'USD').to_s # => "($1,234.56)"
+Mint.money(0, 'USD').to_s        # => "--"
+```
+
+If none of those keys are set, `format` is used as a plain string (simple formatting).
+
 > Formatting respects the currency's own `subunit` for decimal precision — `I18n` locale settings for `precision` are ignored since that is a currency property, not a locale one.
 
 ## Usage — Two modes

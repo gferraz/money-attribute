@@ -71,6 +71,91 @@ module Mint
       assert_equal '$ 1.234,56', money.to_s
     end
 
+    test 'locale backend returns string format when no per-sign keys' do
+      Mint.locale_backend = -> {
+        { decimal: '.', thousand: ',', format: '%<symbol>s%<amount>f' }
+      }
+      result = Mint.locale_backend.call
+      assert_kind_of String, result[:format]
+      assert_equal '%<symbol>s%<amount>f', result[:format]
+    end
+
+    test 'locale backend returns hash format when positive key is present' do
+      Mint.locale_backend = -> {
+        gsub = ->(s) { s&.gsub('%n', '%<amount>f')&.gsub('%u', '%<symbol>s') }
+        fmt = { format: '%u%n', positive: '%u%n', separator: '.', delimiter: ',' }
+        {
+          decimal: fmt[:separator],
+          thousand: fmt[:delimiter],
+          format: if fmt.key?(:positive) || fmt.key?(:negative) || fmt.key?(:zero)
+            {
+              positive: gsub.call(fmt[:positive] || fmt[:format]),
+              negative: gsub.call(fmt[:negative] || fmt[:format]),
+              zero:     gsub.call(fmt[:zero] || fmt[:format])
+            }
+          else
+            gsub.call(fmt[:format])
+          end
+        }
+      }
+      result = Mint.locale_backend.call
+      assert_kind_of Hash, result[:format]
+      assert_includes result[:format], :positive
+      assert_includes result[:format], :negative
+      assert_includes result[:format], :zero
+    end
+
+    test 'locale backend hash format respects negative and zero overrides' do
+      Mint.locale_backend = -> {
+        gsub = ->(s) { s&.gsub('%n', '%<amount>f')&.gsub('%u', '%<symbol>s') }
+        fmt = { format: '%u%n', negative: '(%u%n)', zero: '--', separator: '.', delimiter: ',' }
+        {
+          decimal: fmt[:separator],
+          thousand: fmt[:delimiter],
+          format: if fmt.key?(:positive) || fmt.key?(:negative) || fmt.key?(:zero)
+            positive = gsub.call(fmt[:positive] || fmt[:format])
+            negative = gsub.call(fmt[:negative] || fmt[:format])
+            zero = gsub.call(fmt[:zero] || fmt[:format])
+            { positive:, negative:, zero: }
+          else
+            gsub.call(fmt[:format])
+          end
+        }
+      }
+
+      positive = Mint.money(10.00, 'USD')
+      negative = Mint.money(-10.00, 'USD')
+      zero     = Mint.money(0, 'USD')
+
+      assert_equal '$10.00', positive.to_s
+      assert_equal '($10.00)', negative.to_s
+      assert_equal '--', zero.to_s
+    end
+
+    test 'locale backend hash format falls back to format for missing per-sign keys' do
+      Mint.locale_backend = -> {
+        gsub = ->(s) { s&.gsub('%n', '%<amount>f')&.gsub('%u', '%<symbol>s') }
+        fmt = { format: '[%u%n]', negative: '(%u%n)', separator: '.', delimiter: ',' }
+        {
+          decimal: fmt[:separator],
+          thousand: fmt[:delimiter],
+          format: if fmt.key?(:positive) || fmt.key?(:negative) || fmt.key?(:zero)
+            {
+              positive: gsub.call(fmt[:positive] || fmt[:format]),
+              negative: gsub.call(fmt[:negative] || fmt[:format]),
+              zero:     gsub.call(fmt[:zero] || fmt[:format])
+            }
+          else
+            gsub.call(fmt[:format])
+          end
+        }
+      }
+
+      assert_equal '[$10.00]',   Mint.money(10.00, 'USD').to_s
+      assert_equal '($10.00)',   Mint.money(-10.00, 'USD').to_s
+      assert_equal '[$0.00]',    Mint.money(0, 'USD').to_s
+    end
+
     test 'configuration has defaults without Active Support configurable' do
       config = Mint::MoneyAttribute::Configuration.new
 

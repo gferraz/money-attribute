@@ -13,20 +13,6 @@ module Mint
       assert_equal 'BRL', Mint.default_currency.code
     end
 
-    test 'enable currencies configuration' do
-      assert_equal Mint.currency('BRL'), Mint.assert_valid_currency!('BRL')
-      assert_equal Mint.currency('USD'), Mint.assert_valid_currency!('USD')
-      assert_raises(ArgumentError) {  Mint.assert_valid_currency!('XPX') }
-      assert_raises(ArgumentError) {  Mint.assert_valid_currency!('XPX') }
-      assert_raises(ArgumentError) {  Mint.assert_valid_currency!(12) }
-      assert_raises(ArgumentError) {  Mint.assert_valid_currency!(nil) }
-    end
-
-    test 'custom currencies from configuration are registered' do
-      assert_equal Mint.currency('CRC'), Mint.assert_valid_currency!('CRC')
-      assert_equal Mint.currency('NGN'), Mint.assert_valid_currency!('NGN')
-    end
-
     test 'configure resets cached default currency' do
       Mint.default_currency
 

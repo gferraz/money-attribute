@@ -9,11 +9,11 @@ module Mint
       end
 
       def parse(amount, currency = @default_currency)
-        currency = Mint.assert_valid_currency!(currency)
+        currency = Currency.resolve!(currency)
         case amount
         when NilClass    then nil
-        when Numeric     then Mint::Money.create(amount, currency)
-        when String      then Mint::Money.create(amount.to_r, currency)
+        when Numeric     then Mint::Money.from(amount, currency)
+        when String      then Mint::Money.from(amount.to_r, currency)
         when Mint::Money
           return amount if amount.currency == currency
 

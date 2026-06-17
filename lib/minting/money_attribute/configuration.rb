@@ -25,14 +25,7 @@ module Mint
     config
   end
 
-  def self.assert_valid_currency!(currency)
-    currency = Mint.currency(currency)
-    raise ArgumentError, "Invalid currency code #{currency}." unless currency
-
-    currency
-  end
-
   def self.default_currency
-    @default_currency ||= Mint.assert_valid_currency!(config.default_currency)
+    @default_currency ||= Currency.resolve!(config.default_currency)
   end
 end

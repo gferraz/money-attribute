@@ -6,6 +6,8 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 # Specify your gem's dependencies in minting-rails.gemspec.
 gemspec
 
+gem 'minting', path: '/Users/gilson/code/minting'
+
 gem 'puma'
 gem 'sqlite3', '>= 2.0'
 

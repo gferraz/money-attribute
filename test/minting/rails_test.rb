@@ -165,6 +165,40 @@ module Mint
       assert_nil config.default_format
     end
 
+    test 'added_currencies registers custom currencies' do
+      with_mint_config(added_currencies: [
+        { currency: 'CFGA', subunit: 2, symbol: 'A' },
+        { currency: 'CFGB', subunit: 3, symbol: 'B' }
+      ]) do
+        c = Mint::Currency.for_code('CFGA')
+        assert_equal 'CFGA', c.code
+        assert_equal 2, c.subunit
+        assert_equal 'A', c.symbol
+
+        c = Mint::Currency.for_code('CFGB')
+        assert_equal 'CFGB', c.code
+        assert_equal 3, c.subunit
+        assert_equal 'B', c.symbol
+      end
+    end
+
+    test 'money can be minted with configured currency' do
+      with_mint_config(added_currencies: [
+        { currency: 'CFGC', subunit: 2, symbol: 'C' }
+      ]) do
+        money = Mint.money(42.50, 'CFGC')
+        assert_equal 42.50, money.amount
+        assert_equal 'CFGC', money.currency.code
+      end
+    end
+
+    test 'currencies registered via dummy initializer are available' do
+      assert Mint::Currency.for_code('CRCA')
+      assert Mint::Currency.for_code('NGNA')
+      assert_equal 2, Mint::Currency.for_code('CRCA').subunit
+      assert_equal 3, Mint::Currency.for_code('NGNA').subunit
+    end
+
     private
 
     def with_mint_config(overrides)
@@ -179,11 +213,15 @@ module Mint
         overrides.each { |key, value| config.public_send("#{key}=", value) }
       end
 
+      Mint::Railtie.register_custom_currencies!
+
       yield
     ensure
       Mint.configure do |config|
         original.each { |key, value| config.public_send("#{key}=", value) }
       end
+
+      Mint::Railtie.register_custom_currencies!
     end
   end
 end

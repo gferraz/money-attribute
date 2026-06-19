@@ -33,13 +33,15 @@ module Mint
     def self.register_custom_currencies!
       Array(Mint.config.added_currencies).each do |currency_data|
         if currency_data.respond_to?(:values_at)
-          code = currency_data[:currency] || currency_data['currency']
-          subunit = currency_data[:subunit] || currency_data['subunit']
-          symbol = currency_data[:symbol] || currency_data['symbol']
+          code = currency_data[:currency]
+          subunit = currency_data[:subunit]
+          symbol = currency_data[:symbol]
         else
           code, subunit, symbol = *currency_data
         end
         Currency.register(code:, subunit:, symbol:)
+        rescue KeyError
+          nil
       end
     end
   end

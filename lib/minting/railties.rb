@@ -40,8 +40,8 @@ module Mint
           code, subunit, symbol = *currency_data
         end
         Currency.register(code:, subunit:, symbol:)
-        rescue KeyError
-          nil
+      rescue KeyError
+        nil
       end
     end
   end

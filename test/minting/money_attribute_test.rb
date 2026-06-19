@@ -60,6 +60,7 @@ module Mint
       transaction.save!
 
       reloaded = FinancialTransaction.find(transaction.id)
+
       assert_equal 12.50.dollars, reloaded.amount
       assert_equal 'test', reloaded.description
     end
@@ -69,6 +70,7 @@ module Mint
       FinancialTransaction.create!(amount: 10.dollars, description: 'usd')
 
       found = FinancialTransaction.where(amount: 5.euros).first
+
       assert_equal 5.euros, found.amount
       assert_equal 'eur', found.description
     end
@@ -81,6 +83,7 @@ module Mint
 
       transaction.save!
       reloaded = FinancialTransaction.find(transaction.id)
+
       assert_equal 7.euros, reloaded.amount
     end
 
@@ -144,7 +147,7 @@ module Mint
       assert_equal(-5.50.dollars, offer.reload.price)
     end
 
-    test 'find_money_attributes error lists missing mapping keys' do
+    test 'find_money_attributes infers currency column from convention when mapping only amount' do
       error = assert_raises(ArgumentError) do
         Class.new(ApplicationRecord) do
           self.table_name = 'offers'
@@ -152,8 +155,7 @@ module Mint
           money_attribute :cost, mapping: { amount: :price_amount }
         end
       end
-      assert_includes error.message, 'missing required keys'
-      assert_includes error.message, 'currency'
+      assert_includes error.message, 'Expected: price_amount, cost_currency'
     end
 
     test 'find_money_attributes error lists expected and found columns' do
@@ -166,7 +168,7 @@ module Mint
       assert_includes error.message, 'Found:'
     end
 
-    test 'find_money_attributes error with wrong mapping key names' do
+    test 'find_money_attributes ignores wrong mapping keys and falls back to convention' do
       error = assert_raises(ArgumentError) do
         Class.new(ApplicationRecord) do
           self.table_name = 'offers'
@@ -174,8 +176,7 @@ module Mint
           money_attribute :cost, mapping: { price_amount: :amount }
         end
       end
-      assert_includes error.message, 'missing required keys'
-      assert_includes error.message, 'amount, currency'
+      assert_includes error.message, 'Expected: cost_amount, cost_currency'
     end
 
     test 'parse keeps money values unchanged' do
@@ -189,16 +190,32 @@ module Mint
       assert_raises(TypeError) { parser.parse(23.euros, 'USD') }
     end
 
-    test 'aggregated money attribute partial custom mapping' do
-      assert_raises(ArgumentError) do
-        Class.new(ApplicationRecord) do
-          self.table_name = 'offers'
+    test 'aggregated money attribute partial custom mapping for currency only' do
+      mapped = Class.new(ApplicationRecord) do
+        self.table_name = 'offers'
 
-          money_attribute :cost, mapping: {
-            amount: :price_amount
-          }
-        end
+        money_attribute :price, mapping: { currency: :price_currency }
       end
+
+      offer = mapped.new(price: 19.euros)
+
+      assert_equal 19.euros, offer.price
+      assert_equal 19, offer.price_amount
+      assert_equal 'EUR', offer.price_currency
+    end
+
+    test 'aggregated money attribute partial custom mapping for amount only' do
+      mapped = Class.new(ApplicationRecord) do
+        self.table_name = 'offers'
+
+        money_attribute :price, mapping: { amount: :price_amount }
+      end
+
+      offer = mapped.new(price: 19.euros)
+
+      assert_equal 19.euros, offer.price
+      assert_equal 19, offer.price_amount
+      assert_equal 'EUR', offer.price_currency
     end
   end
 end

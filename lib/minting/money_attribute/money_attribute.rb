@@ -10,14 +10,19 @@ module Mint
       def money_attribute(name, currency: Mint.default_currency, mapping: nil)
         currency = Currency.resolve!(currency)
         parser = Parser.new(currency)
+
+        if mapping.nil? && attribute_names.include?(name.to_s) && attribute_names.include?('currency')
+          mapping = { amount: name, currency: :currency }
+        end
+
         if attribute_names.include?(name.to_s) && mapping.nil?
           attribute(name, :mint_money, currency:)
           normalizes(name, with: parser)
         else
           aggregated = find_money_attributes(name, mapping:)
           amount_col = columns.find { |c| c.name == aggregated[:amount] }
-          constructor = if amount_col&.type == :integer || amount_col&.type == :bigint
-                          ->(fractional, currency_code) {
+          constructor = if %i[integer bigint].include?(amount_col&.type)
+                          lambda { |fractional, currency_code|
                             Money.from_fractional(fractional, Currency.resolve!(currency_code))
                           }
                         else
@@ -47,15 +52,11 @@ module Mint
       end
 
       def find_money_attributes(name, mapping:)
+        composite = { amount: "#{name}_amount", currency: "#{name}_currency" }
+
         if mapping.present?
-          missing_keys = (%i[amount currency] - mapping.keys).join(', ')
-          if missing_keys.present?
-            raise ArgumentError,
-                  "Mapping for :#{name} money attribute is missing required keys: #{missing_keys}"
-          end
-          composite = { amount: mapping[:amount].to_s, currency: mapping[:currency].to_s }
-        else
-          composite = { amount: "#{name}_amount", currency: "#{name}_currency" }
+          composite[:amount] = mapping[:amount].to_s if mapping[:amount]
+          composite[:currency] = mapping[:currency].to_s if mapping[:currency]
         end
 
         missing = composite.values - attribute_names

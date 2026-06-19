@@ -10,14 +10,22 @@ module Mint
       def money_attribute(name, currency: Mint.default_currency, mapping: nil)
         currency = Currency.resolve!(currency)
         parser = Parser.new(currency)
-        if attribute_names.include? name.to_s
+        if attribute_names.include?(name.to_s) && mapping.nil?
           attribute(name, :mint_money, currency:)
           normalizes(name, with: parser)
         else
           aggregated = find_money_attributes(name, mapping:)
+          amount_col = columns.find { |c| c.name == aggregated[:amount] }
+          constructor = if amount_col&.type == :integer || amount_col&.type == :bigint
+                          ->(fractional, currency_code) {
+                            Money.from_fractional(fractional, Currency.resolve!(currency_code))
+                          }
+                        else
+                          parser
+                        end
           options = {
             allow_nil: true, class_name: 'Mint::Money',
-            constructor: parser, converter: parser,
+            constructor:, converter: parser,
             mapping: {
               aggregated[:amount] => amount_extractor_for(aggregated[:amount]),
               aggregated[:currency] => :currency_code

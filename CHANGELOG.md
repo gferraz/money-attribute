@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [v0.8.2](https://github.com/gferraz/minting-rails/releases/tag/v0.8.2) (2026-06-19)
+
+[Full Changelog](https://github.com/gferraz/minting-rails/compare/v0.8.1...v0.8.2)
+
+### Improvements
+- **I18n support** — Money amounts are now formatted using the ActiveRecord I18n locale (`number.currency.format`). Locale files are no longer installed by default; users can run `rails g minting:locale:install` to customize.
+- **Negative and zero formatting** — Negative and zero amounts can have different formats
+- update minting dependency
+
 ## [v0.8.1](https://github.com/gferraz/minting-rails/releases/tag/v0.8.1) (2026-06-17)
 
 [Full Changelog](https://github.com/gferraz/minting-rails/compare/v0.8.0...v0.8.1)

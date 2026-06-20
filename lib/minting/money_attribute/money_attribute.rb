@@ -32,15 +32,12 @@ module Mint
         end
       end
 
-      def build_composite_mapping(name, mapping)
+      def resolve_aggregate(name, mapping:)
         composite = { amount: "#{name}_amount", currency: "#{name}_currency" }
+
         composite[:amount]    = mapping[:amount].to_s   if mapping&.key?(:amount)
         composite[:currency]  = mapping[:currency].to_s if mapping&.key?(:currency)
-        composite
-      end
 
-      def find_money_attributes(name, mapping:)
-        composite = build_composite_mapping(name, mapping)
         assert_columns_exist!(name, composite)
         composite
       end
@@ -60,11 +57,11 @@ module Mint
       end
 
       def money_constructor_for(amount_column, parser)
-        return parser unless integer_column?(amount_column)
-
-        lambda { |fractional, currency|
-          Money.from_fractional(fractional, Currency.resolve!(currency))
-        }
+        if integer_column?(amount_column)
+          ->(amount, currency) { Money.from_fractional(amount, Currency.resolve!(currency)) }
+        else
+          parser
+        end
       end
 
       def integer_column?(column_name)
@@ -81,7 +78,7 @@ module Mint
       end
 
       def define_composite_money_attribute(name, mapping, parser)
-        aggregated = find_money_attributes(name, mapping:)
+        aggregated = resolve_aggregate(name, mapping:)
 
         composed_of(name.to_sym, {
                       allow_nil: true,

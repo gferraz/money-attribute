@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Competitive benchmark: minting-rails vs money-rails
+# Competitive benchmark: money_attribute vs money-rails
 # Run with: bundle exec ruby benchmark/comparison.rb
 
 ENV['RAILS_ENV'] = 'test'
@@ -89,7 +89,7 @@ begin
   # ── Benchmarks ──────────────────────────────────────────────────
 
   puts '=' * 80
-  puts 'Benchmark: minting-rails vs money-rails'
+  puts 'Benchmark: money_attribute vs money-rails'
   puts "Ruby #{RUBY_VERSION}, Rails #{Rails.version}, SQLite3"
   puts "#{ITERATIONS} iterations per test, #{NUM_RECORDS} records for mass insert"
   puts 'NOTE: Both sides pass a Money object through the attribute setter (fair comparison)'
@@ -101,20 +101,20 @@ begin
     puts '-' * 60
     puts 'Instantiation (passing Money object to setter)'
     puts '-' * 60
-    x.report('minting-rails  (single integer):') do
+    x.report('money_attribute  (single integer):') do
       ITERATIONS.times { MintingSingle.new(price: MINTING_MONEY) }
     end
-    x.report('minting-rails  (single decimal):') do
+    x.report('money_attribute  (single decimal):') do
       ITERATIONS.times { MintingSingleDecimal.new(price: MINTING_MONEY) }
     end
     x.report('money-rails   (single integer):') do
       ITERATIONS.times { MoneyRailsSingle.new(price: MONEY_RAILS_MONEY) }
     end
 
-    x.report('minting-rails  (comp integer):') do
+    x.report('money_attribute  (comp integer):') do
       ITERATIONS.times { MintingComposite.new(price: MINTING_MONEY) }
     end
-    x.report('minting-rails  (comp decimal):') do
+    x.report('money_attribute  (comp decimal):') do
       ITERATIONS.times { MintingCompositeDecimal.new(price: MINTING_MONEY) }
     end
     x.report('money-rails   (comp integer):') do
@@ -125,11 +125,11 @@ begin
     puts '-' * 60
     puts 'Create + save individual (Money through setter)'
     puts '-' * 60
-    x.report('minting-rails  (single integer):') do
+    x.report('money_attribute  (single integer):') do
       ITERATIONS.times { MintingSingle.create!(price: MINTING_MONEY) }
       MintingSingle.delete_all
     end
-    x.report('minting-rails  (single decimal):') do
+    x.report('money_attribute  (single decimal):') do
       ITERATIONS.times { MintingSingleDecimal.create!(price: MINTING_MONEY) }
       MintingSingleDecimal.delete_all
     end
@@ -138,11 +138,11 @@ begin
       MoneyRailsSingle.delete_all
     end
 
-    x.report('minting-rails  (comp integer):') do
+    x.report('money_attribute  (comp integer):') do
       ITERATIONS.times { MintingComposite.create!(price: MINTING_MONEY) }
       MintingComposite.delete_all
     end
-    x.report('minting-rails  (comp decimal):') do
+    x.report('money_attribute  (comp decimal):') do
       ITERATIONS.times { MintingCompositeDecimal.create!(price: MINTING_MONEY) }
       MintingCompositeDecimal.delete_all
     end
@@ -162,11 +162,11 @@ begin
     mcd = MintingCompositeDecimal.create!(price: MINTING_MONEY)
     mrc = MoneyRailsComposite.create!(price: MONEY_RAILS_MONEY)
 
-    x.report('minting-rails  (single integer):') do
+    x.report('money_attribute  (single integer):') do
       record = MintingSingle.find(ms.id)
       ITERATIONS.times { record.price }
     end
-    x.report('minting-rails  (single decimal):') do
+    x.report('money_attribute  (single decimal):') do
       record = MintingSingleDecimal.find(msd.id)
       ITERATIONS.times { record.price }
     end
@@ -175,11 +175,11 @@ begin
       ITERATIONS.times { record.price }
     end
 
-    x.report('minting-rails  (comp integer):') do
+    x.report('money_attribute  (comp integer):') do
       record = MintingComposite.find(mc.id)
       ITERATIONS.times { record.price }
     end
-    x.report('minting-rails  (comp decimal):') do
+    x.report('money_attribute  (comp decimal):') do
       record = MintingCompositeDecimal.find(mcd.id)
       ITERATIONS.times { record.price }
     end
@@ -192,20 +192,20 @@ begin
     puts '-' * 60
     puts 'Query (raw column values — both query the same way)'
     puts '-' * 60
-    x.report('minting-rails  (single integer):') do
+    x.report('money_attribute  (single integer):') do
       ITERATIONS.times { MintingSingle.find_by(price: MINTING_MONEY) }
     end
-    x.report('minting-rails  (single decimal):') do
+    x.report('money_attribute  (single decimal):') do
       ITERATIONS.times { MintingSingleDecimal.find_by(price: MINTING_MONEY) }
     end
     x.report('money-rails   (single integer):') do
       ITERATIONS.times { MoneyRailsSingle.find_by(price_cents: MONEY_RAILS_MONEY) }
     end
 
-    x.report('minting-rails  (comp integer):') do
+    x.report('money_attribute  (comp integer):') do
       ITERATIONS.times { MintingComposite.find_by(price: MINTING_MONEY) }
     end
-    x.report('minting-rails  (comp decimal):') do
+    x.report('money_attribute  (comp decimal):') do
       ITERATIONS.times { MintingCompositeDecimal.find_by(price: MINTING_MONEY) }
     end
     x.report('money-rails   (comp integer):') do
@@ -224,7 +224,7 @@ begin
     mr1 = MoneyRailsSingle.create!(price: MONEY_RAILS_MONEY)
     mr2 = MoneyRailsSingle.create!(price: MONEY_RAILS_MONEY)
 
-    x.report('minting-rails  (single integer):') do
+    x.report('money_attribute  (single integer):') do
       ITERATIONS.times { (ms1.price / 3) + (ms2.price * 2) }
     end
     x.report('money-rails   (single integer):') do
@@ -247,18 +247,18 @@ begin
 
   first = mcc.price
   second = mcc.price
-  puts "minting-rails composite int same object? #{first.equal?(second)}"
+  puts "money_attribute composite int same object? #{first.equal?(second)}"
   first_d = mcc_d.price
   second_d = mcc_d.price
-  puts "minting-rails composite dec same object? #{first_d.equal?(second_d)}"
+  puts "money_attribute composite dec same object? #{first_d.equal?(second_d)}"
   first_mr = mrcc.price
   second_mr = mrcc.price
   puts "money-rails   composite int same object? #{first_mr.equal?(second_mr)}"
   puts
 
   Benchmark.bm(40) do |x|
-    x.report('minting-rails  (comp integer):')  { ITERATIONS.times { mcc.price } }
-    x.report('minting-rails  (comp decimal):')  { ITERATIONS.times { mcc_d.price } }
+    x.report('money_attribute  (comp integer):')  { ITERATIONS.times { mcc.price } }
+    x.report('money_attribute  (comp decimal):')  { ITERATIONS.times { mcc_d.price } }
     x.report('money-rails   (comp integer):')   { ITERATIONS.times { mrcc.price } }
   end
 
@@ -275,8 +275,8 @@ begin
   money_alloc = GC.stat(:total_allocated_objects) - alloc_before
 
   puts
-  puts format('%-40s %10s', 'minting-rails (comp integer) allocated:', minting_int_alloc.to_s)
-  puts format('%-40s %10s', 'minting-rails (comp decimal) allocated:', minting_dec_alloc.to_s)
+  puts format('%-40s %10s', 'money_attribute (comp integer) allocated:', minting_int_alloc.to_s)
+  puts format('%-40s %10s', 'money_attribute (comp decimal) allocated:', minting_dec_alloc.to_s)
   puts format('%-40s %10s', 'money-rails (comp integer) allocated:', money_alloc.to_s)
   puts
 
@@ -326,15 +326,15 @@ begin
     end
   end
 
-  puts format('%-40s %10s', 'minting-rails (single integer):',
+  puts format('%-40s %10s', 'money_attribute (single integer):',
               "#{mass_minting_single.real.round(4)}s")
-  puts format('%-40s %10s', 'minting-rails (single decimal):',
+  puts format('%-40s %10s', 'money_attribute (single decimal):',
               "#{mass_minting_single_decimal.real.round(4)}s")
   puts format('%-40s %10s', 'money-rails  (single integer):',
               "#{mass_money_rails_single.real.round(4)}s")
-  puts format('%-40s %10s', 'minting-rails (comp integer):',
+  puts format('%-40s %10s', 'money_attribute (comp integer):',
               "#{mass_minting_composite.real.round(4)}s")
-  puts format('%-40s %10s', 'minting-rails (comp decimal):',
+  puts format('%-40s %10s', 'money_attribute (comp decimal):',
               "#{mass_minting_composite_decimal.real.round(4)}s")
   puts format('%-40s %10s', 'money-rails  (comp integer):',
               "#{mass_money_rails_composite.real.round(4)}s")

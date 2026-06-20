@@ -1,6 +1,6 @@
 # encoding : utf-8
 
-Mint.configure do |config|
+MoneyAttribute.configure do |config|
 
   # Register a custom currency
   #

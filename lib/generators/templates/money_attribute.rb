@@ -1,7 +1,7 @@
 # encoding : utf-8
 # frozen_string_literal: true
 
-Mint.configure do |config|
+MoneyAttribute.configure do |config|
   # Register a custom currency
   #
   # Example:

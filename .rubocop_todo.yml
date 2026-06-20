@@ -12,7 +12,7 @@
 # Include: **/*.gemspec
 Gemspec/RequireMFA:
   Exclude:
-    - 'minting-rails.gemspec'
+    - 'money_attribute.gemspec'
 
 
 

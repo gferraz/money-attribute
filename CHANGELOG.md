@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [v0.9.0](https://github.com/gferraz/money-attribute/releases/tag/v0.9.0) (2026-06-20)
+
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.8.3...v0.9.0)
+
+### Breaking changes
+- **Rebrand** — Gem renamed from `minting-rails` to `money_attribute` ([#](REBRAND.md)).
+- Module `Mint::MoneyAttribute` → `MoneyAttribute::Macro`.
+- Class `Mint::MintMoneyType` → `MoneyAttribute::Type`.
+- AR type key `:mint_money` → `:money`.
+- Config methods moved from `Mint.configure`/`Mint.config`/`Mint.default_currency` to `MoneyAttribute.configure`/`MoneyAttribute.config`/`MoneyAttribute.default_currency`.
+- Generator renamed from `rails g mint:initializer` to `rails g money_attribute:initializer` (creates `config/initializers/money_attribute.rb`).
+- Entry point changed from `require 'minting/rails'` to `require 'money_attribute'`.
+
 ## [v0.8.3](https://github.com/gferraz/minting-rails/releases/tag/v0.8.3) (2026-06-20)
 
 [Full Changelog](https://github.com/gferraz/minting-rails/compare/v0.8.2...v0.8.3)

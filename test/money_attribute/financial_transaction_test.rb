@@ -2,8 +2,7 @@
 
 require 'test_helper'
 
-module Mint
-  class FinancialTransactionTest < ActiveSupport::TestCase
+class FinancialTransactionTest < ActiveSupport::TestCase
     test 'aggregated money attribute with integer amount column' do
       transaction = FinancialTransaction.new(amount: 45.34.dollars)
 
@@ -85,7 +84,7 @@ module Mint
     test 'tax is a single-column fixed-currency attribute' do
       transaction = FinancialTransaction.new(tax: 100)
 
-      assert_equal 100.mint(Mint.default_currency), transaction.tax
+      assert_equal 100.mint(MoneyAttribute.default_currency), transaction.tax
     end
 
     test 'tax does not conflict with amount or discount' do
@@ -97,7 +96,7 @@ module Mint
 
       assert_equal 45.34.dollars, transaction.amount
       assert_equal 10.euros, transaction.discount
-      assert_equal 200.mint(Mint.default_currency), transaction.tax
+      assert_equal 200.mint(MoneyAttribute.default_currency), transaction.tax
       assert_equal 'USD', transaction.currency
       assert_equal 'EUR', transaction.discount_currency
     end
@@ -113,7 +112,7 @@ module Mint
 
       assert_equal 100.dollars, reloaded.amount
       assert_equal 20.euros, reloaded.discount
-      assert_equal 50.mint(Mint.default_currency), reloaded.tax
+      assert_equal 50.mint(MoneyAttribute.default_currency), reloaded.tax
     end
 
     test 'tax uses bigint column storing fractional (cents)' do
@@ -139,7 +138,7 @@ module Mint
       assert_equal 'USD', record.currency
       assert_equal 10.euros, record.discount
       assert_equal 'EUR', record.discount_currency
-      assert_equal 200.mint(Mint.default_currency), record.tax
+      assert_equal 200.mint(MoneyAttribute.default_currency), record.tax
     end
 
     test 'price is a convention composite attribute with decimal columns' do
@@ -184,7 +183,7 @@ module Mint
       assert_equal 100.dollars, transaction.amount
       assert_equal 20.euros, transaction.discount
       assert_equal 15.50.dollars, transaction.price
-      assert_equal 500.mint(Mint.default_currency), transaction.tax
+      assert_equal 500.mint(MoneyAttribute.default_currency), transaction.tax
       assert_equal 99.99.euros, transaction.total
       assert_equal 'USD', transaction.currency
       assert_equal 'EUR', transaction.discount_currency
@@ -197,14 +196,17 @@ module Mint
       assert_equal 100.dollars, reloaded.amount
       assert_equal 20.euros, reloaded.discount
       assert_equal 15.50.dollars, reloaded.price
-      assert_equal 500.mint(Mint.default_currency), reloaded.tax
+      assert_equal 500.mint(MoneyAttribute.default_currency), reloaded.tax
       assert_equal 99.99.euros, reloaded.total
     end
     test 'FinancialTransaction loads all five money attribute accessors' do
+      record = FinancialTransaction.new(
+        amount: 1.dollars, discount: 2.euros, price: 3.dollars,
+        tax: 4, total: 5.euros
+      )
       %i[amount discount price tax total].each do |attr|
-        assert FinancialTransaction.method_defined?(attr),
-               "Expected FinancialTransaction to have money attribute :#{attr}"
+        assert_respond_to record, attr,
+                          "Expected FinancialTransaction to have money attribute :#{attr}"
       end
     end
-  end
 end

@@ -2,8 +2,7 @@
 
 require 'test_helper'
 
-module Mint
-  class MoneyAttributeTest < ActiveSupport::TestCase
+class MoneyAttributeTest < ActiveSupport::TestCase
     test 'aggregated money attribute requires backing amount and currency columns' do
       invalid_offer = Class.new(ApplicationRecord) do
         self.table_name = 'offers'
@@ -57,5 +56,4 @@ module Mint
       assert_nil MoneyAttribute::Parser.new.parse(nil, 'USD')
       assert_raises(TypeError) { parser.parse(23.euros, 'USD') }
     end
-  end
 end

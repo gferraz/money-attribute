@@ -1,7 +1,7 @@
-# Minting::Rails
+# MoneyAttribute
 
-[![CI](https://github.com/gferraz/minting-rails/actions/workflows/ci.yml/badge.svg)](https://github.com/gferraz/minting-rails/actions/workflows/ci.yml)
-[![Gem Version](https://badge.fury.io/rb/minting-rails.svg)](https://badge.fury.io/rb/minting-rails)
+[![CI](https://github.com/gferraz/money-attribute/actions/workflows/ci.yml/badge.svg)](https://github.com/gferraz/money-attribute/actions/workflows/ci.yml)
+[![Gem Version](https://badge.fury.io/rb/money_attribute.svg)](https://badge.fury.io/rb/money_attribute)
 
 Store and read Active Record attributes as `Mint::Money` objects with a single `money_attribute` declaration. No manual serialization, no boilerplate.
 
@@ -17,8 +17,8 @@ Product.new(price: 12).price  # => [USD 12.00]
 ## Quick start
 
 ```sh
-bundle add minting-rails
-bin/rails g mint:initializer
+bundle add money_attribute
+bin/rails g money_attribute:initializer
 ```
 
 ```ruby
@@ -30,7 +30,7 @@ end
 
 That's it. `Product.new(price: 12).price` is a `Mint::Money`.
 
-## Why Minting::Rails?
+## Why MoneyAttribute?
 
 - **No serialization boilerplate** — declare once, read/write `Mint::Money` everywhere.
 - **Two storage modes** — single column for fixed-currency apps (simpler), amount+currency columns for multi-currency records (more flexible).
@@ -41,7 +41,7 @@ That's it. `Product.new(price: 12).price` is a `Mint::Money`.
 
 ### At a glance — vs money-rails
 
-| Feature | minting-rails | money-rails |
+| Feature | MoneyAttribute | money-rails |
 |---|---|---|
 | **Declaration** | `money_attribute :price` | `monetize :price_cents` |
 | **Column types** | `integer`, `decimal`, `bigint` — auto-detected | `integer` cents only |
@@ -64,23 +64,22 @@ That's it. `Product.new(price: 12).price` is a `Mint::Money`.
 
 ```ruby
 # Gemfile
-gem 'minting-rails'
+gem 'money_attribute'
 ```
 
 ```sh
 bundle install
-bin/rails g mint:initializer
+bin/rails g money_attribute:initializer
 ```
 
-The generator creates `config/initializers/minting.rb`.
+The generator creates `config/initializers/money_attribute.rb`.
 
 ## Configuration
 
 ```ruby
-# config/initializers/minting.rb
-Mint.configure do |config|
+# config/initializers/money_attribute.rb
+MoneyAttribute.configure do |config|
   config.default_currency = 'USD'
-  # enabled_currencies removed — all registered currencies are valid
 end
 ```
 
@@ -88,7 +87,7 @@ See the [Minting gem](https://github.com/gferraz/minting) for full configuration
 
 ### I18n / Locale-aware formatting
 
-Minting-rails integrates with Rails I18n to automatically format money amounts according to the current locale.
+MoneyAttribute integrates with Rails I18n to automatically format money amounts according to the current locale.
 
 With `I18n.locale` set to `:en`:
 ```ruby
@@ -106,7 +105,7 @@ The locale backend reads `number.currency.format` from your I18n translations an
 You can configure per-sign formatting by adding `positive`, `negative`, and `zero` keys to your locale:
 
 ```yaml
-# config/locales/minting-rails.en.yml
+# config/locales/money_attribute.en.yml
 en:
   number:
     currency:
@@ -216,7 +215,7 @@ offer.price_amount   # => 15.0
 offer.price_currency # => "EUR"
 ```
 
-When assigning a plain number or string, `Mint.default_currency` is used:
+When assigning a plain number or string, `MoneyAttribute.default_currency` is used:
 
 ```ruby
 offer = Offer.new(price: '12')
@@ -345,7 +344,7 @@ Offer.where('price_amount > ? AND price_currency = ?', 10, 'EUR')
 
 ## Convenience methods
 
-Minting::Rails adds small helpers on `Numeric` and `String`:
+MoneyAttribute adds small helpers on `Numeric` and `String`:
 
 ```ruby
 12.to_money('USD')    # => [USD 12.00]
@@ -363,7 +362,7 @@ Minting::Rails adds small helpers on `Numeric` and `String`:
 ### Model declaration
 
 ```ruby
-# minting-rails
+# MoneyAttribute
 class Product < ApplicationRecord
   money_attribute :price, currency: 'USD'          # single column, fixed currency
   money_attribute :total                           # two columns, multi-currency
@@ -379,7 +378,7 @@ end
 ### Migration
 
 ```ruby
-# minting-rails — any numeric column type
+# MoneyAttribute — any numeric column type
 create_table :products do |t|
   t.decimal :price              # stores 12.34
   t.integer :discount           # stores 1234 (cents)
@@ -399,7 +398,7 @@ end
 ### Reading & writing
 
 ```ruby
-# minting-rails — pass any type, always get Mint::Money
+# MoneyAttribute — pass any type, always get Mint::Money
 product.price = 12.34          # stores 12.34 in decimal column
 product.price = 1234           # stores 1234 in integer column
 product.price = '$12.34'       # parses string
@@ -414,7 +413,7 @@ product.price                  # => #<Money fractional:1234 currency:USD>
 ### Querying
 
 ```ruby
-# minting-rails (fixed-currency) — full type-aware querying
+# MoneyAttribute (fixed-currency) — full type-aware querying
 Product.where(price: 10.mint('USD'))
 Product.where(price: [5.mint('USD'), 10.mint('USD')])
 Product.where(price: 5.mint('USD')..15.mint('USD'))
@@ -431,7 +430,7 @@ Product.order(:price_cents)
 ### Decimal columns
 
 ```ruby
-# minting-rails — works with decimal columns out of the box
+# MoneyAttribute — works with decimal columns out of the box
 # migration: t.decimal :price
 money_attribute :price, currency: 'USD'
 
@@ -451,7 +450,7 @@ product.price           # => #<Money fractional:1234 currency:USD>
 ### Multi-currency
 
 ```ruby
-# minting-rails
+# MoneyAttribute
 money_attribute :price   # expects price_amount + price_currency columns
 
 offer = Offer.new(price: 15.to_money('EUR'))
@@ -471,7 +470,7 @@ offer.price_currency    # => "EUR"
 ### Column type auto-detection
 
 ```ruby
-# minting-rails — same declaration works with any column type
+# MoneyAttribute — same declaration works with any column type
 money_attribute :price, currency: 'USD'
 
 # t.decimal :price   → stores human-readable value (12.34)
@@ -485,13 +484,13 @@ monetize :price         # column must be price — no support for other types
 
 ### Performance
 
-See [BENCHMARKS.md](BENCHMARKS.md) for detailed results across instantiation, persistence, reads, queries, arithmetic, and mass inserts. Minting-rails wins 9 of 11 benchmark cells, with the largest advantages in reads (up to 14× faster), arithmetic (6.6×), and mass inserts (1.6×).
+See [BENCHMARKS.md](BENCHMARKS.md) for detailed results across instantiation, persistence, reads, queries, arithmetic, and mass inserts. MoneyAttribute wins 9 of 11 benchmark cells, with the largest advantages in reads (up to 14× faster), arithmetic (6.6×), and mass inserts (1.6×).
 
 ### What money-rails has (and minting-rails doesn't)
 
-Minting-rails is intentionally minimal — it focuses on storing and reading money attributes with Rails primitives. Money-rails is a more mature gem (12+ years, 1.9k stars) with a broader feature set that minting-rails does not currently provide:
+MoneyAttribute is intentionally minimal — it focuses on storing and reading money attributes with Rails primitives. Money-rails is a more mature gem (12+ years, 1.9k stars) with a broader feature set that MoneyAttribute does not currently provide:
 
-| Feature | money-rails | minting-rails |
+| Feature | money-rails | MoneyAttribute |
 |---|---|---|
 | **Mongoid support** | Yes | ActiveRecord only |
 | **Migration helpers** | `add_monetize :products, :price` | None |
@@ -507,7 +506,7 @@ Minting-rails is intentionally minimal — it focuses on storing and reading mon
 | **Parse error control** | `raise_error_on_money_parsing` option | Always raises |
 | **Community** | 1.9k stars, 386 forks, 897 commits | New gem |
 
-If you need any of these features today, money-rails may be a better fit. minting-rails fills a specific niche: a lightweight, performant money-in-Rails solution built on standard Rails primitives.
+If you need any of these features today, money-rails may be a better fit. MoneyAttribute fills a specific niche: a lightweight, performant money-in-Rails solution built on standard Rails primitives.
 
 ## Roadmap
 
@@ -515,7 +514,7 @@ If you need any of these features today, money-rails may be a better fit. mintin
 1. **Method-level currency** — lambda-based currency resolution for multi-tenant and instance-level scenarios
 1. **Migration helper**
 
-Contributions and suggestions are welcome — open an issue or PR at [gferraz/minting-rails](https://github.com/gferraz/minting-rails).
+Contributions and suggestions are welcome — open an issue or PR at [gferraz/money-attribute](https://github.com/gferraz/money-attribute).
 
 ## Development
 
@@ -528,7 +527,7 @@ The dummy Rails app under `test/dummy` exercises the engine in a full Rails envi
 
 ## Contributing
 
-Bug reports and pull requests welcome at [gferraz/minting-rails](https://github.com/gferraz/minting-rails).
+Bug reports and pull requests welcome at [gferraz/money-attribute](https://github.com/gferraz/money-attribute).
 
 ## License
 

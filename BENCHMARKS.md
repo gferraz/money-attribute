@@ -1,6 +1,6 @@
 # Benchmarks Notes
 
-Benchmarks comparing **minting-rails** against **money-rails** (the most popular money-in-Rails gem).
+Benchmarks comparing **money_attribute** (formerly minting-rails) against **money-rails** (the most popular money-in-Rails gem).
 
 Disclaimer:
 This report as well as the benchmark program were created by OpenCode AI.
@@ -24,7 +24,7 @@ This report as well as the benchmark program were created by OpenCode AI.
 
 ## Results
 
-| Test                                | minting-rails | money-rails | Winner           |
+| Test                                | money_attribute | money-rails | Winner           |
 |-------------------------------------|--------------|------------|------------------|
 | Instantiation (single column)       | 0.0049s      | 0.0090s    | **minting** 1.8x |
 | Instantiation (composite)           | 0.0070s      | 0.0185s    | **minting** 2.6x |
@@ -38,11 +38,11 @@ This report as well as the benchmark program were created by OpenCode AI.
 | Mass insert (single column)         | 0.0121s      | 0.0188s    | **minting** 1.6x |
 | Mass insert (composite)             | 0.0126s      | 0.0190s    | **minting** 1.5x |
 
-**minting-rails wins 9 of 11 cells.** *(Decimal column results used where faster than integer; minting-rails supports both column types natively.)*
+**money_attribute wins 9 of 11 cells.** *(Decimal column results used where faster than integer; money_attribute supports both column types natively.)*
 
 ### Decimal Column Support
 
-minting-rails also supports **decimal amount columns** (storing `12.34` directly instead of `1234` cents). Money-rails always stores amounts as cents (integer) and has no built-in decimal column support.
+money_attribute also supports **decimal amount columns** (storing `12.34` directly instead of `1234` cents). Money-rails always stores amounts as cents (integer) and has no built-in decimal column support.
 
 `MintMoneyType` uses `Rational` internally for the amount value. The table below compares minting-rails with integer and decimal columns against money-rails:
 
@@ -76,16 +76,16 @@ In instantiation and mass insert the overhead is dwarfed by ActiveRecord object 
 
 ## Repeated Access (Caching Demonstration)
 
-| Test                                | minting-rails (int) | minting-rails (dec) | money-rails (int)  | Ratio          |
+| Test                                | money_attribute (int) | money_attribute (dec) | money-rails (int)  | Ratio          |
 |-------------------------------------|---------------------|---------------------|--------------------|----------------|
 | Time (1000 reads)                   | 0.000133s           | 0.000094s           | 0.003493s          | **~28x faster** |
 | Objects allocated (1000 reads)      | 2                   | 2                   | 15002              | **7500x fewer** |
 
-Both gems cache the `Money` object after the first read, but **minting-rails** returns it with near-zero overhead because `composed_of` stores the aggregation directly. Money-rails re-runs currency lookups, string interpolation for `instance_variable_get`, and `public_send` with splat on every read, allocating ~15 intermediate objects per call.
+Both gems cache the `Money` object after the first read, but **money_attribute** returns it with near-zero overhead because `composed_of` stores the aggregation directly. Money-rails re-runs currency lookups, string interpolation for `instance_variable_get`, and `public_send` with splat on every read, allocating ~15 intermediate objects per call.
 
 ## Composite Mode Trade-off
 
-minting-rails uses Rails' built-in `composed_of` for composite (two-column) mode. This provides:
+money_attribute uses Rails' built-in `composed_of` for composite (two-column) mode. This provides:
 
 - **Automatic caching** — `composed_of` memoizes the `Money` object and invalidates it only when underlying columns change.
 - **Predicate builder** — `Model.where(price: money_obj)` automatically decomposes the `Money` into column conditions (`WHERE price_amount = ? AND price_currency = ?`).
@@ -93,7 +93,7 @@ minting-rails uses Rails' built-in `composed_of` for composite (two-column) mode
 
 The overhead of `composed_of` is visible in composite **instantiation** (~10μs/op) and **query** (~50μs/op). money-rails uses hand-rolled getters/setters that skip this abstraction layer, which makes those two operations faster but sacrifices the built-in features above.
 
-For single-column mode, minting-rails uses a custom ActiveRecord type (`MintMoneyType`) which competes directly with money-rails' `monetize` — and wins across nearly every metric.
+For single-column mode, money_attribute uses a custom ActiveRecord type (`MoneyAttribute::Type`) which competes directly with money-rails' `monetize` — and wins across nearly every metric.
 
 ## Running the Benchmark
 

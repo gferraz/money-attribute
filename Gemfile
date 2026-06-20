@@ -3,7 +3,7 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-# Specify your gem's dependencies in minting-rails.gemspec.
+# Specify your gem's dependencies in money_attribute.gemspec.
 gemspec
 
 gem 'minting'

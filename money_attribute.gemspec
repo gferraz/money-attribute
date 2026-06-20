@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require_relative 'lib/minting/money_attribute/version'
+require_relative 'lib/money_attribute/version'
 
 Gem::Specification.new do |spec|
-  spec.name        = 'minting-rails'
-  spec.version     = Mint::MoneyAttribute::VERSION
+  spec.name        = 'money_attribute'
+  spec.version     = MoneyAttribute::VERSION
   spec.authors     = ['Gilson Ferraz']
   spec.email       = ['gilson@cesar.etc.br']
-  spec.homepage    = 'https://github.com/gferraz/minting-rails'
-  spec.summary     = 'Money attributes to ActiveRecord'
+  spec.homepage    = 'https://github.com/gferraz/money-attribute'
+  spec.summary     = 'Money attributes for ActiveRecord'
   spec.description = ''
   spec.license     = 'MIT'
 

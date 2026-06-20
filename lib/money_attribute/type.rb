@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-module Mint
-  # MintMoneyType
-  class MintMoneyType < ActiveRecord::Type::Value
+module MoneyAttribute
+  # Type
+  class Type < ActiveRecord::Type::Value
     def initialize(currency:, column_type: ActiveRecord::Type::Decimal.new)
       @currency = currency
       @column_type = column_type
@@ -12,7 +12,7 @@ module Mint
     def assert_valid_value(value)
       case value
       when NilClass, Numeric, String then return
-      when Mint::Money
+      when ::Mint::Money
         return if value.currency == @currency
 
         message = "'#{value.inspect}' has different currency. Only #{@currency.code} allowed."
@@ -26,9 +26,9 @@ module Mint
       return nil unless value
 
       if @column_type.is_a?(ActiveRecord::Type::Integer)
-        Mint::Money.from_fractional(value, @currency)
+        ::Mint::Money.from_fractional(value, @currency)
       else
-        Mint::Money.from(value, @currency)
+        ::Mint::Money.from(value, @currency)
       end
     end
 
@@ -43,13 +43,13 @@ module Mint
     end
 
     def self.type
-      :mint_type
+      :money
     end
   end
 end
 
 ActiveSupport.on_load(:active_record) do
-  include Mint::MoneyAttribute
+  include MoneyAttribute::Macro
 
-  ActiveRecord::Type.register(:mint_money, Mint::MintMoneyType)
+  ActiveRecord::Type.register(:money, MoneyAttribute::Type)
 end

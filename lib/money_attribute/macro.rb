@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-module Mint
-  module MoneyAttribute
+module MoneyAttribute
+  module Macro
     extend ActiveSupport::Concern
 
     class_methods do
-      def money_attribute(name, currency: Mint.default_currency, mapping: nil)
+      def money_attribute(name, currency: MoneyAttribute.default_currency, mapping: nil)
         columns = attribute_names
-        currency = Currency.resolve!(currency)
+        currency = ::Mint::Currency.resolve!(currency)
         name = name.to_s
         parser = Parser.new(currency)
         resolved_mapping = mapping || resolve_mapping(name, columns)
@@ -68,7 +68,7 @@ module Mint
 
       def define_single_column_money_attribute(name, currency, parser)
         column_type = integer_column?(name) ? ActiveRecord::Type::Integer.new : ActiveRecord::Type::Decimal.new
-        attribute(name.to_sym, :mint_money, currency:, column_type: column_type)
+        attribute(name.to_sym, :money, currency:, column_type: column_type)
         normalizes(name.to_sym, with: parser)
       end
 

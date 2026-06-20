@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-module Mint
+module MoneyAttribute
   class Railtie < ::Rails::Railtie
     generators do
-      require 'generators/minting/initializer_generator'
+      require 'generators/money_attribute/initializer_generator'
     end
 
     config.after_initialize do
@@ -12,7 +12,7 @@ module Mint
     end
 
     def self.setup_locale_backend!
-      Mint.locale_backend = lambda {
+      ::Mint.locale_backend = lambda {
         fmt = I18n.t('number.currency.format', default: {})
         translator = ->(s) { s&.gsub('%n', '%<amount>f')&.gsub('%u', '%<symbol>s') }
 
@@ -31,7 +31,7 @@ module Mint
     end
 
     def self.register_custom_currencies!
-      Array(Mint.config.added_currencies).each do |currency_data|
+      Array(MoneyAttribute.config.added_currencies).each do |currency_data|
         if currency_data.respond_to?(:values_at)
           code = currency_data[:currency]
           subunit = currency_data[:subunit]
@@ -39,7 +39,7 @@ module Mint
         else
           code, subunit, symbol = *currency_data
         end
-        Currency.register(code:, subunit:, symbol:)
+        ::Mint::Currency.register(code:, subunit:, symbol:)
       rescue KeyError
         nil
       end

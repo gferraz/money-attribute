@@ -2,8 +2,7 @@
 
 require 'test_helper'
 
-module Mint
-  class SimpleMoneyAttributeTest < ActiveSupport::TestCase
+class SimpleMoneyAttributeTest < ActiveSupport::TestCase
     test 'Money attribute is enabled' do
       assert SimpleOffer.attribute :price
       assert SimpleOffer.attribute :discount
@@ -78,5 +77,4 @@ module Mint
 
       assert_equal(-5.50.mint('USD'), offer.reload.price)
     end
-  end
 end

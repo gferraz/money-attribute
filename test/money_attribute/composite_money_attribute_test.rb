@@ -2,8 +2,7 @@
 
 require 'test_helper'
 
-module Mint
-  class CompositeMoneyAttributeTest < ActiveSupport::TestCase
+class CompositeMoneyAttributeTest < ActiveSupport::TestCase
     test 'Money attribute is enabled' do
       assert Offer.attribute :price
     end
@@ -19,9 +18,9 @@ module Mint
     test 'aggregated money attribute parses any amount to the default currency' do
       offer = Offer.new(price: '12')
 
-      assert_equal Mint.money(12, Mint.default_currency), offer.price
+      assert_equal Mint.money(12, MoneyAttribute.default_currency), offer.price
       assert_equal 12, offer.price_amount
-      assert_equal Mint.default_currency.code, offer.price_currency
+      assert_equal MoneyAttribute.default_currency.code, offer.price_currency
     end
 
     test 'aggregated money attribute is saved correctly' do
@@ -115,5 +114,4 @@ module Mint
       assert_equal 19, offer.price_amount
       assert_equal 'EUR', offer.price_currency
     end
-  end
 end

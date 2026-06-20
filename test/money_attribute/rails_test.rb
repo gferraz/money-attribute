@@ -166,7 +166,6 @@ class RailsTest < ActiveSupport::TestCase
 
     assert_empty config.added_currencies
     assert_equal 'USD', config.default_currency
-    assert_nil config.rounding_mode
     assert_nil config.default_format
   end
 
@@ -213,7 +212,6 @@ class RailsTest < ActiveSupport::TestCase
     original = {
       added_currencies: MoneyAttribute.config.added_currencies,
       default_currency: MoneyAttribute.config.default_currency,
-      rounding_mode: MoneyAttribute.config.rounding_mode,
       default_format: MoneyAttribute.config.default_format
     }
 

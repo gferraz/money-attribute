@@ -3,12 +3,11 @@
 module MoneyAttribute
   class Configuration
     attr_accessor :added_currencies, :default_currency,
-                  :rounding_mode, :default_format
+                  :default_format
 
     def initialize
       @added_currencies = []
       @default_currency = 'USD'
-      @rounding_mode = nil
       @default_format = nil
     end
   end

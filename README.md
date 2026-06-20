@@ -58,7 +58,7 @@ That's it. `Product.new(price: 12).price` is a `Mint::Money`.
 
 - Ruby 3.3+
 - Rails 7.1.3.2+
-- [Minting](https://github.com/gferraz/minting) 1.6.0+
+- [Minting](https://github.com/gferraz/minting) 1.8.0+
 
 ## Installation
 
@@ -485,7 +485,7 @@ monetize :price         # column must be price — no support for other types
 
 See [BENCHMARKS.md](BENCHMARKS.md) for detailed results across instantiation, persistence, reads, queries, arithmetic, and mass inserts. MoneyAttribute wins 9 of 11 benchmark cells, with the largest advantages in reads (up to 14× faster), arithmetic (6.6×), and mass inserts (1.6×).
 
-### What money-rails has (and minting-rails doesn't)
+### What money-rails has (and money-attribute doesn't)
 
 MoneyAttribute is intentionally minimal — it focuses on storing and reading money attributes with Rails primitives. Money-rails is a more mature gem (12+ years, 1.9k stars) with a broader feature set that MoneyAttribute does not currently provide:
 
@@ -499,7 +499,7 @@ MoneyAttribute is intentionally minimal — it focuses on storing and reading mo
 | **Currency exchange** | `default_bank`, `add_rate`, EuCentralBank | None |
 | **Custom currencies** | `register_currency` for non-ISO codes | Via `minting` gem config |
 | **Validation integration** | `validates_numericality_of` auto-added | Must add manually |
-| **Rounding mode** | Configurable `rounding_mode` | None |
+| **Rounding mode** | Configurable `rounding_mode` | Wrap in `Mint.with_rounding` block |
 | **Per-request currency** | Lambda-based for multi-tenant apps | Static default only |
 | **Allow nil** | `monetize :x, allow_nil: true` | Must handle nil manually |
 | **Parse error control** | `raise_error_on_money_parsing` option | Always raises |
@@ -509,9 +509,9 @@ If you need any of these features today, money-rails may be a better fit. MoneyA
 
 ## Roadmap
 
+1. **Migration helper**
 1. **Allow nil** — `money_attribute :price, currency: 'USD', allow_nil: true`
 1. **Method-level currency** — lambda-based currency resolution for multi-tenant and instance-level scenarios
-1. **Migration helper**
 
 Contributions and suggestions are welcome — open an issue or PR at [gferraz/money-attribute](https://github.com/gferraz/money-attribute).
 

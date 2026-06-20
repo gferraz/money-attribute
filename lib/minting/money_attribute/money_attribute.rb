@@ -9,12 +9,13 @@ module Mint
         columns = attribute_names
         currency = Currency.resolve!(currency)
         name = name.to_s
+        parser = Parser.new(currency)
         resolved_mapping = mapping || resolve_mapping(name, columns)
 
         if columns.include?(name) && resolved_mapping.nil?
-          define_single_column_money_attribute(name, currency, Parser.new(currency))
+          define_single_column_money_attribute(name, currency, parser)
         else
-          define_composite_money_attribute(name, resolved_mapping, Parser.new(currency))
+          define_composite_money_attribute(name, resolved_mapping, parser)
         end
       end
 
@@ -32,7 +33,7 @@ module Mint
         end
       end
 
-      def resolve_aggregate(name, mapping:)
+      def resolve_composite_for(name, mapping:)
         composite = { amount: "#{name}_amount", currency: "#{name}_currency" }
 
         composite[:amount]    = mapping[:amount].to_s   if mapping&.key?(:amount)
@@ -56,13 +57,7 @@ module Mint
         integer_column?(column_name) ? :fractional : :to_d
       end
 
-      def money_constructor_for(amount_column, parser)
-        if integer_column?(amount_column)
-          ->(amount, currency) { Money.from_fractional(amount, Currency.resolve!(currency)) }
-        else
-          parser
-        end
-      end
+      def money_constructor_for(amount_column) = integer_column?(amount_column) ? :from_fractional : :from
 
       def integer_column?(column_name)
         col = columns.find { |c| c.name == column_name }
@@ -78,12 +73,12 @@ module Mint
       end
 
       def define_composite_money_attribute(name, mapping, parser)
-        aggregated = resolve_aggregate(name, mapping:)
+        aggregated = resolve_composite_for(name, mapping:)
 
         composed_of(name.to_sym, {
                       allow_nil: true,
                       class_name: 'Mint::Money',
-                      constructor: money_constructor_for(aggregated[:amount], parser),
+                      constructor: money_constructor_for(aggregated[:amount]),
                       converter: parser,
                       mapping: {
                         aggregated[:amount] => amount_extractor_for(aggregated[:amount]),

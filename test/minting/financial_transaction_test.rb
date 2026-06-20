@@ -145,5 +145,64 @@ module Mint
       assert_equal 'EUR', record.discount_currency
       assert_equal 200.mint(Mint.default_currency), record.tax
     end
+
+    test 'price is a convention composite attribute with decimal columns' do
+      transaction = FinancialTransaction.new(price: 29.99.euros)
+
+      assert_equal 29.99.euros, transaction.price
+      assert_equal 29.99, transaction.price_amount
+      assert_equal 'EUR', transaction.price_currency
+    end
+
+    test 'price saves and reloads correctly' do
+      transaction = FinancialTransaction.create!(price: 9.99.dollars)
+      reloaded = FinancialTransaction.find(transaction.id)
+
+      assert_equal 9.99.dollars, reloaded.price
+    end
+
+    test 'total uses explicit mapping with custom column names' do
+      transaction = FinancialTransaction.new(total: 150.50.dollars)
+
+      assert_equal 150.50.dollars, transaction.total
+      assert_equal 150.50, transaction.total_amount
+      assert_equal 'USD', transaction.currency_code
+    end
+
+    test 'total saves and reloads correctly' do
+      transaction = FinancialTransaction.create!(total: 250.euros)
+      reloaded = FinancialTransaction.find(transaction.id)
+
+      assert_equal 250.euros, reloaded.total
+    end
+
+    test 'all five money attributes coexist without conflicts' do
+      transaction = FinancialTransaction.new(
+        amount: 100.dollars,
+        discount: 20.euros,
+        price: 15.50.dollars,
+        tax: 500,
+        total: 99.99.euros
+      )
+
+      assert_equal 100.dollars, transaction.amount
+      assert_equal 20.euros, transaction.discount
+      assert_equal 15.50.dollars, transaction.price
+      assert_equal 500.mint(Mint.default_currency), transaction.tax
+      assert_equal 99.99.euros, transaction.total
+      assert_equal 'USD', transaction.currency
+      assert_equal 'EUR', transaction.discount_currency
+      assert_equal 'USD', transaction.price_currency
+      assert_equal 'EUR', transaction.currency_code
+
+      transaction.save!
+      reloaded = FinancialTransaction.find(transaction.id)
+
+      assert_equal 100.dollars, reloaded.amount
+      assert_equal 20.euros, reloaded.discount
+      assert_equal 15.50.dollars, reloaded.price
+      assert_equal 500.mint(Mint.default_currency), reloaded.tax
+      assert_equal 99.99.euros, reloaded.total
+    end
   end
 end

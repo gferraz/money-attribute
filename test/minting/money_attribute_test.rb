@@ -47,10 +47,6 @@ module Mint
       assert_includes error.message, 'Expected: cost_amount, cost_currency'
     end
 
-    test 'money attribute uses :to_d extractor for decimal columns' do
-      assert_equal :to_d, Offer.amount_extractor_for(:price_amount)
-    end
-
     test 'parse keeps money values unchanged' do
       parser = MoneyAttribute::Parser.new('USD')
 

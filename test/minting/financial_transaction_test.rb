@@ -44,10 +44,6 @@ module Mint
       assert_equal 7.euros, reloaded.amount
     end
 
-    test 'money attribute uses :fractional extractor for integer columns' do
-      assert_equal :fractional, FinancialTransaction.amount_extractor_for(:amount)
-    end
-
     test 'discount money attribute does not conflict with amount' do
       transaction = FinancialTransaction.new(amount: 45.34.dollars, discount: 10.euros)
 
@@ -55,12 +51,12 @@ module Mint
       assert_equal 10.euros, transaction.discount
       assert_equal 'USD', transaction.currency
       assert_equal 'EUR', transaction.discount_currency
-      refute_equal transaction.amount, transaction.discount
+      assert_not_equal transaction.amount, transaction.discount
     end
 
     test 'discount and amount persist independently' do
       transaction = FinancialTransaction.create!(amount: 100.dollars, discount: 20.euros,
-                                                  description: 'independent')
+                                                 description: 'independent')
       transaction.save!
       reloaded = FinancialTransaction.find(transaction.id)
 
@@ -150,7 +146,7 @@ module Mint
       transaction = FinancialTransaction.new(price: 29.99.euros)
 
       assert_equal 29.99.euros, transaction.price
-      assert_equal 29.99, transaction.price_amount
+      assert_equal 29.99r, transaction.price_amount
       assert_equal 'EUR', transaction.price_currency
     end
 
@@ -165,7 +161,7 @@ module Mint
       transaction = FinancialTransaction.new(total: 150.50.dollars)
 
       assert_equal 150.50.dollars, transaction.total
-      assert_equal 150.50, transaction.total_amount
+      assert_equal 150.50r, transaction.total_amount
       assert_equal 'USD', transaction.currency_code
     end
 

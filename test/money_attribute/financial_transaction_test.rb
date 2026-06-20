@@ -84,7 +84,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     test 'tax is a single-column fixed-currency attribute' do
       transaction = FinancialTransaction.new(tax: 100)
 
-      assert_equal 100.to_money(MoneyAttribute.default_currency), transaction.tax
+      assert_equal 100.to_money, transaction.tax
     end
 
     test 'tax does not conflict with amount or discount' do
@@ -96,7 +96,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
 
       assert_equal 45.34.dollars, transaction.amount
       assert_equal 10.euros, transaction.discount
-      assert_equal 200.to_money(MoneyAttribute.default_currency), transaction.tax
+      assert_equal 200.to_money, transaction.tax
       assert_equal 'USD', transaction.currency
       assert_equal 'EUR', transaction.discount_currency
     end
@@ -112,7 +112,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
 
       assert_equal 100.dollars, reloaded.amount
       assert_equal 20.euros, reloaded.discount
-      assert_equal 50.to_money(MoneyAttribute.default_currency), reloaded.tax
+      assert_equal 50.to_money, reloaded.tax
     end
 
     test 'tax uses bigint column storing fractional (cents)' do
@@ -138,7 +138,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
       assert_equal 'USD', record.currency
       assert_equal 10.euros, record.discount
       assert_equal 'EUR', record.discount_currency
-      assert_equal 200.to_money(MoneyAttribute.default_currency), record.tax
+      assert_equal 200.to_money, record.tax
     end
 
     test 'price is a convention composite attribute with decimal columns' do
@@ -183,7 +183,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
       assert_equal 100.dollars, transaction.amount
       assert_equal 20.euros, transaction.discount
       assert_equal 15.50.dollars, transaction.price
-      assert_equal 500.to_money(MoneyAttribute.default_currency), transaction.tax
+      assert_equal 500.to_money, transaction.tax
       assert_equal 99.99.euros, transaction.total
       assert_equal 'USD', transaction.currency
       assert_equal 'EUR', transaction.discount_currency
@@ -196,7 +196,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
       assert_equal 100.dollars, reloaded.amount
       assert_equal 20.euros, reloaded.discount
       assert_equal 15.50.dollars, reloaded.price
-      assert_equal 500.to_money(MoneyAttribute.default_currency), reloaded.tax
+      assert_equal 500.to_money, reloaded.tax
       assert_equal 99.99.euros, reloaded.total
     end
     test 'FinancialTransaction loads all five money attribute accessors' do

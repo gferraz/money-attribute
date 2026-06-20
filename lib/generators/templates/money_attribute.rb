@@ -19,13 +19,4 @@ MoneyAttribute.configure do |config|
   # It must be a registered currency
   #
   config.default_currency = 'BRL'
-
-  # Default value is nil meaning "ignore this option".
-  # Example:
-  #
-  # config.default_format = {
-  #   no_cents_if_whole: nil,
-  #   symbol: nil,
-  #   sign_before_symbol: nil
-  # }
 end

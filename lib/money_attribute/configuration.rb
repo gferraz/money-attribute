@@ -2,13 +2,11 @@
 
 module MoneyAttribute
   class Configuration
-    attr_accessor :added_currencies, :default_currency,
-                  :default_format
+    attr_accessor :added_currencies, :default_currency
 
     def initialize
       @added_currencies = []
       @default_currency = 'USD'
-      @default_format = nil
     end
   end
 

@@ -166,7 +166,6 @@ class RailsTest < ActiveSupport::TestCase
 
     assert_empty config.added_currencies
     assert_equal 'USD', config.default_currency
-    assert_nil config.default_format
   end
 
   test 'added_currencies registers custom currencies' do
@@ -211,8 +210,7 @@ class RailsTest < ActiveSupport::TestCase
   def with_money_attribute_config(overrides)
     original = {
       added_currencies: MoneyAttribute.config.added_currencies,
-      default_currency: MoneyAttribute.config.default_currency,
-      default_format: MoneyAttribute.config.default_format
+      default_currency: MoneyAttribute.config.default_currency
     }
 
     MoneyAttribute.configure do |config|

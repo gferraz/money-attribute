@@ -495,13 +495,12 @@ MoneyAttribute is intentionally minimal — it focuses on storing and reading mo
 | **Migration helpers** | `add_monetize :products, :price` | None |
 | **View helpers** | `humanized_money`, `money_without_cents`, etc. | None |
 | **I18n / locale files** | Locale-aware formatting via I18n `number.currency.format` — reads your existing translations, no extra setup | Built-in locale-aware formatting with bundled translations |
-| **Test matcher** | `monetize(:price_cents)` RSpec matcher | None |
 | **Currency exchange** | `default_bank`, `add_rate`, EuCentralBank | None |
-| **Custom currencies** | `register_currency` for non-ISO codes | Via `minting` gem config |
+| **Custom currencies** | `register_currency` for non-ISO codes | Mint::Currency.register |
 | **Validation integration** | `validates_numericality_of` auto-added | Must add manually |
 | **Rounding mode** | Configurable `rounding_mode` | Wrap in `Mint.with_rounding` block |
 | **Per-request currency** | Lambda-based for multi-tenant apps | Static default only |
-| **Allow nil** | `monetize :x, allow_nil: true` | Must handle nil manually |
+| **Allow nil** | `monetize :x, allow_nil: true` | Always allowed (no opt-in needed) |
 | **Parse error control** | `raise_error_on_money_parsing` option | Always raises |
 | **Community** | 1.9k stars, 386 forks, 897 commits | New gem |
 
@@ -510,7 +509,7 @@ If you need any of these features today, money-rails may be a better fit. MoneyA
 ## Roadmap
 
 1. **Migration helper**
-1. **Allow nil** — `money_attribute :price, currency: 'USD', allow_nil: true`
+2. **Per-request currency**
 1. **Method-level currency** — lambda-based currency resolution for multi-tenant and instance-level scenarios
 
 Contributions and suggestions are welcome — open an issue or PR at [gferraz/money-attribute](https://github.com/gferraz/money-attribute).

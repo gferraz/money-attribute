@@ -15,7 +15,7 @@ AllCops:
   TargetRubyVersion: 3.3
 
 Layout/LineLength:
-  Max: 100
+  Max: 120
 
 Metrics/MethodLength:
   Max: 30
@@ -25,11 +25,11 @@ Minitest/MultipleAssertions:
 
 Style/Documentation:
   Exclude:
-    - 'lib/generators/minting/initializer_generator.rb'
-    - 'lib/minting/money_attribute/configuration.rb'
-    - 'lib/minting/money_attribute/parser.rb'
-    - 'lib/minting/railties.rb'
-    - 'test/**/*'
+    - "lib/generators/minting/initializer_generator.rb"
+    - "lib/minting/money_attribute/configuration.rb"
+    - "lib/minting/money_attribute/parser.rb"
+    - "lib/minting/railties.rb"
+    - "test/**/*"
 
 Style/FrozenStringLiteralComment:
   EnforcedStyle: always

@@ -20,17 +20,7 @@ module Mint
 
       private
 
-      def amount_extractor_for(column_name)
-        integer_column?(column_name) ? :fractional : :to_d
-      end
-
-      def find_money_attributes(name, mapping:)
-        composite = build_composite_mapping(name, mapping)
-        assert_columns_exist!(name, composite)
-        composite
-      end
-
-      # --- Mapping resolution ---
+      # --- Preparation (no side effects) ---
 
       def resolve_mapping(name, columns)
         return nil unless columns.include?(name)
@@ -49,6 +39,12 @@ module Mint
         composite
       end
 
+      def find_money_attributes(name, mapping:)
+        composite = build_composite_mapping(name, mapping)
+        assert_columns_exist!(name, composite)
+        composite
+      end
+
       def assert_columns_exist!(name, composite)
         missing = composite.values - attribute_names
         return if missing.empty?
@@ -59,10 +55,28 @@ module Mint
               "Found: #{attribute_names.join(', ')}"
       end
 
-      # --- Attribute definition ---
+      def amount_extractor_for(column_name)
+        integer_column?(column_name) ? :fractional : :to_d
+      end
+
+      def money_constructor_for(amount_column, parser)
+        return parser unless integer_column?(amount_column)
+
+        lambda { |fractional, currency|
+          Money.from_fractional(fractional, Currency.resolve!(currency))
+        }
+      end
+
+      def integer_column?(column_name)
+        col = columns.find { |c| c.name == column_name }
+        %i[integer bigint].include?(col&.type)
+      end
+
+      # --- Configuration (registers types, normalizers, composed_of) ---
 
       def define_single_column_money_attribute(name, currency, parser)
-        attribute(name.to_sym, :mint_money, currency:, column_type: column_type_for(name))
+        column_type = integer_column?(name) ? ActiveRecord::Type::Integer.new : ActiveRecord::Type::Decimal.new
+        attribute(name.to_sym, :mint_money, currency:, column_type: column_type)
         normalizes(name.to_sym, with: parser)
       end
 
@@ -79,30 +93,6 @@ module Mint
                         aggregated[:currency] => :currency_code
                       }
                     })
-      end
-
-      # --- Column introspection helpers ---
-
-      def find_column(column_name)
-        columns.find { |c| c.name == column_name }
-      end
-
-      def integer_column?(column_name)
-        %i[integer bigint].include?(find_column(column_name)&.type)
-      end
-
-      def column_type_for(name)
-        integer_column?(name) ? ActiveRecord::Type::Integer.new : ActiveRecord::Type::Decimal.new
-      end
-
-      def money_constructor_for(amount_column, parser)
-        if integer_column?(amount_column)
-          lambda { |fractional, currency_code|
-            Money.from_fractional(fractional, Currency.resolve!(currency_code))
-          }
-        else
-          parser
-        end
       end
     end
   end

@@ -300,11 +300,11 @@ end
 
 ```ruby
 class FinancialTransaction < ApplicationRecord
-  money_attribute :amount                             # step 3: amount + currency
-  money_attribute :discount                           # step 2: discount + discount_currency
-  money_attribute :price                              # step 4: price_amount + price_currency
-  money_attribute :surplus, 'EUR'                     # step 5: tax (single-column, will use EUR)
-  money_attribute :tax                                # step 5: tax (single-column, will use default currency)
+  money_attribute :amount                   # step 3: amount(int) + currency
+  money_attribute :discount                 # step 2: discount(int) + discount_currency
+  money_attribute :price                    # step 4: price_amount(dec) + price_currency
+  money_attribute :surplus, currency: 'EUR' # step 5: surplus(int) (single-column, will use EUR)
+  money_attribute :tax                      # step 5: tax(int) (single-column, will use default currency)
   money_attribute :total, mapping: { amount: :total_amount, currency: :currency_code }  # step 1: explicit
 end
 ```

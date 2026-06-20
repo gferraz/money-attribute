@@ -2,7 +2,7 @@
 
 # :nodoc
 class Numeric
-  def to_money(currency)
+  def to_money(currency = MoneyAttribute.default_currency)
     ::Mint.money(self, currency)
   end
 
@@ -16,14 +16,11 @@ class Numeric
 
   alias dollar dollars
   alias euro euros
-  alias mint to_money
 end
 
 # :nodoc
 class String
-  def to_money(currency)
+  def to_money(currency = MoneyAttribute.default_currency)
     ::Mint.money(to_r, currency)
   end
-
-  alias mint to_money
 end

@@ -56,4 +56,47 @@ class MoneyAttributeTest < ActiveSupport::TestCase
       assert_nil MoneyAttribute::Parser.new.parse(nil, 'USD')
       assert_raises(TypeError) { parser.parse(23.euros, 'USD') }
     end
+
+    test 'Numeric#to_money without currency uses default' do
+      default = MoneyAttribute.default_currency
+      money = 42.to_money
+
+      assert_equal default.code, money.currency.code
+      assert_in_delta 42, money.amount
+    end
+
+    test 'Numeric#to_money with explicit currency' do
+      money = 42.to_money('EUR')
+
+      assert_equal 'EUR', money.currency.code
+      assert_in_delta 42, money.amount
+    end
+
+    test 'Numeric#to_money with zero' do
+      money = 0.to_money
+
+      assert_equal MoneyAttribute.default_currency.code, money.currency.code
+      assert_equal 0, money.amount
+    end
+
+    test 'Numeric#to_money with negative value' do
+      money = -5.50.to_money
+
+      assert_equal MoneyAttribute.default_currency.code, money.currency.code
+      assert_in_delta(-5.50, money.amount)
+    end
+
+    test 'String#to_money without currency uses default' do
+      money = '12.50'.to_money
+
+      assert_equal MoneyAttribute.default_currency.code, money.currency.code
+      assert_in_delta 12.50, money.amount
+    end
+
+    test 'String#to_money with explicit currency' do
+      money = '12.50'.to_money('EUR')
+
+      assert_equal 'EUR', money.currency.code
+      assert_in_delta 12.50, money.amount
+    end
 end

@@ -10,13 +10,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_02_041927) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_19_000001) do
   create_table "financial_transactions", force: :cascade do |t|
     t.integer "amount"
     t.datetime "created_at", null: false
     t.string "currency", limit: 3
     t.datetime "date"
     t.string "description"
+    t.integer "discount"
+    t.string "discount_currency", limit: 3
     t.datetime "updated_at", null: false
   end
 

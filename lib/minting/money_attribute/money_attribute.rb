@@ -10,12 +10,13 @@ module Mint
       def money_attribute(name, currency: Mint.default_currency, mapping: nil)
         currency = Currency.resolve!(currency)
         parser = Parser.new(currency)
+        attributes = attribute_names
 
-        if mapping.nil? && attribute_names.include?(name.to_s) && attribute_names.include?('currency')
+        if mapping.nil? && attributes.include?(name.to_s) && attributes.include?('currency')
           mapping = { amount: name, currency: :currency }
         end
 
-        if attribute_names.include?(name.to_s) && mapping.nil?
+        if attributes.include?(name.to_s) && mapping.nil?
           attribute(name, :mint_money, currency:)
           normalizes(name, with: parser)
         else

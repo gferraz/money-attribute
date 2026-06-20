@@ -259,7 +259,7 @@ begin
   Benchmark.bm(40) do |x|
     x.report('money_attribute  (comp integer):')  { ITERATIONS.times { mcc.price } }
     x.report('money_attribute  (comp decimal):')  { ITERATIONS.times { mcc_d.price } }
-    x.report('money-rails   (comp integer):')   { ITERATIONS.times { mrcc.price } }
+    x.report('money-rails   (comp integer):') { ITERATIONS.times { mrcc.price } }
   end
 
   alloc_before = GC.stat(:total_allocated_objects)

@@ -492,7 +492,7 @@ MoneyAttribute is intentionally minimal — it focuses on storing and reading mo
 | Feature | money-rails | MoneyAttribute |
 |---|---|---|
 | **Mongoid support** | Yes | ActiveRecord only |
-| **Migration helpers** | `add_monetize :products, :price` | None |
+| **Migration helpers** | `add_monetize :products, :price` | `add_money :products, :price` / `t.money :price` |
 | **View helpers** | `humanized_money`, `money_without_cents`, etc. | None |
 | **I18n / locale files** | Locale-aware formatting via I18n `number.currency.format` — reads your existing translations, no extra setup | Built-in locale-aware formatting with bundled translations |
 | **Currency exchange** | `default_bank`, `add_rate`, EuCentralBank | None |
@@ -508,8 +508,7 @@ If you need any of these features today, money-rails may be a better fit. MoneyA
 
 ## Roadmap
 
-1. **Migration helper**
-2. **Per-request currency**
+1. **Per-request currency**
 1. **Method-level currency** — lambda-based currency resolution for multi-tenant and instance-level scenarios
 
 Contributions and suggestions are welcome — open an issue or PR at [gferraz/money-attribute](https://github.com/gferraz/money-attribute).

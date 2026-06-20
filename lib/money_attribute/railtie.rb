@@ -7,6 +7,13 @@ module MoneyAttribute
     end
 
     config.after_initialize do
+      require 'money_attribute/migration_extensions/schema_statements'
+      require 'money_attribute/migration_extensions/table_definition'
+
+      ActiveRecord::Migration.include(MoneyAttribute::MigrationExtensions::SchemaStatements)
+      ActiveRecord::ConnectionAdapters::TableDefinition.include(MoneyAttribute::MigrationExtensions::TableDefinition)
+      ActiveRecord::ConnectionAdapters::Table.include(MoneyAttribute::MigrationExtensions::TableDefinition)
+
       setup_locale_backend!
       register_custom_currencies!
     end

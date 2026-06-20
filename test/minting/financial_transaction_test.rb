@@ -200,5 +200,11 @@ module Mint
       assert_equal 500.mint(Mint.default_currency), reloaded.tax
       assert_equal 99.99.euros, reloaded.total
     end
+    test 'FinancialTransaction loads all five money attribute accessors' do
+      %i[amount discount price tax total].each do |attr|
+        assert FinancialTransaction.method_defined?(attr),
+               "Expected FinancialTransaction to have money attribute :#{attr}"
+      end
+    end
   end
 end

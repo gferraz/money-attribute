@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [v0.8.3](https://github.com/gferraz/minting-rails/releases/tag/v0.8.3) (2026-06-20)
+
+[Full Changelog](https://github.com/gferraz/minting-rails/compare/v0.8.2...v0.8.3)
+
+### Improvements
+- **Resolution priority system** — `money_attribute :name` now resolves columns through a 5-step priority table (explicit mapping, `name_currency` convention, generic `currency` for `amount`, convention composite `name_amount`/`name_currency`, single-column fallback). Resolution is order-independent.
+- **Constructor simplification** — Replaced `money_constructor_for` lambdas with Symbol constructors (`:from`/`:from_fractional`), leveraging Rails' native Symbol support in `composed_of`.
+- **Code reorganization** — Split `money_attribute` internals into preparation (no side effects) and configuration (registers types, normalizers, `composed_of`). Hoisted `Parser` construction to eliminate duplication.
+- **New tests** — Added tests for all five resolution steps (convention composite, explicit mapping, order-independence, single-column), FinancialTransaction model-loading validation, and integration across 5 coexisting money attributes.
+- **Updated README** — Added resolution priority table and single-table example covering all five steps.
+
 ## [v0.8.2](https://github.com/gferraz/minting-rails/releases/tag/v0.8.2) (2026-06-19)
 
 [Full Changelog](https://github.com/gferraz/minting-rails/compare/v0.8.1...v0.8.2)

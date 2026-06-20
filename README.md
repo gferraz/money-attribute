@@ -140,7 +140,7 @@ If none of those keys are set, `format` is used as a plain string (simple format
 | **Model** | `money_attribute :price, currency: 'USD'` | `money_attribute :price` |
 | **When to use** | Column always holds the same currency | Each row can hold a different currency |
 | **Column type** | `decimal`, `integer`, or `bigint` | `decimal`, `integer`, or `bigint` for amount; `string` for currency |
-| **Query** | `Product.where(price: 10.mint('USD'))` — full type support | `Offer.where(price: 10.mint('EUR'))` — equality only |
+| **Query** | `Product.where(price: 10.to_money('USD'))` — full type support | `Offer.where(price: 10.to_money('EUR'))` — equality only |
 
 ### Fixed currency (single column)
 
@@ -314,25 +314,25 @@ Fixed-currency attributes support Rails-native querying through the custom type:
 
 ```ruby
 # Equality
-Product.where(price: 10.mint('USD'))
+Product.where(price: 10.to_money('USD'))
 
 # IN clause
-Product.where(price: [10.mint('USD'), 20.mint('USD')])
+Product.where(price: [10.to_money('USD'), 20.to_money('USD')])
 
 # BETWEEN
-Product.where(price: 10.mint('USD')..20.mint('USD'))
+Product.where(price: 10.to_money('USD')..20.to_money('USD'))
 
 # Ordering
 Product.order(price: :desc)
 
 # Aggregation
-Product.where(price: 10.mint('USD')).sum(:price)
+Product.where(price: 10.to_money('USD')).sum(:price)
 ```
 
 Multi-currency attributes support equality queries via `composed_of`:
 
 ```ruby
-Offer.where(price: 10.mint('EUR'))
+Offer.where(price: 10.to_money('EUR'))
 ```
 
 For comparisons on multi-currency attributes, use the backing columns directly:
@@ -350,10 +350,9 @@ MoneyAttribute adds small helpers on `Numeric` and `String`:
 12.to_money('USD')    # => [USD 12.00]
 12.dollars            # => [USD 12.00]
 12.euros              # => [EUR 12.00]
-'12.50'.mint('BRL')   # => [BRL 12.50]
 ```
 
-> If you prefer not to extend core classes, use `Mint::Money.money(12, 'USD')` instead.
+> If you prefer not to extend core classes, use `Mint.money(12, 'USD')` instead.
 
 ## vs money-rails
 
@@ -414,11 +413,11 @@ product.price                  # => #<Money fractional:1234 currency:USD>
 
 ```ruby
 # MoneyAttribute (fixed-currency) — full type-aware querying
-Product.where(price: 10.mint('USD'))
-Product.where(price: [5.mint('USD'), 10.mint('USD')])
-Product.where(price: 5.mint('USD')..15.mint('USD'))
+Product.where(price: 10.to_money('USD'))
+Product.where(price: [5.to_money('USD'), 10.to_money('USD')])
+Product.where(price: 5.to_money('USD')..15.to_money('USD'))
 Product.order(price: :desc)
-Product.where(price: 10.mint('USD')).sum(:price)
+Product.where(price: 10.to_money('USD')).sum(:price)
 
 # money-rails — query through cents column
 Product.where(price_cents: 1000)

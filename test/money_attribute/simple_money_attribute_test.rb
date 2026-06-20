@@ -9,12 +9,12 @@ class SimpleMoneyAttributeTest < ActiveSupport::TestCase
     end
 
     test 'money attribute updates mapped attributes' do
-      offer = SimpleOffer.new(price: 12.mint('USD'), discount: 15)
+      offer = SimpleOffer.new(price: 12.to_money('USD'), discount: 15)
 
-      assert_equal 12.mint('USD'), offer.price
-      assert_equal 15.mint('USD'), offer.discount
+      assert_equal 12.to_money('USD'), offer.price
+      assert_equal 15.to_money('USD'), offer.discount
 
-      assert_raises(ArgumentError) { SimpleOffer.new(price: 12.mint('USD'), discount: 15.euros) }
+      assert_raises(ArgumentError) { SimpleOffer.new(price: 12.to_money('USD'), discount: 15.euros) }
     end
 
     test 'money attribute parses any amount to the default currency' do
@@ -31,10 +31,10 @@ class SimpleMoneyAttributeTest < ActiveSupport::TestCase
     end
 
     test 'money attribute is saved correctly' do
-      offer = SimpleOffer.new(price: 15.mint('USD'), discount: 45.01)
+      offer = SimpleOffer.new(price: 15.to_money('USD'), discount: 45.01)
       offer.save!
 
-      found = SimpleOffer.where(price: 15.mint('USD')).first
+      found = SimpleOffer.where(price: 15.to_money('USD')).first
 
       assert_equal offer.price, found.price
       assert_equal offer.discount, found.discount
@@ -57,24 +57,24 @@ class SimpleMoneyAttributeTest < ActiveSupport::TestCase
     test 'single-column money attribute normalizes string inputs' do
       offer = SimpleOffer.new(price: '12.50')
 
-      assert_equal 12.50.mint('USD'), offer.price
+      assert_equal 12.50.to_money('USD'), offer.price
     end
 
     test 'single-column money attribute accepts zero' do
-      offer = SimpleOffer.new(price: 0.mint('USD'))
+      offer = SimpleOffer.new(price: 0.to_money('USD'))
 
-      assert_equal 0.mint('USD'), offer.price
+      assert_equal 0.to_money('USD'), offer.price
       offer.save!
 
-      assert_equal 0.mint('USD'), offer.reload.price
+      assert_equal 0.to_money('USD'), offer.reload.price
     end
 
     test 'single-column money attribute accepts negative values' do
-      offer = SimpleOffer.new(price: -5.50.mint('USD'))
+      offer = SimpleOffer.new(price: -5.50.to_money('USD'))
 
-      assert_equal(-5.50.mint('USD'), offer.price)
+      assert_equal(-5.50.to_money('USD'), offer.price)
       offer.save!
 
-      assert_equal(-5.50.mint('USD'), offer.reload.price)
+      assert_equal(-5.50.to_money('USD'), offer.reload.price)
     end
 end

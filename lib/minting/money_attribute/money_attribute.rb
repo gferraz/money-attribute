@@ -12,12 +12,20 @@ module Mint
         parser = Parser.new(currency)
         attributes = attribute_names
 
-        if mapping.nil? && attributes.include?(name.to_s) && attributes.include?('currency')
-          mapping = { amount: name, currency: :currency }
+        if mapping.nil? && attributes.include?(name.to_s)
+          if attributes.include?("#{name}_currency")
+            mapping = { amount: name, currency: :"#{name}_currency" }
+          elsif attributes.include?('currency') && name.to_s == 'amount'
+            mapping = { amount: name, currency: :currency }
+          end
         end
 
         if attributes.include?(name.to_s) && mapping.nil?
-          attribute(name, :mint_money, currency:)
+          col_type = case columns.find { |c| c.name == name.to_s }&.type
+                     when :integer, :bigint then ActiveRecord::Type::Integer.new
+                     else ActiveRecord::Type::Decimal.new
+                     end
+          attribute(name, :mint_money, currency:, column_type: col_type)
           normalizes(name, with: parser)
         else
           aggregated = find_money_attributes(name, mapping:)

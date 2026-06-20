@@ -269,6 +269,46 @@ end
 
 The mapping keys are `:amount` and `:currency`; values are your database column names.
 
+## Column resolution
+
+When you declare `money_attribute :name`, the gem resolves which database columns to use by checking the table schema in this order:
+
+| Step | Condition | Columns used | Mode |
+|---|---|---|---|
+| 1 | `mapping:` provided | As specified | Explicit composite |
+| 2 | `name_currency` column exists | `name` + `name_currency` | Composite (multi-currency) |
+| 3 | `name == 'amount'` AND `currency` column exists | `amount` + `currency` | Composite (multi-currency) |
+| 4 | `name_amount` + `name_currency` columns exist | `name_amount` + `name_currency` | Composite (multi-currency) |
+| 5 | `name` column exists (no currency partner) | `name` alone | Single-column (fixed-currency) |
+
+**Example**
+
+```ruby
+create_table :financial_transactions do |t|
+  t.integer :amount
+  t.string  :currency, limit: 3
+  t.integer :discount
+  t.string  :discount_currency, limit: 3
+  t.decimal :price_amount
+  t.string  :price_currency, limit: 3
+  t.bigint  :surplus
+  t.bigint  :tax
+  t.decimal :total_amount
+  t.string  :currency_code, limit: 3
+end
+```
+
+```ruby
+class FinancialTransaction < ApplicationRecord
+  money_attribute :amount                             # step 3: amount + currency
+  money_attribute :discount                           # step 2: discount + discount_currency
+  money_attribute :price                              # step 4: price_amount + price_currency
+  money_attribute :surplus, 'EUR'                     # step 5: tax (single-column, will use EUR)
+  money_attribute :tax                                # step 5: tax (single-column, will use default currency)
+  money_attribute :total, mapping: { amount: :total_amount, currency: :currency_code }  # step 1: explicit
+end
+```
+
 ## Querying
 
 Fixed-currency attributes support Rails-native querying through the custom type:

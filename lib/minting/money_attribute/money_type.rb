@@ -26,9 +26,9 @@ module Mint
       return nil unless value
 
       if @column_type.is_a?(ActiveRecord::Type::Integer)
-        Mint.money(value * @currency.fractional_multiplier, @currency)
+        Mint::Money.from_fractional(value, @currency)
       else
-        Mint.money(value, @currency)
+        Mint::Money.from(value, @currency)
       end
     end
 

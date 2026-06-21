@@ -1,6 +1,16 @@
 # Changelog
 
-## [Unreleased]
+## [v0.10.0](https://github.com/gferraz/money-attribute/releases/tag/v0.10.0) (2026-06-20)
+
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.9.0...v0.10.0)
+
+### New features
+- **Migration helpers** — `add_money :products, :price` / `remove_money :products, :price` / `t.money :price` added as ActiveRecord migration DSL methods. Supports composite (`price` + `price_currency`) and single-column (`currency: false`), explicit column mapping (`amount: :a, currency: :c`), column type (`type: :integer`), and currency string limit (`currency_limit: 3`). Reversible in `change`.
+
+### Improvements
+- **`allow_nil`** — nil values are always allowed, no opt-in needed (README and roadmap updated).
+- **Dead code removed** — `default_format` config attribute and stale `minting_rails` rake task.
+- **README** — comparative table shows `add_money` / `t.money`, roadmap deduplicated.
 
 ## [v0.9.0](https://github.com/gferraz/money-attribute/releases/tag/v0.9.0) (2026-06-20)
 

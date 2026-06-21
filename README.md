@@ -22,6 +22,19 @@ bin/rails g money_attribute:initializer
 ```
 
 ```ruby
+# db/migrate/20260620000000_create_products.rb
+class CreateProducts < ActiveRecord::Migration[8.1]
+  def change
+    create_table :products do |t|
+      t.string :name
+      t.money  :price
+      t.timestamps
+    end
+  end
+end
+```
+
+```ruby
 # app/models/product.rb
 class Product < ApplicationRecord
   money_attribute :price, currency: 'USD'
@@ -54,6 +67,8 @@ That's it. `Product.new(price: 12).price` is a `Mint::Money`.
 | **Internal amount** | `Rational`  | `BigDecimal` |
 | **Performance** | See [BENCHMARKS.md](BENCHMARKS.md) — wins 9/11 cells |  |
 
+For a detailed side-by-side comparison, see [COMPARISON.md](COMPARISON.md).
+
 ## Requirements
 
 - Ruby 3.3+
@@ -73,6 +88,43 @@ bin/rails g money_attribute:initializer
 ```
 
 The generator creates `config/initializers/money_attribute.rb`.
+
+## Migration helpers
+
+MoneyAttribute adds `add_money` / `remove_money` for existing tables and `t.money` / `t.remove_money` for `create_table` / `change_table` blocks:
+
+```ruby
+class CreateProducts < ActiveRecord::Migration[8.1]
+  def change
+    create_table :products do |t|
+      t.string :name
+      t.money  :price          # price (decimal) + price_currency (string)
+      t.money  :price_amount   # price_amount + price_currency (strips _amount suffix)
+      t.money  :fee, currency: false             # single column, no currency
+      t.money  :tax, type: :bigint               # bigint amount + currency
+      t.timestamps
+    end
+  end
+end
+
+class AddPriceToProducts < ActiveRecord::Migration[8.1]
+  def change
+    add_money :products, :price                 # add price + price_currency
+    add_money :products, :discount, type: :integer
+    remove_money :products, :obsolete_fee       # reversible in change
+  end
+end
+```
+
+### Naming
+
+| Migration call | Columns created | Model declaration |
+|---|---|---|
+| `t.money :price` | `price` decimal + `price_currency` string | `money_attribute :price` |
+| `t.money :price_amount` | `price_amount` decimal + `price_currency` string | `money_attribute :price` |
+| `t.money :price, currency: false` | `price` decimal | `money_attribute :price` |
+| `t.money :price, type: :integer` | `price` integer + `price_currency` string | `money_attribute :price` |
+| `t.money :price, amount: :a, currency: :c` | `a` + `c` | `money_attribute :price, mapping: { amount: :a, currency: :c }` |
 
 ## Configuration
 
@@ -136,88 +188,38 @@ If none of those keys are set, `format` is used as a plain string (simple format
 
 | | Fixed currency (single column) | Multi-currency (amount + currency) |
 |---|---|---|
-| **Migration** | `t.decimal :price` | `t.decimal :price_amount` + `t.string :price_currency` |
+| **Migration** | `t.money :price` (or `t.decimal :price`) | `t.money :price` (or `t.decimal :price_amount` + `t.string :price_currency`) |
 | **Model** | `money_attribute :price, currency: 'USD'` | `money_attribute :price` |
 | **When to use** | Column always holds the same currency | Each row can hold a different currency |
 | **Column type** | `decimal`, `integer`, or `bigint` | `decimal`, `integer`, or `bigint` for amount; `string` for currency |
 | **Query** | `Product.where(price: 10.to_money('USD'))` — full type support | `Offer.where(price: 10.to_money('EUR'))` — equality only |
 
-### Fixed currency (single column)
-
-Migration:
-
-```ruby
-class CreateProducts < ActiveRecord::Migration[7.1]
-  def change
-    create_table :products do |t|
-      t.decimal :price
-      t.decimal :discount
-      t.timestamps
-    end
-  end
-end
-```
-
-Model:
+### Fixed currency
 
 ```ruby
 class Product < ApplicationRecord
   money_attribute :price, currency: 'USD'
-  money_attribute :discount, currency: 'USD'
 end
-```
 
-Assignments are normalized to `Mint::Money`:
+product = Product.new(price: 12)
+product.price # => [USD 12.00]
 
-```ruby
-product = Product.new(price: 12, discount: '3.50')
-product.price    # => [USD 12.00]
-product.discount # => [USD 3.50]
-```
-
-A currency mismatch raises `ArgumentError`:
-
-```ruby
 Product.new(price: 12.to_money('EUR'))
 # => ArgumentError: ... has different currency. Only USD allowed.
 ```
 
-### Multi-currency (amount + currency columns)
-
-Migration:
-
-```ruby
-class CreateOffers < ActiveRecord::Migration[7.1]
-  def change
-    create_table :offers do |t|
-      t.decimal :price_amount
-      t.string  :price_currency
-      t.timestamps
-    end
-  end
-end
-```
-
-Model:
+### Multi-currency
 
 ```ruby
 class Offer < ApplicationRecord
   money_attribute :price
 end
-```
 
-The attribute is composed from `price_amount` and `price_currency`:
-
-```ruby
 offer = Offer.new(price: 15.to_money('EUR'))
 offer.price          # => [EUR 15.00]
 offer.price_amount   # => 15.0
 offer.price_currency # => "EUR"
-```
 
-When assigning a plain number or string, `MoneyAttribute.default_currency` is used:
-
-```ruby
 offer = Offer.new(price: '12')
 offer.price.currency.code # => "USD"
 ```
@@ -354,162 +356,10 @@ MoneyAttribute adds small helpers on `Numeric` and `String`:
 
 > If you prefer not to extend core classes, use `Mint.money(12, 'USD')` instead.
 
-## vs money-rails
-
-[Money-rails](https://github.com/RubyMoney/money-rails) is the most popular money-in-Rails gem. Here's how they compare side-by-side.
-
-### Model declaration
-
-```ruby
-# MoneyAttribute
-class Product < ApplicationRecord
-  money_attribute :price, currency: 'USD'          # single column, fixed currency
-  money_attribute :total                           # two columns, multi-currency
-end
-
-# money-rails
-class Product < ApplicationRecord
-  monetize :price_cents                            # single cents column, fixed currency
-  monetize :total_cents, with_currency: :total_currency  # two columns, multi-currency
-end
-```
-
-### Migration
-
-```ruby
-# MoneyAttribute — any numeric column type
-create_table :products do |t|
-  t.decimal :price              # stores 12.34
-  t.integer :discount           # stores 1234 (cents)
-  t.bigint  :total_amount       # stores 1999 (cents)
-  t.string  :total_currency
-end
-
-# money-rails — integer cents only
-create_table :products do |t|
-  t.integer :price_cents        # stores 1234 (cents)
-  t.integer :discount_cents     # stores 350 (cents)
-  t.integer :total_cents
-  t.string  :total_currency
-end
-```
-
-### Reading & writing
-
-```ruby
-# MoneyAttribute — pass any type, always get Mint::Money
-product.price = 12.34          # stores 12.34 in decimal column
-product.price = 1234           # stores 1234 in integer column
-product.price = '$12.34'       # parses string
-product.price                  # => [USD 12.34]
-
-# money-rails — pass any type, always get Money
-product.price_cents = 1234     # stores 1234
-product.price = Money.new(1234, 'USD')
-product.price                  # => #<Money fractional:1234 currency:USD>
-```
-
-### Querying
-
-```ruby
-# MoneyAttribute (fixed-currency) — full type-aware querying
-Product.where(price: 10.to_money('USD'))
-Product.where(price: [5.to_money('USD'), 10.to_money('USD')])
-Product.where(price: 5.to_money('USD')..15.to_money('USD'))
-Product.order(price: :desc)
-Product.where(price: 10.to_money('USD')).sum(:price)
-
-# money-rails — query through cents column
-Product.where(price_cents: 1000)
-Product.where(price_cents: [500, 1000])
-Product.where(price_cents: 500..1500)
-Product.order(:price_cents)
-```
-
-### Decimal columns
-
-```ruby
-# MoneyAttribute — works with decimal columns out of the box
-# migration: t.decimal :price
-money_attribute :price, currency: 'USD'
-
-product.price = 12.34
-product.price           # => [USD 12.34]
-product.read_attribute(:price)  # => [USD 12.34]
-
-# money-rails — no decimal column support
-# migration: t.decimal :price  ← not supported
-# Must use integer cents:
-# migration: t.integer :price_cents
-monetize :price_cents
-product.price_cents = 1234
-product.price           # => #<Money fractional:1234 currency:USD>
-```
-
-### Multi-currency
-
-```ruby
-# MoneyAttribute
-money_attribute :price   # expects price_amount + price_currency columns
-
-offer = Offer.new(price: 15.to_money('EUR'))
-offer.price             # => [EUR 15.00]
-offer.price_amount      # => 15.0
-offer.price_currency    # => "EUR"
-
-# money-rails
-monetize :price_cents, with_currency: :price_currency
-
-offer = Offer.new(price: Money.new(1500, 'EUR'))
-offer.price             # => #<Money fractional:1500 currency:EUR>
-offer.price_cents       # => 1500
-offer.price_currency    # => "EUR"
-```
-
-### Column type auto-detection
-
-```ruby
-# MoneyAttribute — same declaration works with any column type
-money_attribute :price, currency: 'USD'
-
-# t.decimal :price   → stores human-readable value (12.34)
-# t.integer :price   → stores cents (1234)
-# t.bigint  :price   → stores cents (1234)
-
-# money-rails — must always match the column name
-monetize :price_cents   # column must be price_cents
-monetize :price         # column must be price — no support for other types
-```
-
-### Performance
-
-See [BENCHMARKS.md](BENCHMARKS.md) for detailed results across instantiation, persistence, reads, queries, arithmetic, and mass inserts. MoneyAttribute wins 9 of 11 benchmark cells, with the largest advantages in reads (up to 14× faster), arithmetic (6.6×), and mass inserts (1.6×).
-
-### What money-rails has (and money-attribute doesn't)
-
-MoneyAttribute is intentionally minimal — it focuses on storing and reading money attributes with Rails primitives. Money-rails is a more mature gem (12+ years, 1.9k stars) with a broader feature set that MoneyAttribute does not currently provide:
-
-| Feature | money-rails | MoneyAttribute |
-|---|---|---|
-| **Mongoid support** | Yes | ActiveRecord only |
-| **Migration helpers** | `add_monetize :products, :price` | `add_money :products, :price` / `t.money :price` |
-| **View helpers** | `humanized_money`, `money_without_cents`, etc. | None |
-| **I18n / locale files** | Locale-aware formatting via I18n `number.currency.format` — reads your existing translations, no extra setup | Built-in locale-aware formatting with bundled translations |
-| **Currency exchange** | `default_bank`, `add_rate`, EuCentralBank | None |
-| **Custom currencies** | `register_currency` for non-ISO codes | Mint::Currency.register |
-| **Validation integration** | `validates_numericality_of` auto-added | Must add manually |
-| **Rounding mode** | Configurable `rounding_mode` | Wrap in `Mint.with_rounding` block |
-| **Per-request currency** | Lambda-based for multi-tenant apps | Static default only |
-| **Allow nil** | `monetize :x, allow_nil: true` | Always allowed (no opt-in needed) |
-| **Parse error control** | `raise_error_on_money_parsing` option | Always raises |
-| **Community** | 1.9k stars, 386 forks, 897 commits | New gem |
-
-If you need any of these features today, money-rails may be a better fit. MoneyAttribute fills a specific niche: a lightweight, performant money-in-Rails solution built on standard Rails primitives.
-
 ## Roadmap
 
-1. **Per-request currency**
 1. **Method-level currency** — lambda-based currency resolution for multi-tenant and instance-level scenarios
+2. Prepare to official 1.0 launh
 
 Contributions and suggestions are welcome — open an issue or PR at [gferraz/money-attribute](https://github.com/gferraz/money-attribute).
 

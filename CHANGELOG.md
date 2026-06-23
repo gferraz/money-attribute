@@ -11,6 +11,9 @@
 - **README** — Added migration defaults paragraph (`decimal(16,4)` + string), documented partial `mapping:` (single key), fixed column resolution table, noted that composite mode does not enforce currency.
 - **Precision/scale stripped for non-decimal types** — Passing `precision:`/`scale:` with `type: :integer` or `:bigint` now silently drops them instead of potentially causing migration errors on strict databases.
 
+### Other
+- dependecies updated
+
 ## [v0.11.0](https://github.com/gferraz/money-attribute/releases/tag/v0.11.0) (2026-06-23)
 
 [Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.10.0...v0.11.0)

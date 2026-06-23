@@ -268,7 +268,14 @@ class Invoice < ApplicationRecord
 end
 ```
 
-The mapping keys are `:amount` and `:currency`; values are your database column names.
+The mapping keys are `:amount` and `:currency`; values are your database column names. You can provide only one key — the other falls back to the `<name>_amount` / `<name>_currency` convention:
+
+```ruby
+class Invoice < ApplicationRecord
+  money_attribute :total, mapping: { amount: :total_amount }
+  # currency column inferred as `total_currency`
+end
+```
 
 ## Column resolution
 
@@ -279,8 +286,10 @@ When you declare `money_attribute :name`, the gem resolves which database column
 | 1 | `mapping:` provided | As specified | Explicit composite |
 | 2 | `name_currency` column exists | `name` + `name_currency` | Composite (multi-currency) |
 | 3 | `name == 'amount'` AND `currency` column exists | `amount` + `currency` | Composite (multi-currency) |
-| 4 | `name_amount` + `name_currency` columns exist | `name_amount` + `name_currency` | Composite (multi-currency) |
-| 5 | `name` column exists (no currency partner) | `name` alone | Single-column (fixed-currency) |
+| 4 | `name` column exists (no currency partner) | `name` alone | Single-column (fixed-currency) |
+| 5 | None of the above (name column missing) | `name_amount` + `name_currency` (convention) | Composite (multi-currency) |
+
+Step 5 raises `ArgumentError` if the convention columns don't exist in the table.
 
 **Example**
 

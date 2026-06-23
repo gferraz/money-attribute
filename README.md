@@ -91,7 +91,9 @@ The generator creates `config/initializers/money_attribute.rb`.
 
 ## Migration helpers
 
-MoneyAttribute adds `add_money` / `remove_money` for existing tables and `t.money` / `t.remove_money` for `create_table` / `change_table` blocks:
+MoneyAttribute adds `add_money` / `remove_money` for existing tables and `t.money` / `t.remove_money` for `create_table` / `change_table` blocks.
+
+By default `t.money :price` creates a `decimal(16,4)` amount column and a `string` currency column — both nullable, no default. Pass `amount: { type: :integer }` to store subunits instead, or `currency: false` to skip the currency column entirely.
 
 ```ruby
 class CreateProducts < ActiveRecord::Migration[8.1]
@@ -101,7 +103,7 @@ class CreateProducts < ActiveRecord::Migration[8.1]
       t.money  :price          # price (decimal) + price_currency (string)
       t.money  :price_amount   # price_amount + price_currency (strips _amount suffix)
       t.money  :fee, currency: false             # single column, no currency
-      t.money  :tax, type: :bigint               # bigint amount + currency
+      t.money  :tax, amount: { type: :bigint }   # bigint amount + currency
       t.timestamps
     end
   end
@@ -110,7 +112,7 @@ end
 class AddPriceToProducts < ActiveRecord::Migration[8.1]
   def change
     add_money :products, :price                 # add price + price_currency
-    add_money :products, :discount, type: :integer
+    add_money :products, :discount, amount: { type: :integer }
     remove_money :products, :obsolete_fee       # reversible in change
   end
 end
@@ -123,8 +125,10 @@ end
 | `t.money :price` | `price` decimal + `price_currency` string | `money_attribute :price` |
 | `t.money :price_amount` | `price_amount` decimal + `price_currency` string | `money_attribute :price` |
 | `t.money :price, currency: false` | `price` decimal | `money_attribute :price` |
-| `t.money :price, type: :integer` | `price` integer + `price_currency` string | `money_attribute :price` |
-| `t.money :price, amount: :a, currency: :c` | `a` + `c` | `money_attribute :price, mapping: { amount: :a, currency: :c }` |
+| `t.money :price, amount: { type: :integer }` | `price` integer + `price_currency` string | `money_attribute :price` |
+| `t.money :price, amount: { column: :a }, currency: { column: :c }` | `a` + `c` | `money_attribute :price, mapping: { amount: :a, currency: :c }` |
+| `t.money :price, currency: { limit: 3 }` | `price` decimal + `price_currency` string(3) | `money_attribute :price` |
+| `t.money :price, amount: { precision: 14, scale: 2, null: false }, currency: { limit: 3, default: 'USD' }` | `price` decimal(14,2) NOT NULL + `price_currency` string(3) DEFAULT 'USD' | `money_attribute :price` |
 | `t.remove_money :price` | Removes `price` + `price_currency` | `money_attribute :price` |
 
 Inside `change_table`:

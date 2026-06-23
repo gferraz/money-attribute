@@ -49,25 +49,33 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
     assert_no_columns 'price_currency'
   end
 
-  test 't.money with type: :integer creates integer column' do
+  test 't.money with amount type creates integer column' do
     create_money_table do |t|
-      t.money :price, type: :integer
+      t.money :price, amount: { type: :integer }
     end
 
     assert_column_type 'price', :integer
   end
 
-  test 't.money with type: :bigint creates column' do
+  test 't.money with amount type creates bigint column' do
     create_money_table do |t|
-      t.money :price, type: :bigint
+      t.money :price, amount: { type: :bigint }
     end
 
     assert_columns 'price'
   end
 
+  test 't.money strips precision and scale for non-decimal types' do
+    create_money_table do |t|
+      t.money :price, amount: { type: :integer, precision: 10, scale: 2 }
+    end
+
+    assert_column_type 'price', :integer
+  end
+
   test 't.money with explicit amount and currency mapping' do
     create_money_table do |t|
-      t.money :price, amount: :the_price, currency: :the_currency
+      t.money :price, amount: { column: :the_price }, currency: { column: :the_currency }
     end
 
     assert_columns 'the_price', 'the_currency'
@@ -75,7 +83,7 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
 
   test 't.money with explicit amount mapping only' do
     create_money_table do |t|
-      t.money :price, amount: :the_price
+      t.money :price, amount: { column: :the_price }
     end
 
     assert_columns 'the_price', 'price_currency'
@@ -83,15 +91,15 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
 
   test 't.money with explicit currency mapping only' do
     create_money_table do |t|
-      t.money :price, currency: :code
+      t.money :price, currency: { column: :code }
     end
 
     assert_columns 'price', 'code'
   end
 
-  test 't.money with currency_limit sets string limit' do
+  test 't.money with currency limit sets string limit' do
     create_money_table do |t|
-      t.money :price, currency_limit: 3
+      t.money :price, currency: { limit: 3 }
     end
 
     col = @connection.columns(:test_money_ext).find { |c| c.name == 'price_currency' }

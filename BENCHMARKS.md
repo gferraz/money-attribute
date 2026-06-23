@@ -16,7 +16,7 @@ This report as well as the benchmark program were created by OpenCode AI.
 
 |           |                                |
 |-----------|--------------------------------|
-| **Date**  | 2026-06-20                     |
+| **Date**  | 2026-06-23                     |
 | **Ruby**  | 4.0.5                          |
 | **Rails** | 8.1.3                          |
 | **DB**    | SQLite3                        |
@@ -26,19 +26,19 @@ This report as well as the benchmark program were created by OpenCode AI.
 
 | Test                                | money_attribute | money-rails | Winner                |
 |-------------------------------------|--------------|------------|-----------------------|
-| Instantiation (single column)       | 0.0054s      | 0.0191s    | **money_attribute** 3.5x |
-| Instantiation (composite)           | 0.0077s      | 0.0085s    | **money_attribute** 1.1x |
-| Create + save (single column)       | 0.2101s      | 0.2881s    | **money_attribute** 1.4x |
-| Create + save (composite)           | 0.2316s      | 0.2882s    | **money_attribute** 1.2x |
-| Read (single column)                | 0.0003s      | 0.0032s    | **money_attribute** 9.4x |
-| Read (composite)                    | 0.0002s      | 0.0032s    | **money_attribute** 13.0x |
-| Query (single column)               | 0.0653s      | 0.0608s    | money-rails 1.1x       |
-| Query (composite)                   | 0.1211s      | 0.0886s    | money-rails 1.4x       |
-| Arithmetic (single column)          | 0.0028s      | 0.0104s    | **money_attribute** 3.7x |
-| Mass insert (single column)         | 0.0132s      | 0.0204s    | **money_attribute** 1.5x |
-| Mass insert (composite)             | 0.0130s      | 0.0182s    | **money_attribute** 1.4x |
+| Instantiation (single column)       | 0.0060s      | 0.0332s    | **money_attribute** 5.5x |
+| Instantiation (composite)           | 0.0085s      | 0.0109s    | **money_attribute** 1.3x |
+| Create + save (single column)       | 0.2459s      | 0.3475s    | **money_attribute** 1.4x |
+| Create + save (composite)           | 0.2766s      | 0.4314s    | **money_attribute** 1.6x |
+| Read (single column)                | 0.0007s      | 0.0044s    | **money_attribute** 6.3x |
+| Read (composite)                    | 0.0007s      | 0.0039s    | **money_attribute** 5.6x |
+| Query (single column)               | 0.0830s      | 0.0764s    | money-rails 1.1x       |
+| Query (composite)                   | 0.1604s      | 0.1247s    | money-rails 1.3x       |
+| Arithmetic (single column)          | 0.0036s      | 0.0129s    | **money_attribute** 3.6x |
+| Mass insert (single column)         | 0.0233s      | 0.0388s    | **money_attribute** 1.7x |
+| Mass insert (composite)             | 0.0295s      | 0.0295s    | tie (1.0x)            |
 
-**money_attribute wins 9 of 11 cells.** *(Decimal column results used where faster than integer; money_attribute supports both column types natively.)*
+**money_attribute wins 8 of 11 cells.** *(Decimal column results used where faster than integer; money_attribute supports both column types natively.)*
 
 ### Decimal Column Support
 
@@ -48,16 +48,16 @@ money_attribute also supports **decimal amount columns** (storing `12.34` direct
 
 | Test                                | money_attribute int | money_attribute dec | int/dec ratio | money-rails int |
 |-------------------------------------|-------------|-----------------|---------------|-----------------|
-| Instantiation (single)              | 0.0054s     | 0.0134s         | 0.41x         | 0.0191s         |
-| Instantiation (composite)           | 0.0131s     | 0.0077s         | 1.70x         | 0.0085s         |
-| Create + save (single)              | 0.2382s     | 0.2101s         | 1.13x         | 0.2881s         |
-| Create + save (composite)           | 0.2316s     | 0.2440s         | 0.95x         | 0.2882s         |
-| Read (single)                       | 0.0017s     | 0.0003s         | 4.92x         | 0.0032s         |
-| Read (composite)                    | 0.0003s     | 0.0002s         | 1.09x         | 0.0032s         |
-| Query (single)                      | 0.0653s     | 0.0674s         | 0.97x         | 0.0608s         |
-| Query (composite)                   | 0.1211s     | 0.1232s         | 0.98x         | 0.0886s         |
-| Mass insert (single)                | 0.0132s     | 0.0144s         | 0.92x         | 0.0204s         |
-| Mass insert (composite)             | 0.0137s     | 0.0130s         | 1.05x         | 0.0182s         |
+| Instantiation (single)              | 0.0060s     | 0.0205s         | 0.29x         | 0.0332s         |
+| Instantiation (composite)           | 0.0085s     | 0.0088s         | 0.97x         | 0.0109s         |
+| Create + save (single)              | 0.3667s     | 0.2459s         | 1.49x         | 0.3475s         |
+| Create + save (composite)           | 0.2766s     | 0.3539s         | 0.78x         | 0.4314s         |
+| Read (single)                       | 0.0026s     | 0.0007s         | 3.71x         | 0.0044s         |
+| Read (composite)                    | 0.0021s     | 0.0007s         | 3.00x         | 0.0039s         |
+| Query (single)                      | 0.0830s     | 0.0907s         | 0.92x         | 0.0764s         |
+| Query (composite)                   | 0.1687s     | 0.1604s         | 1.05x         | 0.1247s         |
+| Mass insert (single)                | 0.0233s     | 0.0267s         | 0.87x         | 0.0388s         |
+| Mass insert (composite)             | 0.0313s     | 0.0374s         | 0.84x         | 0.0295s         |
 
 > **ratio > 1.0** means decimal is faster; **ratio < 1.0** means integer is faster.
 
@@ -65,20 +65,20 @@ At first glance, integers should be faster — they're simpler at the database l
 
 - **Read (single) — Decimal is 4.92× faster**: A decimal column returns a `BigDecimal` from SQLite directly, which converts to `Rational` with a single `.to_r` call. An integer column returns a raw integer that must be divided by 100 before conversion to `Rational` — an extra allocation and arithmetic operation per read.
 - **Read (composite) — Decimal is 1.09× faster**: Same read-path conversion savings apply in `composed_of`'s mapper, though the gap narrows with `composed_of`'s overhead.
-- **Create + save — Nearly identical**: `MoneyAttribute::Type#serialize` returns `value.to_d` for decimal columns (an exact `BigDecimal`) and `value.fractional` for integer columns (cents). Both are native ActiveRecord types — ActiveRecord's `Type::Decimal` handles `BigDecimal` directly without intermediate conversion, and `Type::Integer` handles integers directly. The write paths are symmetric.
+- **Create + save — Nearly identical**: `MoneyAttribute::Type#serialize` returns `value.to_d` for decimal columns (an exact `BigDecimal`) and `value.subunits` for integer columns (cents). Both are native ActiveRecord types — ActiveRecord's `Type::Decimal` handles `BigDecimal` directly without intermediate conversion, and `Type::Integer` handles integers directly. The write paths are symmetric.
 - **Query — Nearly identical**: Both integer and decimal columns perform similarly in query predicates, with under 3% difference.
 
 In mass insert, the overhead is dwarfed by SQL execution, so int and dec converge within ~10%. For instantiation, integer columns avoid BigDecimal allocation, making them faster for single-column construction. The best choice depends on whether the read or write path matters more for your workload.
 
 ### Why Rational?
 
-`Rational` guarantees exact arithmetic with no precision loss — `Money(1, :USD) / 3` returns `$⅓` exactly rather than `$0.33333...`. The `serialize` method converts to `BigDecimal` (via `.to_d`) for decimal columns or integer cents (via `.fractional`) for integer columns, so the database always receives a type ActiveRecord can store natively. The read path returns `Rational` for both column types — the extra conversion cost on integer reads is the price of precision.
+`Rational` guarantees exact arithmetic with no precision loss — `Money(1, :USD) / 3` returns `$⅓` exactly rather than `$0.33333...`. The `serialize` method converts to `BigDecimal` (via `.to_d`) for decimal columns or integer cents (via `.subunits`) for integer columns, so the database always receives a type ActiveRecord can store natively. The read path returns `Rational` for both column types — the extra conversion cost on integer reads is the price of precision.
 
 ## Repeated Access (Caching Demonstration)
 
 | Test                                | money_attribute (int) | money_attribute (dec) | money-rails (int)  | Ratio          |
 |-------------------------------------|---------------------|---------------------|--------------------|----------------|
-| Time (1000 reads)                   | 0.000092s           | 0.000086s           | 0.003161s          | **~37x faster** |
+| Time (1000 reads)                   | 0.000095s           | 0.000091s           | 0.003689s          | **~40x faster** |
 | Objects allocated (1000 reads)      | 2                   | 2                   | 15002              | **7500x fewer** |
 
 Both gems cache the `Money` object after the first read, but **money_attribute** returns it with near-zero overhead because `composed_of` stores the aggregation directly. Money-rails re-runs currency lookups, string interpolation for `instance_variable_get`, and `public_send` with splat on every read, allocating ~15 intermediate objects per call.

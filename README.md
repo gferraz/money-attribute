@@ -125,6 +125,15 @@ end
 | `t.money :price, currency: false` | `price` decimal | `money_attribute :price` |
 | `t.money :price, type: :integer` | `price` integer + `price_currency` string | `money_attribute :price` |
 | `t.money :price, amount: :a, currency: :c` | `a` + `c` | `money_attribute :price, mapping: { amount: :a, currency: :c }` |
+| `t.remove_money :price` | Removes `price` + `price_currency` | `money_attribute :price` |
+
+Inside `change_table`:
+
+```ruby
+change_table :products do |t|
+  t.remove_money :obsolete_fee   # removes obsolete_fee + obsolete_fee_currency
+end
+```
 
 ## Configuration
 

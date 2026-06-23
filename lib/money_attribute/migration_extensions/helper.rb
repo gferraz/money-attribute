@@ -27,8 +27,15 @@ module MoneyAttribute
         amount_opts[:type] = col_type
 
         if options.key?(:amount) && options[:amount].is_a?(Hash)
-          amount_opts[:null]    = options[:amount][:null]    if options[:amount].key?(:null)
-          amount_opts[:default] = options[:amount][:default] if options[:amount].key?(:default)
+          amount_opts[:null]      = options[:amount][:null]      if options[:amount].key?(:null)
+          amount_opts[:default]   = options[:amount][:default]   if options[:amount].key?(:default)
+          amount_opts[:precision] = options[:amount][:precision] if options[:amount].key?(:precision)
+          amount_opts[:scale]     = options[:amount][:scale]     if options[:amount].key?(:scale)
+        end
+
+        if col_type == :decimal && !amount_opts.key?(:precision) && !amount_opts.key?(:scale)
+          amount_opts[:precision] = 16
+          amount_opts[:scale]     = 4
         end
 
         currency_opts = {}

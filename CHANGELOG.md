@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.11.0](https://github.com/gferraz/money-attribute/releases/tag/v0.11.0) (2026-06-23)
+
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.10.0...v0.11.0)
+
+### Breaking changes
+- **minting 1.9.0 compatibility** — `from_fractional` replaced with `from_subunits` (Type deserialize, Macro constructors) and `value.fractional` replaced with `value.subunits` (Type serialize). Minimum minting dependency bumped to `>= 1.9.0`.
+
+### Improvements
+- **Migration helpers** — `:decimal` amount columns now default to `precision: 16, scale: 4` to prevent truncation on databases that require explicit precision/scale (MySQL). Explicit `amount: { precision:, scale: }` overrides the default. Covers all registered currencies (max subunit is 4).
+
 ## [v0.10.0](https://github.com/gferraz/money-attribute/releases/tag/v0.10.0) (2026-06-20)
 
 [Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.9.0...v0.10.0)

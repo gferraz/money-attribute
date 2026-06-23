@@ -53,11 +53,9 @@ module MoneyAttribute
               "Found: #{attribute_names.join(', ')}"
       end
 
-      def amount_extractor_for(column_name)
-        integer_column?(column_name) ? :fractional : :to_d
-      end
+      def amount_extractor_for(column_name) = integer_column?(column_name) ? :subunits : :to_d
 
-      def money_constructor_for(amount_column) = integer_column?(amount_column) ? :from_fractional : :from
+      def money_constructor_for(amount_column) = integer_column?(amount_column) ? :from_subunits : :from
 
       def integer_column?(column_name)
         col = columns.find { |c| c.name == column_name }

@@ -26,7 +26,7 @@ module MoneyAttribute
       return nil unless value
 
       if @column_type.is_a?(ActiveRecord::Type::Integer)
-        ::Mint::Money.from_fractional(value, @currency)
+        ::Mint::Money.from_subunits(value, @currency)
       else
         ::Mint::Money.from(value, @currency)
       end
@@ -36,7 +36,7 @@ module MoneyAttribute
       return nil unless value
 
       if @column_type.is_a?(ActiveRecord::Type::Integer)
-        value.fractional
+        value.subunits
       else
         value.to_d
       end

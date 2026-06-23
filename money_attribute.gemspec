@@ -27,6 +27,6 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 3.3'
 
-  spec.add_dependency 'minting', '>= 1.8.1'
+  spec.add_dependency 'minting', '>= 1.9.0'
   spec.add_dependency 'rails', '>= 7.1.3.2'
 end

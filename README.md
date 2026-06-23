@@ -224,6 +224,8 @@ offer = Offer.new(price: '12')
 offer.price.currency.code # => "USD"
 ```
 
+Unlike fixed-currency attributes, composite mode does not enforce a specific currency — any registered currency is accepted at assignment.
+
 ## Column type detection
 
 Declare the column as `decimal`, `integer`, or `bigint` — the gem adapts:

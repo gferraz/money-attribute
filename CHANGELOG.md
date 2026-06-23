@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.12.0] (2026-06-23)
+
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.11.0...v0.12.0)
+
+### Breaking changes
+- **Migration API: all options now hash-nested** — `amount:` and `currency:` consistently accept a hash with `column:`, `type:`, `null:`, `default:`, `precision:`, `scale:`, and `limit:` keys. Flat symbol column overrides (`amount: :foo`) replaced with `amount: { column: :foo }`. Flat `type:` and `currency_limit:` removed — use `amount: { type: }` and `currency: { limit: }` instead. The only remaining flat sentinel is `currency: false` (suppress currency column).
+
+### Improvements
+- **README** — Added migration defaults paragraph (`decimal(16,4)` + string), documented partial `mapping:` (single key), fixed column resolution table, noted that composite mode does not enforce currency.
+- **Precision/scale stripped for non-decimal types** — Passing `precision:`/`scale:` with `type: :integer` or `:bigint` now silently drops them instead of potentially causing migration errors on strict databases.
+
 ## [v0.11.0](https://github.com/gferraz/money-attribute/releases/tag/v0.11.0) (2026-06-23)
 
 [Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.10.0...v0.11.0)

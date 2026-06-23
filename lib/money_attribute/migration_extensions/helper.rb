@@ -12,11 +12,11 @@ module MoneyAttribute
           amount_col = options[:amount][:column]&.to_s || name
           opts = options[:amount]
           amount_opts = {
-            type:      opts[:type],
-            null:      opts[:null],
-            default:   opts[:default],
+            type: opts[:type],
+            null: opts[:null],
+            default: opts[:default],
             precision: opts[:precision],
-            scale:     opts[:scale]
+            scale: opts[:scale]
           }.compact
         else
           amount_col = name
@@ -40,8 +40,8 @@ module MoneyAttribute
           currency_col = options[:currency][:column]&.to_s || default_currency_col
           opts = options[:currency]
           currency_opts = {
-            limit:   opts[:limit],
-            null:    opts[:null],
+            limit: opts[:limit],
+            null: opts[:null],
             default: opts[:default]
           }.compact
         elsif options[:currency] == false

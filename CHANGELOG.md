@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.13.0] (2026-06-23)
+
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.12.0...v0.13.0)
+
+### Breaking changes
+- **Migration DSL renamed** — `t.money` → `t.money_attribute`, `t.remove_money` → `t.remove_money_attribute`, `add_money` → `add_money_attribute`, `remove_money` → `remove_money_attribute` to avoid conflict with Rails PostgreSQL adapter's `t.money`.
+- **Currency column inference for `:amount`** — `t.money_attribute :amount` now infers the currency column as `currency` (not `amount_currency`), matching the model's column resolution (step 3).
+
+### Improvements
+- **Dummy app migrations** — All test migrations updated to use the new DSL helpers.
+
 ## [v0.12.0] (2026-06-23)
 
 [Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.11.0...v0.12.0)
@@ -29,12 +40,12 @@
 [Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.9.0...v0.10.0)
 
 ### New features
-- **Migration helpers** — `add_money :products, :price` / `remove_money :products, :price` / `t.money :price` added as ActiveRecord migration DSL methods. Supports composite (`price` + `price_currency`) and single-column (`currency: false`), explicit column mapping (`amount: :a, currency: :c`), column type (`type: :integer`), and currency string limit (`currency_limit: 3`). Reversible in `change`.
+- **Migration helpers** — `add_money_attribute :products, :price` / `remove_money_attribute :products, :price` / `t.money_attribute :price` added as ActiveRecord migration DSL methods. Supports composite (`price` + `price_currency`) and single-column (`currency: false`), explicit column mapping (`amount: :a, currency: :c`), column type (`type: :integer`), and currency string limit (`currency_limit: 3`). Reversible in `change`.
 
 ### Improvements
 - **`allow_nil`** — nil values are always allowed, no opt-in needed (README and roadmap updated).
 - **Dead code removed** — `default_format` config attribute and stale `minting_rails` rake task.
-- **README** — comparative table shows `add_money` / `t.money`, roadmap deduplicated.
+- **README** — comparative table shows `add_money_attribute` / `t.money_attribute`, roadmap deduplicated.
 
 ## [v0.9.0](https://github.com/gferraz/money-attribute/releases/tag/v0.9.0) (2026-06-20)
 

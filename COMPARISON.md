@@ -23,11 +23,11 @@ end
 ## Migration
 
 ```ruby
-# MoneyAttribute — any numeric column type, t.money shorthand
+# MoneyAttribute — any numeric column type, t.money_attribute shorthand
 create_table :products do |t|
-  t.money   :price                     # decimal column, stores 12.34
-  t.money   :discount, type: :integer  # integer column, stores 1234 (cents)
-  t.money   :total, type: :bigint      # bigint + currency
+  t.money_attribute   :price                     # decimal column, stores 12.34
+  t.money_attribute   :discount, amount: { type: :integer }  # integer column, stores 1234 (cents)
+  t.money_attribute   :total, amount: { type: :bigint }      # bigint + currency
 end
 
 # money-rails — integer cents only

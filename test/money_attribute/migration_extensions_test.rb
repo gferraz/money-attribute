@@ -16,90 +16,90 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
   # --- Module inclusion ---
 
   test 'includes instance methods on Migration and TableDefinition' do
-    assert_includes ActiveRecord::Migration.instance_methods, :add_money
-    assert_includes ActiveRecord::Migration.instance_methods, :remove_money
-    assert_includes ActiveRecord::ConnectionAdapters::TableDefinition.instance_methods, :money
-    assert_includes ActiveRecord::ConnectionAdapters::TableDefinition.instance_methods, :remove_money
+    assert_includes ActiveRecord::Migration.instance_methods, :add_money_attribute
+    assert_includes ActiveRecord::Migration.instance_methods, :remove_money_attribute
+    assert_includes ActiveRecord::ConnectionAdapters::TableDefinition.instance_methods, :money_attribute
+    assert_includes ActiveRecord::ConnectionAdapters::TableDefinition.instance_methods, :remove_money_attribute
   end
 
-  # --- t.money naming conventions (create_table) ---
+  # --- t.money_attribute naming conventions (create_table) ---
 
-  test 't.money :price creates price and price_currency columns' do
+  test 't.money_attribute :price creates price and price_currency columns' do
     create_money_table do |t|
-      t.money :price
+      t.money_attribute :price
     end
 
     assert_columns 'price', 'price_currency'
   end
 
-  test 't.money :price_amount uses _amount column and strips suffix for currency' do
+  test 't.money_attribute :price_amount uses _amount column and strips suffix for currency' do
     create_money_table do |t|
-      t.money :price_amount
+      t.money_attribute :price_amount
     end
 
     assert_columns 'price_amount', 'price_currency'
   end
 
-  test 't.money with currency: false creates single column' do
+  test 't.money_attribute with currency: false creates single column' do
     create_money_table do |t|
-      t.money :price, currency: false
+      t.money_attribute :price, currency: false
     end
 
     assert_columns 'price'
     assert_no_columns 'price_currency'
   end
 
-  test 't.money with amount type creates integer column' do
+  test 't.money_attribute with amount type creates integer column' do
     create_money_table do |t|
-      t.money :price, amount: { type: :integer }
+      t.money_attribute :price, amount: { type: :integer }
     end
 
     assert_column_type 'price', :integer
   end
 
-  test 't.money with amount type creates bigint column' do
+  test 't.money_attribute with amount type creates bigint column' do
     create_money_table do |t|
-      t.money :price, amount: { type: :bigint }
+      t.money_attribute :price, amount: { type: :bigint }
     end
 
     assert_columns 'price'
   end
 
-  test 't.money strips precision and scale for non-decimal types' do
+  test 't.money_attribute strips precision and scale for non-decimal types' do
     create_money_table do |t|
-      t.money :price, amount: { type: :integer, precision: 10, scale: 2 }
+      t.money_attribute :price, amount: { type: :integer, precision: 10, scale: 2 }
     end
 
     assert_column_type 'price', :integer
   end
 
-  test 't.money with explicit amount and currency mapping' do
+  test 't.money_attribute with explicit amount and currency mapping' do
     create_money_table do |t|
-      t.money :price, amount: { column: :the_price }, currency: { column: :the_currency }
+      t.money_attribute :price, amount: { column: :the_price }, currency: { column: :the_currency }
     end
 
     assert_columns 'the_price', 'the_currency'
   end
 
-  test 't.money with explicit amount mapping only' do
+  test 't.money_attribute with explicit amount mapping only' do
     create_money_table do |t|
-      t.money :price, amount: { column: :the_price }
+      t.money_attribute :price, amount: { column: :the_price }
     end
 
     assert_columns 'the_price', 'price_currency'
   end
 
-  test 't.money with explicit currency mapping only' do
+  test 't.money_attribute with explicit currency mapping only' do
     create_money_table do |t|
-      t.money :price, currency: { column: :code }
+      t.money_attribute :price, currency: { column: :code }
     end
 
     assert_columns 'price', 'code'
   end
 
-  test 't.money with currency limit sets string limit' do
+  test 't.money_attribute with currency limit sets string limit' do
     create_money_table do |t|
-      t.money :price, currency: { limit: 3 }
+      t.money_attribute :price, currency: { limit: 3 }
     end
 
     col = @connection.columns(:test_money_ext).find { |c| c.name == 'price_currency' }
@@ -109,24 +109,24 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
 
   # --- change_table ---
 
-  test 't.money works inside change_table block' do
+  test 't.money_attribute works inside change_table block' do
     @connection.create_table(:test_money_items, force: true)
 
     @connection.change_table(:test_money_items) do |t|
-      t.money :price
+      t.money_attribute :price
     end
 
     assert_columns('price', 'price_currency', table: :test_money_items)
   end
 
-  # --- add_money via migration ---
+  # --- add_money_attribute via migration ---
 
-  test 'add_money creates columns via migration' do
+  test 'add_money_attribute creates columns via migration' do
     @connection.create_table(:test_money_items, force: true)
 
     migration = Class.new(ActiveRecord::Migration[8.1]) do
       def change
-        add_money :test_money_items, :price
+        add_money_attribute :test_money_items, :price
       end
     end.new('Test', 1)
 
@@ -137,12 +137,12 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
 
   # --- Reversibility ---
 
-  test 'add_money in change is reversible' do
+  test 'add_money_attribute in change is reversible' do
     @connection.create_table(:reversible_test, force: true)
 
     migration = Class.new(ActiveRecord::Migration[8.1]) do
       def change
-        add_money :reversible_test, :price
+        add_money_attribute :reversible_test, :price
       end
     end.new('ReversibleTest', 2)
 
@@ -155,12 +155,12 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
     assert_no_columns('price', 'price_currency', table: :reversible_test)
   end
 
-  test 'add_money with single column in change is reversible' do
+  test 'add_money_attribute with single column in change is reversible' do
     @connection.create_table(:reversible_test, force: true)
 
     migration = Class.new(ActiveRecord::Migration[8.1]) do
       def change
-        add_money :reversible_test, :fee, currency: false
+        add_money_attribute :reversible_test, :fee, currency: false
       end
     end.new('ReversibleTest', 3)
 
@@ -174,16 +174,16 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
     assert_no_columns('fee', table: :reversible_test)
   end
 
-  # --- remove_money via migration ---
+  # --- remove_money_attribute via migration ---
 
-  test 'remove_money drops columns via migration' do
+  test 'remove_money_attribute drops columns via migration' do
     @connection.create_table(:test_money_items, force: true) do |t|
-      t.money :price
+      t.money_attribute :price
     end
 
     migration = Class.new(ActiveRecord::Migration[8.1]) do
       def change
-        remove_money :test_money_items, :price
+        remove_money_attribute :test_money_items, :price
       end
     end.new('Test', 4)
 

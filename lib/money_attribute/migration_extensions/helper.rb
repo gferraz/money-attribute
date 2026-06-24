@@ -34,7 +34,11 @@ module MoneyAttribute
         end
 
         stripped = name.end_with?('_amount') ? name.sub(/_amount$/, '') : name
-        default_currency_col = "#{stripped}_currency"
+        default_currency_col = if name == 'amount' && !(options[:currency].is_a?(Hash) && options[:currency][:column])
+                                 'currency'
+                               else
+                                 "#{stripped}_currency"
+                               end
 
         if options.key?(:currency) && options[:currency].is_a?(Hash)
           currency_col = options[:currency][:column]&.to_s || default_currency_col

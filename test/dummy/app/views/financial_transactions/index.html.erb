@@ -1,0 +1,34 @@
+<h1>Financial Transactions</h1>
+
+<%= link_to "New transaction", new_financial_transaction_path %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Description</th>
+      <th>Date</th>
+      <th>Amount</th>
+      <th>Discount</th>
+      <th>Price</th>
+      <th>Tax</th>
+      <th>Total</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @financial_transactions.each do |ft| %>
+      <tr>
+        <td><%= ft.description %></td>
+        <td><%= ft.date&.to_fs(:short) %></td>
+        <td><%= ft.amount %></td>
+        <td><%= ft.discount %></td>
+        <td><%= ft.price %></td>
+        <td><%= ft.tax %></td>
+        <td><%= ft.total %></td>
+        <td><%= link_to "Show", ft %></td>
+        <td><%= link_to "Edit", edit_financial_transaction_path(ft) %></td>
+        <td><%= link_to "Delete", ft, data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

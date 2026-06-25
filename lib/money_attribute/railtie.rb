@@ -14,6 +14,8 @@ module MoneyAttribute
       ActiveRecord::ConnectionAdapters::TableDefinition.include(MoneyAttribute::MigrationExtensions::TableDefinition)
       ActiveRecord::ConnectionAdapters::Table.include(MoneyAttribute::MigrationExtensions::TableDefinition)
 
+      ActionView::Helpers::FormBuilder.include(MoneyAttribute::FormBuilderExtension)
+
       setup_locale_backend!
       register_custom_currencies!
     end

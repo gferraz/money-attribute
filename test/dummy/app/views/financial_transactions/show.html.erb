@@ -1,0 +1,39 @@
+<h1>Financial Transaction</h1>
+
+<p>
+  <strong>Description:</strong>
+  <%= @financial_transaction.description %>
+</p>
+
+<p>
+  <strong>Date:</strong>
+  <%= @financial_transaction.date&.to_fs(:short) %>
+</p>
+
+<p>
+  <strong>Amount:</strong>
+  <%= @financial_transaction.amount %>
+</p>
+
+<p>
+  <strong>Discount:</strong>
+  <%= @financial_transaction.discount %>
+</p>
+
+<p>
+  <strong>Price:</strong>
+  <%= @financial_transaction.price %>
+</p>
+
+<p>
+  <strong>Tax:</strong>
+  <%= @financial_transaction.tax %>
+</p>
+
+<p>
+  <strong>Total:</strong>
+  <%= @financial_transaction.total %>
+</p>
+
+<%= link_to "Edit", edit_financial_transaction_path(@financial_transaction) %> |
+<%= link_to "Back", financial_transactions_path %>

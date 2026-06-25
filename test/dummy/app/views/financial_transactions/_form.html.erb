@@ -20,45 +20,29 @@
     <%= form.datetime_field :date %>
   </div>
 
-  <fieldset>
-    <legend>Amount</legend>
     <div>
-      <%= form.label :amount, "Value" %>
+      <%= form.label :amount %>
       <%= form.money_field :amount %>
     </div>
-  </fieldset>
 
-  <fieldset>
-    <legend>Discount</legend>
     <div>
-      <%= form.label :discount, "Value" %>
+      <%= form.label :discount %>
       <%= form.money_field :discount %>
     </div>
-  </fieldset>
 
-  <fieldset>
-    <legend>Price</legend>
     <div>
-      <%= form.label :price, "Value" %>
+      <%= form.label :price %>
       <%= form.money_field :price %>
     </div>
-  </fieldset>
 
-  <fieldset>
-    <legend>Tax</legend>
     <div>
-      <%= form.label :tax, "Value" %>
+      <%= form.label :tax %>
       <%= form.money_amount :tax %>
     </div>
-  </fieldset>
-
-  <fieldset>
-    <legend>Total</legend>
     <div>
-      <%= form.label :total, "Value" %>
+      <%= form.label :total%>
       <%= form.money_field :total %>
     </div>
-  </fieldset>
 
   <div>
     <%= form.submit %>

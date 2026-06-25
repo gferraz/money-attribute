@@ -55,7 +55,22 @@ module MoneyAttribute
 
       def amount_extractor_for(column_name) = integer_column?(column_name) ? :subunits : :to_d
 
-      def money_constructor_for(amount_column) = integer_column?(amount_column) ? :from_subunits : :from
+      def money_constructor_for(amount_column)
+        default = MoneyAttribute.default_currency
+        if integer_column?(amount_column)
+          lambda { |amount, currency|
+            return nil if amount.nil?
+
+            Mint::Money.from_subunits(amount, currency.presence || default)
+          }
+        else
+          lambda { |amount, currency|
+            return nil if amount.nil?
+
+            Mint::Money.from(amount, currency.presence || default)
+          }
+        end
+      end
 
       def integer_column?(column_name)
         col = columns.find { |c| c.name == column_name }

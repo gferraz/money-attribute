@@ -7,17 +7,10 @@ module MoneyAttribute
     end
 
     def parse(amount, currency = @default_currency)
-      currency = ::Mint::Currency.resolve!(currency)
       case amount
-      when NilClass    then nil
-      when Numeric     then ::Mint::Money.from(amount, currency)
-      when String      then ::Mint::Money.from(amount.to_r, currency)
-      when ::Mint::Money
-        return amount if amount.currency == currency
-
-        raise TypeError, "Cannot automatically convert #{amount} to #{currency.code}"
-      else
-        ::Mint.parse(amount, currency)
+      when Mint::Money, NilClass then amount
+      when Numeric               then Mint::Money.from(amount, currency)
+      else                            Mint.parse(amount, currency)
       end
     end
     alias call parse

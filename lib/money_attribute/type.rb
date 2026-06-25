@@ -9,10 +9,17 @@ module MoneyAttribute
       super()
     end
 
+    def cast(value)
+      case value
+      when String then Mint::Money.parse(value, @currency)
+      else             super
+      end
+    end
+
     def assert_valid_value(value)
       case value
       when NilClass, Numeric, String then return
-      when ::Mint::Money
+      when Mint::Money
         return if value.currency == @currency
 
         message = "'#{value.inspect}' has different currency. Only #{@currency.code} allowed."

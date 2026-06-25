@@ -15,7 +15,7 @@ module MoneyAttribute
         if columns.include?(name) && resolved_mapping.nil?
           define_single_column_money_attribute(name, currency)
         else
-          define_composite_money_attribute(name, resolved_mapping)
+          define_composite_money_attribute(name, resolved_mapping, currency)
         end
       end
 
@@ -85,7 +85,7 @@ module MoneyAttribute
         normalizes(name.to_sym, with: Converter.new(currency))
       end
 
-      def define_composite_money_attribute(name, mapping)
+      def define_composite_money_attribute(name, mapping, currency)
         aggregated = resolve_composite_for(name, mapping:)
 
         composed_of(name.to_sym, {

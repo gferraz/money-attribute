@@ -5,7 +5,7 @@
 ### Improvements
 - **Nil-safe `composed_of` constructor** — When the currency column is `nil` or blank, the constructor now falls back to `MoneyAttribute.default_currency` instead of raising `ArgumentError`. This means views can safely render `ft.amount` without rescue helpers.
 - **Single-input form helpers** — `money_field` and `money_amount` now render a single text input with the formatted money string (e.g., `R$1,234.56`). Currency is detected from the typed format (`$1,500.00` → USD, `R$ 3.000,00` → BRL) or falls back to the default currency when no symbol is present.
-- **`Parser` and `Type#cast`** updated to use `Mint::Money.parse` for string parsing, enabling round-trip formatted-I/O.
+- **`Parser` renamed to `Converter`** — better reflects the class's role (converting various input types into `Mint::Money` objects).
 
 ## [v0.13.0] (2026-06-23)
 

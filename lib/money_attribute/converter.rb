@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  class Parser
+  class Converter
     def initialize(currency = MoneyAttribute.default_currency)
       @default_currency = currency
     end

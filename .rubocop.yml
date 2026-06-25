@@ -27,7 +27,6 @@ Style/Documentation:
   Exclude:
     - "lib/generators/money_attribute/initializer_generator.rb"
     - "lib/money_attribute/configuration.rb"
-    - "lib/money_attribute/parser.rb"
     - "lib/money_attribute/railtie.rb"
     - "test/**/*"
 

@@ -27,7 +27,7 @@ Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.
 ## Architecture
 
 - **Entry point:** `lib/money_attribute.rb` requires all components; registers `MoneyAttribute::Macro` on `ActiveSupport.on_load(:active_record)` in `type.rb`
-- **Two storage modes:** single-column fixed-currency (via `ActiveRecord::Type` subclass `MoneyAttribute::Type`, registered as `:money`) vs composite amount+currency (via `composed_of` + `MoneyAttribute::Parser`)
+- **Two storage modes:** single-column fixed-currency (via `ActiveRecord::Type` subclass `MoneyAttribute::Type`, registered as `:money`) vs composite amount+currency (via `composed_of` + `MoneyAttribute::Converter`)
 - **Column resolution** (checked in order within `Macro#resolve_mapping`):
   1. Explicit `mapping:` → as specified
   2. `name_currency` exists → composite (`name` + `name_currency`)

@@ -8,14 +8,14 @@ module MoneyAttribute
       def money_attribute(name, currency: MoneyAttribute.default_currency, mapping: nil)
         columns = attribute_names
         currency = ::Mint::Currency.resolve!(currency)
+        converter = Converter.new(currency)
         name = name.to_s
-        parser = Parser.new(currency)
         resolved_mapping = mapping || resolve_mapping(name, columns)
 
         if columns.include?(name) && resolved_mapping.nil?
-          define_single_column_money_attribute(name, currency, parser)
+          define_single_column_money_attribute(name, currency)
         else
-          define_composite_money_attribute(name, resolved_mapping, parser)
+          define_composite_money_attribute(name, resolved_mapping)
         end
       end
 
@@ -79,20 +79,20 @@ module MoneyAttribute
 
       # --- Configuration (registers types, normalizers, composed_of) ---
 
-      def define_single_column_money_attribute(name, currency, parser)
+      def define_single_column_money_attribute(name, currency)
         column_type = integer_column?(name) ? ActiveRecord::Type::Integer.new : ActiveRecord::Type::Decimal.new
         attribute(name.to_sym, :money, currency:, column_type: column_type)
-        normalizes(name.to_sym, with: parser)
+        normalizes(name.to_sym, with: Converter.new(currency))
       end
 
-      def define_composite_money_attribute(name, mapping, parser)
+      def define_composite_money_attribute(name, mapping)
         aggregated = resolve_composite_for(name, mapping:)
 
         composed_of(name.to_sym, {
                       allow_nil: true,
                       class_name: 'Mint::Money',
                       constructor: money_constructor_for(aggregated[:amount]),
-                      converter: parser,
+                      converter: Converter.new(currency),
                       mapping: {
                         aggregated[:amount] => amount_extractor_for(aggregated[:amount]),
                         aggregated[:currency] => :currency_code

@@ -14,7 +14,7 @@
 | Config | `Mint::MoneyAttribute::Configuration` | `MoneyAttribute::Configuration` |
 | Config DSL | `Mint.configure` | `MoneyAttribute.configure` |
 | Default currency | `Mint.default_currency` | `MoneyAttribute.default_currency` |
-| Parser | `Mint::MoneyAttribute::Parser` | `MoneyAttribute::Parser` |
+| Converter | `Mint::MoneyAttribute::Parser` | `MoneyAttribute::Converter` |
 | Generator | `rails g mint:initializer` | `rails g money_attribute:initializer` |
 | Generated file | `config/initializers/minting.rb` | `config/initializers/money_attribute.rb` |
 | Require | `require 'minting/rails'` | `require 'money_attribute'` |
@@ -129,7 +129,7 @@
 - `Mint::Money` → `::Mint::Money` (from `minting` gem dependency)
 - `Mint.money()` → `::Mint.money()`
 - `Mint::Currency` → `::Mint::Currency`
-- `MoneyAttribute::Parser` → `Parser` (inside module, or keep qualified for clarity)
+- `MoneyAttribute::Parser` → `MoneyAttribute::Converter`
 - `Mint::MoneyAttribute::Configuration` → `Configuration`
 
 ## Execution order

@@ -47,13 +47,13 @@ class MoneyAttributeTest < ActiveSupport::TestCase
   end
 
   test 'parse keeps money values unchanged' do
-    parser = MoneyAttribute::Parser.new('USD')
+    converter = MoneyAttribute::Converter.new('USD')
 
-    assert_equal 23.euros, parser.parse('+23.00', 'EUR')
-    assert_equal 23.euros, parser.parse(23, 'EUR')
-    assert_equal(-25.34.dollars, parser.parse('-25.34'))
-    assert_equal(-29.33.euros, parser.parse('-29.33 EUR'))
-    assert_nil MoneyAttribute::Parser.new.parse(nil, 'USD')
+    assert_equal 23.euros, converter.call('+23.00', 'EUR')
+    assert_equal 23.euros, converter.call(23, 'EUR')
+    assert_equal(-25.34.dollars, converter.call('-25.34'))
+    assert_equal(-29.33.euros, converter.call('-29.33 EUR'))
+    assert_nil MoneyAttribute::Converter.new.call(nil, 'USD')
   end
 
   test 'Numeric#to_money without currency uses default' do

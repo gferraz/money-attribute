@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [v0.14.1] (2026-06-26)
+
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.14.0...v0.14.1)
+
+### Chanes
+- Rename internal :money Type to :mint_money, to avoid conflict with Postgres adaptaer
+
+
 ## [v0.14.0] (2026-06-24)
 
 [Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.13.0...v0.14.0)

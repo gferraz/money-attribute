@@ -61,7 +61,7 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
       financial_transaction: {
         description: 'created via form',
         date: Time.zone.now,
-        amount: 25.to_money('USD').to_s(:currency),
+        amount: 25.to_money('USD').to_fs(:currency),
         tax: 100
       }
     }
@@ -79,7 +79,7 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
     patch financial_transaction_url(@transaction), params: {
       financial_transaction: {
         description: 'updated via form',
-        amount: 75.to_money('USD').to_s(:currency)
+        amount: 75.to_money('USD').to_fs(:currency)
       }
     }
 

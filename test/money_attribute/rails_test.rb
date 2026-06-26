@@ -5,12 +5,10 @@ require 'test_helper'
 class RailsTest < ActiveSupport::TestCase
   setup do
     @original_locale_backend = Mint.locale_backend
-    @original_locale = I18n.locale
   end
 
   teardown do
     Mint.locale_backend = @original_locale_backend
-    I18n.locale = @original_locale
   end
 
   test 'it has a version number' do
@@ -40,13 +38,13 @@ class RailsTest < ActiveSupport::TestCase
   end
 
   test 'locale backend reads from Rails I18n for current locale' do
-    I18n.locale = :en
+    I18n.with_locale(:en) do
+      result = Mint.locale_backend.call
 
-    result = Mint.locale_backend.call
-
-    assert_equal '.', result[:decimal]
-    assert_equal ',', result[:thousand]
-    assert_equal '%<symbol>s%<amount>f', result[:format]
+      assert_equal '.', result[:decimal]
+      assert_equal ',', result[:thousand]
+      assert_equal '%<symbol>s%<amount>f', result[:format]
+    end
   end
 
   test 'format string is mapped from Rails to minting syntax' do

@@ -49,9 +49,7 @@ module MoneyAttribute
       end
     end
 
-    def self.type
-      :money
-    end
+    def self.type = :mint_money
   end
 end
 

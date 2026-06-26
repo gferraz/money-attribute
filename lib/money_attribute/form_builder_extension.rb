@@ -4,18 +4,18 @@ module MoneyAttribute
   module FormBuilderExtension
     def money_field(method, options = {})
       money = object.public_send(method)
-      value = money ? money.to_s : nil
+      value = money&.to_s(:currency)
 
       @template.text_field_tag(field_name(method), value,
                                { id: field_id(method) }.merge(options))
     end
 
-    def money_amount(method, options = {})
+    def money_amount_field(method, options = {})
       money_from_column = object.public_send(method)
-      value = money_from_column ? money_from_column.to_s : nil
+      value = money_from_column&.to_d
 
-      @template.text_field_tag(field_name(method), value,
-                               { id: field_id(method) }.merge(options))
+      @template.number_field_tag(field_name(method), value,
+                                 { id: field_id(method) }.merge(options))
     end
   end
 end

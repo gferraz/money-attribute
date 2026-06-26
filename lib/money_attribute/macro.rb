@@ -8,7 +8,6 @@ module MoneyAttribute
       def money_attribute(name, currency: MoneyAttribute.default_currency, mapping: nil)
         columns = attribute_names
         currency = ::Mint::Currency.resolve!(currency)
-        converter = Converter.new(currency)
         name = name.to_s
         resolved_mapping = mapping || resolve_mapping(name, columns)
 

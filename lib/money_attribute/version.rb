@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  VERSION = '0.14.2'
+  VERSION = '0.14.4'
 end

@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email       = ['gilson@cesar.etc.br']
   spec.homepage    = 'https://github.com/gferraz/money-attribute'
   spec.summary     = 'Money attributes for ActiveRecord'
-  spec.description = ''
+  spec.description = 'Easily add money attributes to your Rails models'
   spec.license     = 'MIT'
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the "allowed_push_host"

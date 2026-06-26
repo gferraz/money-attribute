@@ -49,8 +49,12 @@ module MoneyAttribute
           code, subunit, symbol = *currency_data
         end
         ::Mint::Currency.register(code:, subunit:, symbol:)
-      rescue KeyError
-        nil
+      rescue KeyError => e
+        unless e.message.include?('already registered')
+          raise ArgumentError,
+                "Invalid currency configuration: #{currency_data.inspect}. " \
+                "Each currency must have :currency, :subunit, and :symbol keys. Error: #{e.message}"
+        end
       end
     end
   end

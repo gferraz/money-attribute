@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Improvements
+- **register_custom_currencies! raises ArgumentError** — Invalid currency configuration (missing `:currency`, `:subunit`, or `:symbol` keys) now raises `ArgumentError` with a descriptive message instead of failing silently. Registrations that fail because the currency already exists are still silently skipped.
+
+### Tests
+- **Integration tests for FormBuilderExtension** — New `form_builder_extension_test.rb` covers `money_field` and `money_amount_field` rendering, DOM id conventions, form submission, and CRUD flows via the dummy app's `FinancialTransactionsController`.
+
 ## [v0.14.2] (2026-06-26)
 
 [Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.14.0...v0.14.2)

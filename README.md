@@ -380,6 +380,20 @@ MoneyAttribute adds small helpers on `Numeric` and `String`:
 
 > If you prefer not to extend core classes, use `Mint.money(12, 'USD')` instead.
 
+## Form helpers
+
+MoneyAttribute adds `money_field` and `money_amount_field` to Rails form builders. `money_field` renders a text input with the locale-formatted money string; `money_amount_field` renders a number input with the raw decimal value.
+
+```erb
+<%= form_with model: @product do |form| %>
+  <%= form.label :price %>
+  <%= form.money_field :price %>       <!-- text input, e.g. "$1,234.56" -->
+
+  <%= form.label :tax %>
+  <%= form.money_amount_field :tax %>  <!-- number input, e.g. "1234.56" -->
+<% end %>
+```
+
 ## Roadmap
 
 1. **Method-level currency** — lambda-based currency resolution for multi-tenant and instance-level scenarios

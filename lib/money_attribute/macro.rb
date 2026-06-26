@@ -81,7 +81,7 @@ module MoneyAttribute
 
       def define_single_column_money_attribute(name, currency)
         column_type = integer_column?(name) ? ActiveRecord::Type::Integer.new : ActiveRecord::Type::Decimal.new
-        attribute(name.to_sym, :money, currency:, column_type: column_type)
+        attribute(name.to_sym, :mint_money, currency:, column_type: column_type)
         normalizes(name.to_sym, with: Converter.new(currency))
       end
 

@@ -33,9 +33,9 @@ module MoneyAttribute
       return nil unless value
 
       if @column_type.is_a?(ActiveRecord::Type::Integer)
-        ::Mint::Money.from_subunits(value, @currency)
+        Mint::Money.from_subunits(value, @currency)
       else
-        ::Mint::Money.from(value, @currency)
+        Mint::Money.from(value, @currency)
       end
     end
 
@@ -58,5 +58,5 @@ end
 ActiveSupport.on_load(:active_record) do
   include MoneyAttribute::Macro
 
-  ActiveRecord::Type.register(:money, MoneyAttribute::Type)
+  ActiveRecord::Type.register(:mint_money, MoneyAttribute::Type)
 end

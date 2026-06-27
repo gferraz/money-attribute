@@ -10,6 +10,8 @@ module MoneyAttribute
     end
   end
 
+  # Class-level caches — written during Rails boot (single-threaded),
+  # read-only during request handling. Safe without synchronization.
   def self.config
     @config ||= Configuration.new
   end

@@ -10,7 +10,8 @@ module MoneyAttribute
       case amount
       when Mint::Money, NilClass then amount
       when Numeric               then Mint::Money.from(amount, currency)
-      else                            Mint.parse(amount, currency)
+      when String                then Mint.parse(amount, currency)
+      else raise ArgumentError, "Cannot convert #{amount.inspect} (#{amount.class}) to Money"
       end
     end
     alias call parse

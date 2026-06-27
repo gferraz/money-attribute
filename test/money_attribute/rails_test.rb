@@ -21,7 +21,7 @@ class RailsTest < ActiveSupport::TestCase
 
   test 'configure resets cached default currency' do
     MoneyAttribute.default_currency
-    
+
     with_money_attribute_config(default_currency: 'USD') do
       assert_equal 'USD', MoneyAttribute.default_currency.code
     end
@@ -125,7 +125,7 @@ class RailsTest < ActiveSupport::TestCase
                 end
       }
     }
-    
+
     positive = Mint.money(10.00, 'USD')
     negative = Mint.money(-10.00, 'USD')
     zero     = Mint.money(0, 'USD')
@@ -153,7 +153,7 @@ class RailsTest < ActiveSupport::TestCase
                 end
       }
     }
-    
+
     assert_equal '[$10.00]',   Mint.money(10.00, 'USD').to_s
     assert_equal '($10.00)',   Mint.money(-10.00, 'USD').to_s
     assert_equal '[$0.00]',    Mint.money(0, 'USD').to_s
@@ -161,7 +161,7 @@ class RailsTest < ActiveSupport::TestCase
 
   test 'configuration has defaults without Active Support configurable' do
     config = MoneyAttribute::Configuration.new
-    
+
     assert_empty config.added_currencies
     assert_equal 'USD', config.default_currency
   end
@@ -205,8 +205,8 @@ class RailsTest < ActiveSupport::TestCase
 
   test 'configuration cannot be modified after freeze' do
     config = MoneyAttribute::Configuration.new
-    config.freeze!
-    
+    config.freeze
+
     assert_raises(FrozenError) { config.default_currency = 'EUR' }
   end
 

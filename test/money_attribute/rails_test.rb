@@ -21,7 +21,7 @@ class RailsTest < ActiveSupport::TestCase
 
   test 'configure resets cached default currency' do
     MoneyAttribute.default_currency
-
+    
     with_money_attribute_config(default_currency: 'USD') do
       assert_equal 'USD', MoneyAttribute.default_currency.code
     end
@@ -125,7 +125,7 @@ class RailsTest < ActiveSupport::TestCase
                 end
       }
     }
-
+    
     positive = Mint.money(10.00, 'USD')
     negative = Mint.money(-10.00, 'USD')
     zero     = Mint.money(0, 'USD')
@@ -153,7 +153,7 @@ class RailsTest < ActiveSupport::TestCase
                 end
       }
     }
-
+    
     assert_equal '[$10.00]',   Mint.money(10.00, 'USD').to_s
     assert_equal '($10.00)',   Mint.money(-10.00, 'USD').to_s
     assert_equal '[$0.00]',    Mint.money(0, 'USD').to_s
@@ -161,7 +161,7 @@ class RailsTest < ActiveSupport::TestCase
 
   test 'configuration has defaults without Active Support configurable' do
     config = MoneyAttribute::Configuration.new
-
+    
     assert_empty config.added_currencies
     assert_equal 'USD', config.default_currency
   end
@@ -170,7 +170,7 @@ class RailsTest < ActiveSupport::TestCase
     with_money_attribute_config(added_currencies: [
                                   { currency: 'CFGA', subunit: 2, symbol: 'A' },
                                   { currency: 'CFGB', subunit: 3, symbol: 'B' }
-                                ]) do
+                                  ]) do
       c = Mint::Currency.for_code('CFGA')
 
       assert_equal 'CFGA', c.code
@@ -188,7 +188,7 @@ class RailsTest < ActiveSupport::TestCase
   test 'money can be minted with configured currency' do
     with_money_attribute_config(added_currencies: [
                                   { currency: 'CFGC', subunit: 2, symbol: 'C' }
-                                ]) do
+                                  ]) do
       money = Mint.money(42.50, 'CFGC')
 
       assert_in_delta(42.50, money.amount)
@@ -201,6 +201,13 @@ class RailsTest < ActiveSupport::TestCase
     assert Mint::Currency.for_code('NGNA')
     assert_equal 2, Mint::Currency.for_code('CRCA').subunit
     assert_equal 3, Mint::Currency.for_code('NGNA').subunit
+  end
+
+  test 'configuration cannot be modified after freeze' do
+    config = MoneyAttribute::Configuration.new
+    config.freeze!
+    
+    assert_raises(FrozenError) { config.default_currency = 'EUR' }
   end
 
   private

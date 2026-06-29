@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+## [v0.14.5] (2026-06-29)
+
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.14.4...v0.14.5)
+
+### Improvements
+- **Use `to_fs(:currency)` instead of `to_s(:currency)`** — Form builder helpers and tests now call `to_fs(:currency)` for money formatting, aligning with modern Rails conventions.
+- **Configuration frozen after initialization** — `MoneyAttribute::Configuration` supports `#freeze` to prevent runtime mutation; Rails boot freezes the config object.
+- **Core extensions simplified** — Removed redundant `remove_method` calls from `Numeric#to_money` and `String#to_money`; the minting gem no longer defines conflicting methods.
+- **Converter error handling** — `Converter#parse` raises `ArgumentError` for unrecognized input types instead of letting `Mint.parse` raise a lower-level error.
+- **AGENTS.md rewritten** — Full agent documentation with commands, architecture, gotchas, and key files map.
+
+### Dependencies
+- Removed `solargraph` from development group.
+- Updated Gemfile.lock dependency versions.
+
+## [v0.14.4] (2026-06-26)
+
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.14.2...v0.14.4)
+
 ### Improvements
 - **register_custom_currencies! raises ArgumentError** — Invalid currency configuration (missing `:currency`, `:subunit`, or `:symbol` keys) now raises `ArgumentError` with a descriptive message instead of failing silently. Registrations that fail because the currency already exists are still silently skipped.
 
@@ -10,11 +29,18 @@
 
 ## [v0.14.2] (2026-06-26)
 
-[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.14.0...v0.14.2)
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.14.1...v0.14.2)
 
-### Chanes
-- Rename internal :money Type to :mint_money, to avoid conflict with Postgres adaptaer
+### Fixes
+- **Remaining `:mint_money` renames** — Follow-up to v0.14.1: fixed missing `:money_type` references that were still using the old type key.
 
+## [v0.14.1] (2026-06-26)
+
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.14.0...v0.14.1)
+
+### Fixes
+- **`:money` type renamed to `:mint_money`** — The internal `ActiveRecord::Type` key was changed from `:money` back to `:mint_money` to avoid conflicts with the PostgreSQL adapter's built-in `:money` type. This affects `attribute(name, :mint_money, ...)` calls.
+- **Error in `money_attribute` macro** — Fixed a bug in column resolution that could produce incorrect mapping.
 
 ## [v0.14.0] (2026-06-24)
 

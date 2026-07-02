@@ -14,6 +14,25 @@ end
 Product.new(price: 12).price  # => [USD 12.00]
 ```
 
+## Table of contents
+
+- [Quick start](#quick-start)
+- [Why MoneyAttribute](#why-moneyattribute)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Migration helpers](#migration-helpers)
+- [Configuration](#configuration)
+- [Usage — two modes](#usage--two-modes)
+- [Column type detection](#column-type-detection)
+- [Custom column names](#custom-column-names)
+- [Column resolution](#column-resolution)
+- [Querying](#querying)
+- [Convenience methods](#convenience-methods)
+- [Form helpers](#form-helpers)
+- [Roadmap](#roadmap)
+- [Development & Contributing](#development)
+- [License](#license)
+
 ## Quick start
 
 ```sh
@@ -58,14 +77,14 @@ That's it. `Product.new(price: 12).price` is a `Mint::Money`.
 |---|---|---|
 | **Declaration** | `money_attribute :price` | `monetize :price_cents` |
 | **Column types** | `integer`, `decimal`, `bigint` — auto-detected | `integer` cents only |
-| **Storage modes** | Single column, composite (amount+currency)| Single cents column, composite (cents+currency) |
+| **Storage modes** | Single column, composite (amount+currency) | Single cents column, composite (cents+currency) |
 | **Decimal columns** | Native — `t.decimal :price` | Not supported — must convert to cents manually |
 | **Multi-currency** | `money_attribute :price` (convention: `<name>_amount` + `<name>_currency`) | `monetize :price_cents, with_currency: :price_currency` |
 | **Rails integration** | `ActiveRecord::Type` + `composed_of` — no monkey-patches | `monetize` overrides reader/writer methods |
 | **Query (fixed)** | `Model.where(price: money)` — `=`, `IN`, `BETWEEN`, `ORDER`, `SUM` | Through cents column (`price_cents`) |
 | **Query (multi)** | `Model.where(price: money)` | `Model.where(price_cents:, price_currency:)` |
-| **Internal amount** | `Rational`  | `BigDecimal` |
-| **Performance** | See [BENCHMARKS.md](BENCHMARKS.md) — wins 9/11 cells |  |
+| **Internal amount** | `Rational` | `BigDecimal` |
+| **Performance** | See [BENCHMARKS.md](BENCHMARKS.md) — wins 9/11 cells | — |
 
 For a detailed side-by-side comparison, see [COMPARISON.md](COMPARISON.md).
 
@@ -195,7 +214,7 @@ If none of those keys are set, `format` is used as a plain string (simple format
 
 > Formatting respects the currency's own `subunit` for decimal precision — `I18n` locale settings for `precision` are ignored since that is a currency property, not a locale one.
 
-## Usage — Two modes
+## Usage — two modes
 
 ### Decision table
 
@@ -397,7 +416,7 @@ MoneyAttribute adds `money_field` and `money_amount_field` to Rails form builder
 ## Roadmap
 
 1. **Method-level currency** — lambda-based currency resolution for multi-tenant and instance-level scenarios
-2. Prepare to official 1.0 launh
+2. Prepare for official 1.0 launch
 
 Contributions and suggestions are welcome — open an issue or PR at [gferraz/money-attribute](https://github.com/gferraz/money-attribute).
 

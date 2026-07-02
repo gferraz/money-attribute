@@ -18,7 +18,7 @@ CURRENCY_CODE = 'USD'
 NUM_RECORDS = 100
 ITERATIONS = 1000
 
-MINTING_MONEY = Mint.money(AMOUNT, CURRENCY_CODE)
+MINTING_MONEY = Mint::Money.from(AMOUNT, CURRENCY_CODE)
 MONEY_RAILS_MONEY = Money.from_amount(AMOUNT, CURRENCY_CODE)
 
 # ── Create tables ───────────────────────────────────────────────

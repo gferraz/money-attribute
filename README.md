@@ -94,7 +94,7 @@ For a detailed side-by-side comparison, see [COMPARISON.md](COMPARISON.md).
 
 - Ruby 3.3+
 - Rails 7.1.3.2+
-- [Minting](https://github.com/gferraz/minting) 1.8.0+
+- [Minting](https://github.com/gferraz/minting) 2.0+
 
 ## Installation
 

@@ -7,8 +7,8 @@ module MoneyAttribute
 
       AMOUNT_CONFIG = {
         crypto_decimal: { type: :decimal, precision: 36, scale: 18 },
-        fiat_decimal:   { type: :decimal, precision: 20, scale: 4 },
-        fiat_integer:   { type: :bigint }
+        fiat_decimal: { type: :decimal, precision: 20, scale: 4 },
+        fiat_integer: { type: :bigint }
       }.freeze
 
       CURRENCY_LIMIT_RANGE = 4..32
@@ -19,7 +19,8 @@ module MoneyAttribute
 
         config = AMOUNT_CONFIG[options[:type] || :fiat_decimal]
         unless config
-          raise ArgumentError, "Invalid money amount type #{options[:type]}. Use :crypto_decimal, :fiat_decimal or :fiat_integer"
+          raise ArgumentError,
+                "Invalid money amount type #{options[:type]}. Use :crypto_decimal, :fiat_decimal or :fiat_integer"
         end
 
         options = { null: options[:null], default: options[:default] }.compact
@@ -38,7 +39,7 @@ module MoneyAttribute
             column = "#{radical}_currency"
           end
         end
-          limit = (options[:limit] || 16).to_i.clamp(CURRENCY_LIMIT_RANGE)
+        limit = (options[:limit] || 16).to_i.clamp(CURRENCY_LIMIT_RANGE)
         [column, { limit: limit, null: options[:null], default: options[:default] }.compact]
       end
 
@@ -46,7 +47,7 @@ module MoneyAttribute
         amount_column, amount_options = parse_money_amount_args(accessor, options[:amount])
         currency_column, currency_options = parse_currency_args(accessor, options[:currency])
 
-        return [amount_column, currency_column, amount_options, currency_options]
+        [amount_column, currency_column, amount_options, currency_options]
       end
     end
   end

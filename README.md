@@ -130,11 +130,11 @@ By default `t.money_attribute :price` creates a `decimal(20,4)` amount column an
 
 Control the amount column type with `amount: { type: }` (composite) or the top-level `type:` shortcut (single-column):
 
-| Amount type | Default |Column type | Precision/Scale | Maximum | Integer digits |
-|---|---|---|---|---|---|
-| `:crypto_decimal` |   | `decimal` | `36/18`  | < 1 quintillion  | 18  |
-| `:fiat_decimal`   | * | `decimal` | `20/4`   | < 10 quatrillion | 16  |
-| `:fiat_integer`   |   | `bigint`  | stripped | < 922 trillion   | ~15 |
+| Amount type |Column type | `precision/scale` | Maximum | Integer digits |
+|---|---|---|---|---|
+| `:crypto_decimal` | `decimal` | `36/18`  | < 1 quintillion  | 18  |
+| `:fiat_decimal`   | `decimal` | `20/4`   | < 10 quatrillion | 16  |
+| `:fiat_integer`   | `bigint`  | stripped | < 922 trillion   | ~15 |
 
 ```ruby
 class CreateProducts < ActiveRecord::Migration[8.1]

@@ -83,7 +83,7 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
 
   test 't.money_amount with amount type creates integer column' do
     create_money_table do |t|
-      t.money_amount :price, amount: { type: :integer }
+      t.money_amount :price, type: :fiat_integer
     end
 
     assert_column_type 'price', :integer
@@ -91,7 +91,7 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
 
   test 't.money_amount strips precision and scale for non-decimal types' do
     create_money_table do |t|
-      t.money_amount :price, amount: { type: :integer, precision: 10, scale: 2 }
+      t.money_amount :price, type: :fiat_integer, precision: 10, scale: 2
     end
 
     assert_column_type 'price', :integer
@@ -99,23 +99,15 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
 
   test 't.money_attribute with amount type creates integer column' do
     create_money_table do |t|
-      t.money_attribute :price, amount: { type: :integer }
+      t.money_attribute :price, amount: { type: :fiat_integer }
     end
 
     assert_column_type 'price', :integer
   end
 
-  test 't.money_attribute with amount type creates bigint column' do
-    create_money_table do |t|
-      t.money_attribute :price, amount: { type: :bigint }
-    end
-
-    assert_columns 'price'
-  end
-
   test 't.money_attribute strips precision and scale for non-decimal types' do
     create_money_table do |t|
-      t.money_attribute :price, amount: { type: :integer, precision: 10, scale: 2 }
+      t.money_attribute :price, amount: { type: :fiat_integer, precision: 10, scale: 2 }
     end
 
     assert_column_type 'price', :integer
@@ -147,12 +139,12 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
 
   test 't.money_attribute with currency limit sets string limit' do
     create_money_table do |t|
-      t.money_attribute :price, currency: { limit: 3 }
+      t.money_attribute :price, currency: { limit: 10 }
     end
 
     col = @connection.columns(:test_money_ext).find { |c| c.name == 'price_currency' }
 
-    assert_equal 3, col.limit
+    assert_equal 10, col.limit
   end
 
   # --- change_table ---

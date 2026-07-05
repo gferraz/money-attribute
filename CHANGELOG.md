@@ -10,7 +10,7 @@
 - **Use `to_fs(:currency)` instead of `to_s(:currency)`** — Form builder helpers and tests now call `to_fs(:currency)` for money formatting, aligning with modern Rails conventions.
 - **Configuration frozen after initialization** — `MoneyAttribute::Configuration` supports `#freeze` to prevent runtime mutation; Rails boot freezes the config object.
 - **Core extensions simplified** — Removed redundant `remove_method` calls from `Numeric#to_money` and `String#to_money`; the minting gem no longer defines conflicting methods.
-- **Converter error handling** — `Converter#parse` raises `ArgumentError` for unrecognized input types instead of letting `Mint.parse` raise a lower-level error.
+- **Converter error handling** — `Converter#parse` raises `ArgumentError` for unrecognized input types instead of letting `Money.parse` raise a lower-level error.
 - **AGENTS.md rewritten** — Full agent documentation with commands, architecture, gotchas, and key files map.
 
 ### Dependencies

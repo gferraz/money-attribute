@@ -87,8 +87,8 @@
 
 - `module Mint; module MoneyAttribute` → `module MoneyAttribute`
 - `Mint.default_currency` → `MoneyAttribute.default_currency`
-- `Mint::Money` → `::Mint::Money`
-- `Mint.parse()` → `::Mint.parse()`
+- `Mint::Money` → `Money`
+- `Mint.parse()` → `::Money.parse()`
 
 ### `lib/money_attribute/configuration.rb`
 

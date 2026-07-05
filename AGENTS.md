@@ -22,6 +22,7 @@ Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.
 - **Framework:** Minitest via `ActiveSupport::TestCase` (no RSpec), fixtures loaded automatically
 - Dummy Rails app at `test/dummy/` — migrate before running (`rake test` does this); SQLite3 DB at `test/dummy/storage/test.sqlite3`
 - **7** test files in `test/money_attribute/`
+- **98** tests, all passing
 - Dummy app initializer sets `default_currency = 'BRL'` — test expectations assume BRL, not USD
 - Config-mutating tests: use `with_money_attribute_config` (in `rails_test.rb:215`), which saves/restores config and re-registers currencies
 - RuboCop enforces `Minitest/MultipleAssertions: max 4` — warns on 5+ assertions
@@ -67,7 +68,7 @@ Two separate helpers — one per storage mode:
 
 `money_amount` naming: column name = accessor (no currency column).
 
-- Default amount type: `:decimal` precision 16, scale 4
+- Default amount type: `:decimal` precision 20, scale 4 (fiat); `type: :crypto_decimal` → `decimal(36,18)`; `type: :fiat_integer` → `bigint`
 - `:integer`/`:bigint` types strip precision/scale
 - Methods are reversible inside `change`
 

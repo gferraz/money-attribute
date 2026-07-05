@@ -31,13 +31,32 @@ module MoneyAttribute
 
       def parse_money_amount_args(accessor, options = {})
         name = accessor.to_s
+
+        if options.key?(:type)
+          type_val = options.delete(:type)
+          case type_val
+          when :fiat_decimal
+            # default, no special handling
+          when :crypto_decimal
+            options[:crypto] = true
+          when :fiat_integer
+            options[:amount] ||= {}
+            options[:amount][:type] ||= :bigint
+          end
+        end
+
         amount_col, amount_opts = resolve_amount_column(name, options)
 
         [amount_col, amount_opts]
       end
 
       def resolve_amount_column(name, options)
-        if options.key?(:amount) && options[:amount].is_a?(Hash)
+        crypto = options[:crypto]
+
+        if crypto
+          col = options.dig(:amount, :column)&.to_s || name
+          amount_opts = { type: :decimal, precision: 36, scale: 18 }
+        elsif options.key?(:amount) && options[:amount].is_a?(Hash)
           opts = options[:amount]
           col = opts[:column]&.to_s || name
           amount_opts = { type: opts[:type], null: opts[:null], default: opts[:default],
@@ -49,12 +68,14 @@ module MoneyAttribute
 
         amount_opts[:type] ||= :decimal
 
-        if amount_opts[:type] == :decimal && !amount_opts.key?(:precision) && !amount_opts.key?(:scale)
-          amount_opts[:precision] = 16
-          amount_opts[:scale]     = 4
-        elsif amount_opts[:type] != :decimal
-          amount_opts.delete(:precision)
-          amount_opts.delete(:scale)
+        unless crypto
+          if amount_opts[:type] == :decimal && !amount_opts.key?(:precision) && !amount_opts.key?(:scale)
+            amount_opts[:precision] = 20
+            amount_opts[:scale]     = 4
+          elsif amount_opts[:type] != :decimal
+            amount_opts.delete(:precision)
+            amount_opts.delete(:scale)
+          end
         end
 
         [col, amount_opts]

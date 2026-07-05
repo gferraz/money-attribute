@@ -51,6 +51,34 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
 
     assert_columns 'price'
     assert_no_columns 'price_currency'
+    assert_column_precision_scale 'price', 20, 4
+  end
+
+  test 't.money_amount with type: :crypto_decimal creates high-precision decimal column' do
+    create_money_table do |t|
+      t.money_amount :btc_balance, type: :crypto_decimal
+    end
+
+    assert_columns 'btc_balance'
+    assert_column_type 'btc_balance', :decimal
+    assert_column_precision_scale 'btc_balance', 36, 18
+  end
+
+  test 't.money_amount with type: :fiat_integer uses bigint column' do
+    create_money_table do |t|
+      t.money_amount :price, type: :fiat_integer
+    end
+
+    assert_columns 'price'
+  end
+
+  test 't.money_amount with type: :fiat_decimal uses default precision and scale' do
+    create_money_table do |t|
+      t.money_amount :price, type: :fiat_decimal
+    end
+
+    assert_columns 'price'
+    assert_column_precision_scale 'price', 20, 4
   end
 
   test 't.money_amount with amount type creates integer column' do
@@ -249,6 +277,13 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
     col = @connection.columns(table).find { |c| c.name == column_name.to_s }
 
     assert_equal expected_type, col.type
+  end
+
+  def assert_column_precision_scale(column_name, expected_precision, expected_scale, table: :test_money_ext)
+    col = @connection.columns(table).find { |c| c.name == column_name.to_s }
+
+    assert_equal expected_precision, col.precision
+    assert_equal expected_scale, col.scale
   end
 
   def drop_table_if_exists(name)

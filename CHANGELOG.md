@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Migration helpers
+- **`type:` option for `money_amount` migration helpers** — `money_amount :btc, type: :crypto_decimal` creates `decimal(36,18)`. `money_amount :count, type: :fiat_integer` creates an integer column. `money_amount :price, type: :fiat_decimal` (or omit) creates `decimal(20,4)`. Composite `money_attribute` continues to use `amount: { type: }` — no top-level `type:`.
+
 ## [v0.14.5] (2026-06-29)
 
 [Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.14.4...v0.14.5)

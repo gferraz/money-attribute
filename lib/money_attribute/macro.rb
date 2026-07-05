@@ -13,8 +13,8 @@ module MoneyAttribute
         if resolved_mapping.nil? && attribute_names.include?(name)
           raise ArgumentError,
                 "Column '#{name}' exists but no '#{name}_currency' column was found. " \
-                "For single-column fixed-currency attributes, use `money_amount` " \
-                "instead of `money_attribute`."
+                'For single-column fixed-currency attributes, use `money_amount` ' \
+                'instead of `money_attribute`.'
         end
 
         define_composite_money_attribute(name, resolved_mapping || {}, currency)
@@ -36,7 +36,7 @@ module MoneyAttribute
       def resolve_composite_for(name, mapping:)
         composite = { amount: "#{name}_amount", currency: "#{name}_currency" }
 
-        composite[:amount]   = mapping[:amount].to_s  if mapping&.key?(:amount)
+        composite[:amount]   = mapping[:amount].to_s if mapping&.key?(:amount)
         composite[:currency] = mapping[:currency].to_s if mapping&.key?(:currency)
 
         assert_columns_exist!(name, composite)

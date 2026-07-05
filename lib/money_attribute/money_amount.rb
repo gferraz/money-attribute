@@ -7,13 +7,14 @@ module MoneyAttribute
     class_methods do
       def money_amount(name, currency: MoneyAttribute.default_currency)
         name = name.to_s
-        currency = ::Mint::Currency.resolve!(currency)
 
         unless attribute_names.include?(name)
           raise ArgumentError,
                 "Column '#{name}' does not exist on this table. " \
                 "Add a column named '#{name}' or use a different accessor name."
         end
+
+        currency = ::Mint::Currency.resolve!(currency)
 
         column_type = if (col = columns.find { |c| c.name == name })
                         %i[integer bigint].include?(col.type) ? ActiveRecord::Type::Integer.new : ActiveRecord::Type::Decimal.new

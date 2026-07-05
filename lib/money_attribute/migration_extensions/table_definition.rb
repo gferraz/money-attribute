@@ -4,6 +4,7 @@ require_relative 'helper'
 
 module MoneyAttribute
   module MigrationExtensions
+    # :nodoc:
     module TableDefinition
       include Helper
 

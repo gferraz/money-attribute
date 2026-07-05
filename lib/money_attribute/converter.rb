@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
+  # :nodoc:
   class Converter
     def initialize(currency = MoneyAttribute.default_currency)
       @default_currency = currency

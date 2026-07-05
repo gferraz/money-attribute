@@ -21,22 +21,32 @@ module MoneyAttribute
     end
 
     def self.setup_locale_backend!
-      ::Mint.locale_backend = lambda {
-        fmt = I18n.t('number.currency.format', default: {})
-        translator = ->(s) { s&.gsub('%n', '%<amount>f')&.gsub('%u', '%<symbol>s') }
+      ::Mint.locale_backend = method(:build_locale_format).to_proc
+    end
 
-        format = if fmt.key?(:positive) || fmt.key?(:negative) || fmt.key?(:zero)
-                   {
-                     positive: translator.call(fmt[:positive] || fmt[:format]),
-                     negative: translator.call(fmt[:negative] || fmt[:format]),
-                     zero: translator.call(fmt[:zero] || fmt[:format])
-                   }
-                 else
-                   translator.call(fmt[:format])
-                 end
+    def self.build_locale_format
+      fmt = I18n.t('number.currency.format', default: {})
+      { decimal: fmt[:separator], thousand: fmt[:delimiter], format: build_format(fmt) }
+    end
 
-        { decimal: fmt[:separator], thousand: fmt[:delimiter], format: format }
+    def self.build_format(fmt)
+      if %i[positive negative zero].any? { |k| fmt.key?(k) }
+        build_hash_format(fmt)
+      else
+        translate_format(fmt[:format])
+      end
+    end
+
+    def self.build_hash_format(fmt)
+      {
+        positive: translate_format(fmt[:positive] || fmt[:format]),
+        negative: translate_format(fmt[:negative] || fmt[:format]),
+        zero: translate_format(fmt[:zero] || fmt[:format])
       }
+    end
+
+    def self.translate_format(str)
+      str.to_s.gsub('%n', '%<amount>f').gsub('%u', '%<symbol>s')
     end
 
     def self.register_custom_currencies!

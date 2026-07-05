@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.metadata['bug_tracker_uri'] = "#{spec.homepage}/issues"
   spec.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.files = Dir.chdir(File.expand_path(__dir__)) do
+  spec.files = Dir.chdir(File.expand_path(__dir__)) do # rubocop:disable ThreadSafety/DirChdir
     Dir['{app,config,db,lib}/**/*', 'MIT-LICENSE', 'Rakefile', 'README.md']
   end
 

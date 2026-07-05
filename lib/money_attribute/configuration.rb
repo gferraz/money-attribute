@@ -12,6 +12,7 @@ module MoneyAttribute
 
   # Class-level caches — written during Rails boot (single-threaded),
   # read-only during request handling. Safe without synchronization.
+  # rubocop:disable ThreadSafety/ClassInstanceVariable
   def self.config
     @config ||= Configuration.new
   end
@@ -25,4 +26,5 @@ module MoneyAttribute
   def self.default_currency
     @default_currency ||= ::Mint::Currency.resolve!(config.default_currency)
   end
+  # rubocop:enable ThreadSafety/ClassInstanceVariable
 end

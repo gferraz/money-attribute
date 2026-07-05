@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Naming/MethodParameterName, Layout/LineLength
+
 # Generate a consolidated markdown benchmark report.
 # Run: bundle exec ruby benchmark/report.rb
 
@@ -234,3 +236,4 @@ report << "- Each side runs in a separate process (no gem conflict)\n"
 report_path = File.join(RESULTS_DIR, 'benchmark_report.md')
 File.write(report_path, report)
 puts "Report written to #{report_path}"
+# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Naming/MethodParameterName, Layout/LineLength

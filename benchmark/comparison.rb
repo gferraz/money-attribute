@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Style/FormatStringToken, Metrics/BlockLength
 # Competitive benchmark: money_attribute vs money-rails
 # Run with: bundle exec ruby benchmark/comparison.rb
 #
@@ -377,3 +378,4 @@ ensure
   puts
   puts 'Done. Temporary tables dropped.'
 end
+# rubocop:enable Style/FormatStringToken, Metrics/BlockLength

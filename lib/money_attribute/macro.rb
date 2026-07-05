@@ -1,27 +1,12 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
+  # :nodoc:
   module Macro
     extend ActiveSupport::Concern
 
-    class_methods do
-      def money_attribute(name, currency: MoneyAttribute.default_currency, mapping: nil)
-        name = name.to_s
-        currency = ::Mint::Currency.resolve!(currency)
-        resolved_mapping = mapping || resolve_composite_mapping(name)
-
-        if resolved_mapping.nil? && attribute_names.include?(name)
-          raise ArgumentError,
-                "Column '#{name}' exists but no '#{name}_currency' column was found. " \
-                'For single-column fixed-currency attributes, use `money_amount` ' \
-                'instead of `money_attribute`.'
-        end
-
-        define_composite_money_attribute(name, resolved_mapping || {}, currency)
-      end
-
-      private
-
+    # :nodoc:
+    module CompositeClassMethods
       def resolve_composite_mapping(name)
         columns = attribute_names
         if columns.include?("#{name}_currency")
@@ -91,6 +76,27 @@ module MoneyAttribute
                       }
                     })
       end
+    end
+
+    class_methods do
+      def money_attribute(name, currency: MoneyAttribute.default_currency, mapping: nil)
+        name = name.to_s
+        currency = ::Mint::Currency.resolve!(currency)
+        resolved_mapping = mapping || resolve_composite_mapping(name)
+
+        if resolved_mapping.nil? && attribute_names.include?(name)
+          raise ArgumentError,
+                "Column '#{name}' exists but no '#{name}_currency' column was found. " \
+                'For single-column fixed-currency attributes, use `money_amount` ' \
+                'instead of `money_attribute`.'
+        end
+
+        define_composite_money_attribute(name, resolved_mapping || {}, currency)
+      end
+    end
+
+    included do
+      extend CompositeClassMethods
     end
   end
 end

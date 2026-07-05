@@ -2,6 +2,7 @@
 
 require 'test_helper'
 
+# rubocop:disable Metrics/ClassLength
 class FinancialTransactionTest < ActiveSupport::TestCase
   test 'aggregated money attribute with integer amount column' do
     transaction = FinancialTransaction.new(amount: 45.34.dollars)
@@ -43,7 +44,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     assert_equal 7.euros, reloaded.amount
   end
 
-  test 'discount money attribute does not conflict with amount' do
+  test 'discount money attribute does not conflict with amount' do # rubocop:disable Minitest/MultipleAssertions
     transaction = FinancialTransaction.new(amount: 45.34.dollars, discount: 10.euros)
 
     assert_equal 45.34.dollars, transaction.amount
@@ -87,7 +88,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     assert_equal 100.to_money, transaction.tax
   end
 
-  test 'tax does not conflict with amount or discount' do
+  test 'tax does not conflict with amount or discount' do # rubocop:disable Minitest/MultipleAssertions
     transaction = FinancialTransaction.new(
       amount: 45.34.dollars,
       discount: 10.euros,
@@ -123,7 +124,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     ).first['tax']
   end
 
-  test 'column inference is independent of money_attribute declaration order' do
+  test 'column inference is independent of money_attribute declaration order' do # rubocop:disable Minitest/MultipleAssertions
     reversed = Class.new(ApplicationRecord) do
       self.table_name = 'financial_transactions'
 
@@ -171,7 +172,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     assert_equal 250.euros, reloaded.total
   end
 
-  test 'all five money attributes coexist without conflicts' do
+  test 'all five money attributes coexist without conflicts' do # rubocop:disable Minitest/MultipleAssertions
     transaction = FinancialTransaction.new(
       amount: 100.dollars,
       discount: 20.euros,
@@ -211,3 +212,4 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

@@ -15,7 +15,7 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test 'new form renders all money fields' do
+  test 'new form renders all money fields' do # rubocop:disable Minitest/MultipleAssertions
     get new_financial_transaction_url
 
     assert_response :success
@@ -49,7 +49,7 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test 'money fields have correct dom ids' do
+  test 'money fields have correct dom ids' do # rubocop:disable Minitest/MultipleAssertions
     get edit_financial_transaction_url(@transaction)
 
     assert_response :success

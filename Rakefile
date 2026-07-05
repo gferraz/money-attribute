@@ -15,8 +15,8 @@ Rake::TestTask.new(:test_run) do |t|
 end
 
 desc 'Migrate test database'
-task :test_db_migrate do
-  Dir.chdir('test/dummy') do
+task test_db_migrate: :environment do
+  Dir.chdir('test/dummy') do # rubocop:disable ThreadSafety/DirChdir
     sh({ 'RAILS_ENV' => 'test' }, 'bin/rails', 'db:migrate')
   end
 end
@@ -25,7 +25,7 @@ desc 'Run tests (migrates test DB first)'
 task test: %i[test_db_migrate test_run]
 
 desc 'Run money_attribute vs money-rails benchmark'
-task :bench do
+task bench: :environment do
   puts
   puts '=' * 80
   puts 'money_attribute (minting gem)'
@@ -42,6 +42,6 @@ task :bench do
 end
 
 desc 'Generate consolidated benchmark report (markdown)'
-task :bench_report do
+task bench_report: :environment do
   ruby 'benchmark/report.rb'
 end

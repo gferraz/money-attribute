@@ -2,9 +2,8 @@
 
 module MoneyAttribute
   module MigrationExtensions
+    # :nodoc:
     module Helper
-      private
-
       AMOUNT_CONFIG = {
         crypto_decimal: { type: :decimal, precision: 36, scale: 18 },
         fiat_decimal: { type: :decimal, precision: 20, scale: 4 },
@@ -12,6 +11,8 @@ module MoneyAttribute
       }.freeze
 
       CURRENCY_LIMIT_RANGE = 4..32
+
+      private
 
       def parse_money_amount_args(accessor, options)
         options ||= {}

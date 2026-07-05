@@ -132,7 +132,7 @@ puts "\nGenerating report..."
 
 report = +''
 report << "# Benchmark Report: money_attribute vs money-rails\n\n"
-report << "Run at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}\n"
+report << "Run at: #{Time.zone.now.strftime('%Y-%m-%d %H:%M:%S')}\n"
 report << "Ruby #{RUBY_VERSION}, Rails #{Rails::VERSION::STRING}\n\n"
 
 report << "## Instantiation (passing Money object to setter)\n\n"

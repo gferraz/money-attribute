@@ -126,7 +126,7 @@ begin
   # natively stores amounts as cents (integer). It has no built-in support
   # for decimal amount columns.
 
-  HEADER = "Benchmark: #{BENCH_SIDE == 'minting' ? 'money_attribute' : 'money-rails'}"
+  HEADER = "Benchmark: #{BENCH_SIDE == 'minting' ? 'money_attribute' : 'money-rails'}".freeze
 
   puts '=' * 80
   puts HEADER
@@ -250,10 +250,10 @@ begin
 
   # ── 6. Caching ──────────────────────────────────────────────────
 
+  puts '-' * 60
+  puts 'Repeated access ×1000 (caching demonstration)'
+  puts '-' * 60
   if BENCH_SIDE == 'minting'
-    puts '-' * 60
-    puts 'Repeated access ×1000 (caching demonstration)'
-    puts '-' * 60
     puts 'composed_of used by Mint returns zero-allocation cached objects.'
     puts
 
@@ -284,12 +284,8 @@ begin
     puts
     puts format('%-40s %10s', 'money_attribute (comp integer) allocated:', minting_int_alloc.to_s)
     puts format('%-40s %10s', 'money_attribute (comp decimal) allocated:', minting_dec_alloc.to_s)
-    puts
 
   else # money_rails
-    puts '-' * 60
-    puts 'Repeated access ×1000 (caching demonstration)'
-    puts '-' * 60
     puts 'Money-rails re-runs currency lookups and comparisons on every read.'
     puts
 
@@ -310,8 +306,8 @@ begin
 
     puts
     puts format('%-40s %10s', 'money-rails (comp integer) allocated:', money_alloc.to_s)
-    puts
   end
+  puts
 
   # ── Mass insert ─────────────────────────────────────────────────
 

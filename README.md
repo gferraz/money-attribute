@@ -3,12 +3,12 @@
 [![CI](https://github.com/gferraz/money-attribute/actions/workflows/ci.yml/badge.svg)](https://github.com/gferraz/money-attribute/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/money_attribute.svg)](https://badge.fury.io/rb/money_attribute)
 
-Store and read Active Record attributes as `Mint::Money` objects with a single `money_attribute` declaration. No manual serialization, no boilerplate.
+Store and read Active Record attributes as `Mint::Money` objects with no manual serialization. Two explicit helpers — one per storage mode:
 
 ```ruby
 class Product < ApplicationRecord
-  money_attribute :price, currency: 'USD'   # fixed currency, single column
-  money_attribute :total                    # multi-currency, two columns
+  money_amount :price, currency: 'USD'     # fixed currency, single column
+  money_attribute :total                   # multi-currency, two columns
 end
 
 Product.new(price: 12).price  # => [USD 12.00]
@@ -56,7 +56,7 @@ end
 ```ruby
 # app/models/product.rb
 class Product < ApplicationRecord
-  money_attribute :price, currency: 'USD'
+  money_amount :price, currency: 'USD'
 end
 ```
 
@@ -75,7 +75,7 @@ That's it. `Product.new(price: 12).price` is a `Mint::Money`.
 
 | Feature | MoneyAttribute | money-rails |
 |---|---|---|
-| **Declaration** | `money_attribute :price` | `monetize :price_cents` |
+| **Declaration** | `money_amount :price` / `money_attribute :price` | `monetize :price_cents` |
 | **Column types** | `integer`, `decimal`, `bigint` — auto-detected | `integer` cents only |
 | **Storage modes** | Single column, composite (amount+currency) | Single cents column, composite (cents+currency) |
 | **Decimal columns** | Native — `t.decimal :price` | Not supported — must convert to cents manually |
@@ -143,7 +143,7 @@ end
 |---|---|---|
 | `t.money_attribute :price` | `price` decimal + `price_currency` string | `money_attribute :price` |
 | `t.money_attribute :price_amount` | `price_amount` decimal + `price_currency` string | `money_attribute :price` |
-| `t.money_attribute :price, currency: false` | `price` decimal | `money_attribute :price` |
+| `t.money_attribute :price, currency: false` | `price` decimal | `money_amount :price` |
 | `t.money_attribute :price, amount: { type: :integer }` | `price` integer + `price_currency` string | `money_attribute :price` |
 | `t.money_attribute :price, amount: { column: :a }, currency: { column: :c }` | `a` + `c` | `money_attribute :price, mapping: { amount: :a, currency: :c }` |
 | `t.money_attribute :price, currency: { limit: 3 }` | `price` decimal + `price_currency` string(3) | `money_attribute :price` |
@@ -221,7 +221,7 @@ If none of those keys are set, `format` is used as a plain string (simple format
 | | Fixed currency (single column) | Multi-currency (amount + currency) |
 |---|---|---|
 | **Migration** | `t.money_attribute :price` (or `t.decimal :price`) | `t.money_attribute :price` (or `t.decimal :price_amount` + `t.string :price_currency`) |
-| **Model** | `money_attribute :price, currency: 'USD'` | `money_attribute :price` |
+| **Model** | `money_amount :price, currency: 'USD'` | `money_attribute :price` |
 | **When to use** | Column always holds the same currency | Each row can hold a different currency |
 | **Column type** | `decimal`, `integer`, or `bigint` | `decimal`, `integer`, or `bigint` for amount; `string` for currency |
 | **Query** | `Product.where(price: 10.to_money('USD'))` — full type support | `Offer.where(price: 10.to_money('EUR'))` — equality only |
@@ -230,7 +230,7 @@ If none of those keys are set, `format` is used as a plain string (simple format
 
 ```ruby
 class Product < ApplicationRecord
-  money_attribute :price, currency: 'USD'
+  money_amount :price, currency: 'USD'
 end
 
 product = Product.new(price: 12)
@@ -283,8 +283,8 @@ Same for fixed-currency attributes:
 # Migration
 t.bigint :price
 
-# Model (no change needed)
-money_attribute :price, currency: 'USD'
+# Model
+money_amount :price, currency: 'USD'
 ```
 
 > Use `integer`/`bigint` for large tables (faster, smaller). Use `decimal` when SQL-level readability matters.
@@ -313,17 +313,16 @@ end
 
 ## Column resolution
 
-When you declare `money_attribute :name`, the gem resolves which database columns to use by checking the table schema in this order:
+`money_attribute :name` is always composite. It resolves columns in this order:
 
-| Step | Condition | Columns used | Mode |
-|---|---|---|---|
-| 1 | `mapping:` provided | As specified | Explicit composite |
-| 2 | `name_currency` column exists | `name` + `name_currency` | Composite (multi-currency) |
-| 3 | `name == 'amount'` AND `currency` column exists | `amount` + `currency` | Composite (multi-currency) |
-| 4 | `name` column exists (no currency partner) | `name` alone | Single-column (fixed-currency) |
-| 5 | None of the above (name column missing) | `name_amount` + `name_currency` (convention) | Composite (multi-currency) |
+| Step | Condition | Columns used |
+|---|---|---|
+| 1 | `mapping:` provided | As specified (missing keys fall back to `<name>_amount` / `<name>_currency`) |
+| 2 | `name_currency` column exists AND `name` column exists | `name` + `name_currency` |
+| 3 | `name == 'amount'` AND `currency` column exists | `amount` + `currency` |
+| 4 | None of the above | `<name>_amount` + `<name>_currency` (convention) |
 
-Step 5 raises `ArgumentError` if the convention columns don't exist in the table.
+Step 4 raises `ArgumentError` if the convention columns don't exist. For single-column fixed-currency attributes, use `money_amount` instead.
 
 **Example**
 
@@ -335,7 +334,6 @@ create_table :financial_transactions do |t|
   t.string  :discount_currency, limit: 3
   t.decimal :price_amount
   t.string  :price_currency, limit: 3
-  t.bigint  :surplus
   t.bigint  :tax
   t.decimal :total_amount
   t.string  :currency_code, limit: 3
@@ -346,10 +344,9 @@ end
 class FinancialTransaction < ApplicationRecord
   money_attribute :amount                   # step 3: amount(int) + currency
   money_attribute :discount                 # step 2: discount(int) + discount_currency
-  money_attribute :price                    # step 4: price_amount(dec) + price_currency
-  money_attribute :surplus, currency: 'EUR' # step 5: surplus(int) (single-column, will use EUR)
-  money_attribute :tax                      # step 5: tax(int) (single-column, will use default currency)
+  money_attribute :price                    # step 4: price_amount + price_currency
   money_attribute :total, mapping: { amount: :total_amount, currency: :currency_code }  # step 1: explicit
+  money_amount  :tax                        # single-column, fixed-currency (uses default currency)
 end
 ```
 

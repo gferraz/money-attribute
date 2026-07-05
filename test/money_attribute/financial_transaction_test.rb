@@ -127,7 +127,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     reversed = Class.new(ApplicationRecord) do
       self.table_name = 'financial_transactions'
 
-      money_attribute :tax
+      money_amount :tax
       money_attribute :discount
       money_attribute :amount
     end

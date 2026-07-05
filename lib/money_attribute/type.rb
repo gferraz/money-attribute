@@ -55,6 +55,7 @@ end
 
 ActiveSupport.on_load(:active_record) do
   include MoneyAttribute::Macro
+  include MoneyAttribute::MoneyAmount
 
   ActiveRecord::Type.register(:mint_money, MoneyAttribute::Type)
 end

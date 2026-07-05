@@ -80,7 +80,7 @@ begin
   when 'minting'
     MintingSingle = Class.new(ApplicationRecord) do
       self.table_name = 'minting_single'
-      money_attribute :price, currency: CURRENCY_CODE
+      money_amount :price, currency: CURRENCY_CODE
     end
     MintingComposite = Class.new(ApplicationRecord) do
       self.table_name = 'minting_composite'
@@ -88,7 +88,7 @@ begin
     end
     MintingSingleDecimal = Class.new(ApplicationRecord) do
       self.table_name = 'minting_single_decimal'
-      money_attribute :price, currency: CURRENCY_CODE
+      money_amount :price, currency: CURRENCY_CODE
     end
     MintingCompositeDecimal = Class.new(ApplicationRecord) do
       self.table_name = 'minting_composite_decimal'

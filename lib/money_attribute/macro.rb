@@ -6,28 +6,29 @@ module MoneyAttribute
 
     class_methods do
       def money_attribute(name, currency: MoneyAttribute.default_currency, mapping: nil)
-        columns = attribute_names
-        currency = ::Mint::Currency.resolve!(currency)
         name = name.to_s
-        resolved_mapping = mapping || resolve_mapping(name, columns)
+        currency = ::Mint::Currency.resolve!(currency)
+        resolved_mapping = mapping || resolve_composite_mapping(name)
 
-        if columns.include?(name) && resolved_mapping.nil?
-          define_single_column_money_attribute(name, currency)
-        else
-          define_composite_money_attribute(name, resolved_mapping, currency)
+        if resolved_mapping.nil? && attribute_names.include?(name)
+          raise ArgumentError,
+                "Column '#{name}' exists but no '#{name}_currency' column was found. " \
+                "For single-column fixed-currency attributes, use `money_amount` " \
+                "instead of `money_attribute`."
         end
+
+        define_composite_money_attribute(name, resolved_mapping || {}, currency)
       end
 
       private
 
-      # --- Preparation (no side effects) ---
-
-      def resolve_mapping(name, columns)
-        return nil unless columns.include?(name)
-
+      def resolve_composite_mapping(name)
+        columns = attribute_names
         if columns.include?("#{name}_currency")
-          { amount: name, currency: :"#{name}_currency" }
-        elsif columns.include?('currency') && name == 'amount'
+          return { amount: name, currency: :"#{name}_currency" } if columns.include?(name)
+
+          nil
+        elsif name == 'amount' && columns.include?('currency')
           { amount: name, currency: :currency }
         end
       end
@@ -35,8 +36,8 @@ module MoneyAttribute
       def resolve_composite_for(name, mapping:)
         composite = { amount: "#{name}_amount", currency: "#{name}_currency" }
 
-        composite[:amount]    = mapping[:amount].to_s   if mapping&.key?(:amount)
-        composite[:currency]  = mapping[:currency].to_s if mapping&.key?(:currency)
+        composite[:amount]   = mapping[:amount].to_s  if mapping&.key?(:amount)
+        composite[:currency] = mapping[:currency].to_s if mapping&.key?(:currency)
 
         assert_columns_exist!(name, composite)
         composite
@@ -74,14 +75,6 @@ module MoneyAttribute
       def integer_column?(column_name)
         col = columns.find { |c| c.name == column_name }
         %i[integer bigint].include?(col&.type)
-      end
-
-      # --- Configuration (registers types, normalizers, composed_of) ---
-
-      def define_single_column_money_attribute(name, currency)
-        column_type = integer_column?(name) ? ActiveRecord::Type::Integer.new : ActiveRecord::Type::Decimal.new
-        attribute(name.to_sym, :mint_money, currency:, column_type: column_type)
-        normalizes(name.to_sym, with: Converter.new(currency))
       end
 
       def define_composite_money_attribute(name, mapping, currency)

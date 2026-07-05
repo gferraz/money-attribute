@@ -1,4 +1,4 @@
 class SimpleOffer < ApplicationRecord
-  money_attribute :price, currency: 'USD'
-  money_attribute :discount, currency: 'USD'
+  money_amount :price, currency: 'USD'
+  money_amount :discount, currency: 'USD'
 end

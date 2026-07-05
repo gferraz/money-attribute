@@ -37,14 +37,14 @@ Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.
 ## Architecture
 
 - **Entry point:** `lib/money_attribute.rb` requires all components in dependency order
-- **Two storage modes:**
-  1. **Single-column fixed-currency:** `ActiveRecord::Type` subclass `MoneyAttribute::Type`, registered as `:mint_money`. Uses `attribute(name, :mint_money, ...)` + `normalizes(name, with: Converter.new(currency))`.
-  2. **Composite amount+currency:** `composed_of` + `MoneyAttribute::Converter`. Two DB columns, per-row currency. Integer/bigint → subunits, decimal → unit value.
-- **Column resolution** (in `Macro#resolve_mapping`, checked after explicit `mapping:`):
-  1. `name_currency` column exists → composite (`name` + `name_currency`)
+- **Two explicit helpers** (no auto-detect — the method name declares the mode):
+  1. `money_amount :price, currency: 'USD'` — **single-column fixed-currency.** Stores amount in one column (`price`). Uses `ActiveRecord::Type` subclass `MoneyAttribute::Type` (registered as `:mint_money`) + `normalizes`. Currency never changes per row.
+  2. `money_attribute :price` — **composite amount+currency.** Two DB columns (`price_amount` + `price_currency` or custom via `mapping:`). Per-row currency via `composed_of` + `Converter`. Integer/bigint → subunits, decimal → unit value.
+- **Column resolution** for `money_attribute` (composite only, checked after `mapping:`):
+  1. `name_currency` column exists AND `name` column exists → composite (`name` + `name_currency`)
   2. `name == 'amount'` AND `currency` column exists → composite (`amount` + `currency`)
-  3. Column exists but no `*_currency` → single-column fixed-currency
-  4. Column does NOT exist → convention path; raises `ArgumentError` if columns missing
+  3. Otherwise → convention (`name_amount` + `name_currency`); raises `ArgumentError` if missing
+- Using `money_attribute` when only a single column exists raises with a hint to use `money_amount`
 - Custom currency registration: `MoneyAttribute::Railtie.register_custom_currencies!`
 
 ## Migration helpers

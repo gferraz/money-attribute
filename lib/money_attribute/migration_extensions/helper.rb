@@ -8,18 +8,42 @@ module MoneyAttribute
       def parse_money_args(accessor, options = {})
         name = accessor.to_s
 
-        if options.key?(:amount) && options[:amount].is_a?(Hash)
-          amount_col = options[:amount][:column]&.to_s || name
-          opts = options[:amount]
-          amount_opts = {
-            type: opts[:type],
-            null: opts[:null],
-            default: opts[:default],
-            precision: opts[:precision],
-            scale: opts[:scale]
-          }.compact
+        amount_col, amount_opts = resolve_amount_column(name, options)
+
+        stripped = name.end_with?('_amount') ? name.sub(/_amount$/, '') : name
+        default_currency_col = if name == 'amount' && !(options[:currency].is_a?(Hash) && options[:currency][:column])
+                                 'currency'
+                               else
+                                 "#{stripped}_currency"
+                               end
+
+        if options.key?(:currency) && options[:currency].is_a?(Hash)
+          opts = options[:currency]
+          currency_col = opts[:column]&.to_s || default_currency_col
+          currency_opts = { limit: opts[:limit], null: opts[:null], default: opts[:default] }.compact
         else
-          amount_col = name
+          currency_col = default_currency_col
+          currency_opts = {}
+        end
+
+        [amount_col, currency_col, amount_opts, currency_opts]
+      end
+
+      def parse_money_amount_args(accessor, options = {})
+        name = accessor.to_s
+        amount_col, amount_opts = resolve_amount_column(name, options)
+
+        [amount_col, amount_opts]
+      end
+
+      def resolve_amount_column(name, options)
+        if options.key?(:amount) && options[:amount].is_a?(Hash)
+          opts = options[:amount]
+          col = opts[:column]&.to_s || name
+          amount_opts = { type: opts[:type], null: opts[:null], default: opts[:default],
+                          precision: opts[:precision], scale: opts[:scale] }.compact
+        else
+          col = name
           amount_opts = {}
         end
 
@@ -33,30 +57,7 @@ module MoneyAttribute
           amount_opts.delete(:scale)
         end
 
-        stripped = name.end_with?('_amount') ? name.sub(/_amount$/, '') : name
-        default_currency_col = if name == 'amount' && !(options[:currency].is_a?(Hash) && options[:currency][:column])
-                                 'currency'
-                               else
-                                 "#{stripped}_currency"
-                               end
-
-        if options.key?(:currency) && options[:currency].is_a?(Hash)
-          currency_col = options[:currency][:column]&.to_s || default_currency_col
-          opts = options[:currency]
-          currency_opts = {
-            limit: opts[:limit],
-            null: opts[:null],
-            default: opts[:default]
-          }.compact
-        elsif options[:currency] == false
-          currency_col = nil
-          currency_opts = {}
-        else
-          currency_col = default_currency_col
-          currency_opts = {}
-        end
-
-        [amount_col, currency_col, amount_opts, currency_opts]
+        [col, amount_opts]
       end
     end
   end

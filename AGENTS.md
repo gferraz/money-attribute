@@ -49,14 +49,23 @@ Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.
 
 ## Migration helpers
 
-`add_money_attribute` / `t.money_attribute` naming conventions:
+Two separate helpers — one per storage mode:
+
+| Helper | Columns created |
+|---|---|
+| `add_money_attribute` / `t.money_attribute` | Amount column + currency column (composite) |
+| `add_money_amount` / `t.money_amount` | Amount column only (single-column) |
+
+`money_attribute` naming conventions:
 
 | Accessor | Amount column | Currency column | Notes |
 |---|---|---|---|
 | `:price` | `price` | `price_currency` | Default |
 | `:price_amount` | `price_amount` | `price_currency` | Strips `_amount` suffix |
 | `:amount` | `amount` | `currency` | Special case |
-| `:price, currency: false` | `price` | (none) | Single-column |
+| `:price, amount: { column: :a }, currency: { column: :c }` | `a` | `c` | Explicit mapping |
+
+`money_amount` naming: column name = accessor (no currency column).
 
 - Default amount type: `:decimal` precision 16, scale 4
 - `:integer`/`:bigint` types strip precision/scale

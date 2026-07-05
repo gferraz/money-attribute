@@ -9,7 +9,6 @@
 | Top-level module | `Mint` | `MoneyAttribute` |
 | Concern module | `Mint::MoneyAttribute` | `MoneyAttribute::Macro` |
 | AR type class | `Mint::MintMoneyType` | `MoneyAttribute::Type` |
-| AR type key | `:mint_money` | `:money` |
 | Railtie | `Mint::Railtie` | `MoneyAttribute::Railtie` |
 | Config | `Mint::MoneyAttribute::Configuration` | `MoneyAttribute::Configuration` |
 | Config DSL | `Mint.configure` | `MoneyAttribute.configure` |

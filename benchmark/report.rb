@@ -14,8 +14,8 @@ RESULTS_DIR  = File.expand_path('../tmp', __dir__)
 FileUtils.mkdir_p(RESULTS_DIR)
 
 SIDES = {
-  'minting'     => 'money_attribute',
-  'money_rails' => 'money-rails',
+  'minting' => 'money_attribute',
+  'money_rails' => 'money-rails'
 }.freeze
 
 def run_side(side)
@@ -27,7 +27,7 @@ def run_side(side)
   File.write(out_file, stdout)
 
   unless status.success?
-    $stderr.puts "Error running #{side}: #{stderr}"
+    warn "Error running #{side}: #{stderr}"
     exit 1
   end
 
@@ -52,13 +52,13 @@ ALLOC_RE = /^\s*(.+?) allocated:\s+(\d+)\s*$/
 IDENTITY_RE = /^\s*(.+?)\s+same object\?\s+(true|false)\s*$/
 
 SECTION_HEADERS = {
-  /Instantiation/                                  => :instantiation,
-  /Create \+ save/                                 => :create_save,
-  /Read Money attribute/                           => :read,
-  /Query/                                          => :query,
-  /Arithmetic/                                     => :arithmetic,
-  /Repeated access|Repeated read|caching/          => :caching,
-  /Mass insert/                                    => :mass_insert,
+  /Instantiation/ => :instantiation,
+  /Create \+ save/ => :create_save,
+  /Read Money attribute/ => :read,
+  /Query/ => :query,
+  /Arithmetic/ => :arithmetic,
+  /Repeated access|Repeated read|caching/ => :caching,
+  /Mass insert/ => :mass_insert
 }.freeze
 
 def parse_output(text)
@@ -69,23 +69,23 @@ def parse_output(text)
     case line
 
     when BM_RE
-      label = $1.strip
+      label = Regexp.last_match(1).strip
       data[:bm][current_section] ||= {}
       data[:bm][current_section][label] = {
-        user: $2.to_f,
-        system: $3.to_f,
-        total: $4.to_f,
-        real: $5.to_f,
+        user: Regexp.last_match(2).to_f,
+        system: Regexp.last_match(3).to_f,
+        total: Regexp.last_match(4).to_f,
+        real: Regexp.last_match(5).to_f
       }
 
     when MASS_RE
-      data[:mass][$1.strip] = $2.to_f
+      data[:mass][Regexp.last_match(1).strip] = Regexp.last_match(2).to_f
 
     when ALLOC_RE
-      data[:alloc][$1.strip] = $2.to_i
+      data[:alloc][Regexp.last_match(1).strip] = Regexp.last_match(2).to_i
 
     when IDENTITY_RE
-      data[:identity][$1.strip] = $2 == 'true'
+      data[:identity][Regexp.last_match(1).strip] = Regexp.last_match(2) == 'true'
 
     else
       SECTION_HEADERS.each do |re, section|
@@ -114,6 +114,7 @@ end
 
 def fmt(val)
   return '—' unless val
+
   format('%.5f', val)
 end
 
@@ -142,7 +143,7 @@ rows = [
   ['single integer', 'money_attribute  (single integer)', 'money-rails   (single integer)'],
   ['single decimal', 'money_attribute  (single decimal)', nil],
   ['comp integer',   'money_attribute  (comp integer)',   'money-rails   (comp integer)'],
-  ['comp decimal',   'money_attribute  (comp decimal)',   nil],
+  ['comp decimal',   'money_attribute  (comp decimal)',   nil]
 ]
 rows.each do |variant, mint_label, rails_label|
   m = minting[:bm][:instantiation][mint_label]
@@ -212,7 +213,7 @@ mass_rows = [
   ['single integer', 'money_attribute (single integer)', 'money-rails  (single integer)'],
   ['single decimal', 'money_attribute (single decimal)', nil],
   ['comp integer',   'money_attribute (comp integer)',   'money-rails  (comp integer)'],
-  ['comp decimal',   'money_attribute (comp decimal)',   nil],
+  ['comp decimal',   'money_attribute (comp decimal)',   nil]
 ]
 mass_rows.each do |variant, mint_label, rails_label|
   m = minting[:mass][mint_label]

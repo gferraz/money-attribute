@@ -17,6 +17,7 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
 
   test 'new form renders all money fields' do
     get new_financial_transaction_url
+
     assert_response :success
 
     assert_select 'input[name="financial_transaction[amount]"]'
@@ -28,16 +29,19 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
 
   test 'money_field renders text input with formatted value on edit' do
     get edit_financial_transaction_url(@transaction)
+
     assert_response :success
 
     assert_select 'input[name="financial_transaction[amount]"][type="text"]' do |inputs|
       value = inputs.first.attributes['value']&.value
+
       assert_predicate value, :present?, 'Expected money_field to have a formatted value'
     end
   end
 
   test 'money_amount_field renders number input with numeric value on edit' do
     get edit_financial_transaction_url(@transaction)
+
     assert_response :success
 
     assert_select 'input[name="financial_transaction[tax]"][type="number"]' do |inputs|
@@ -47,6 +51,7 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
 
   test 'money fields have correct dom ids' do
     get edit_financial_transaction_url(@transaction)
+
     assert_response :success
 
     assert_select 'input#financial_transaction_amount'
@@ -68,9 +73,11 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
 
     assert_response :redirect
     follow_redirect!
+
     assert_response :success
 
     created = FinancialTransaction.last
+
     assert_equal 'created via form', created.description
     assert_equal 25.dollars, created.amount
   end
@@ -85,20 +92,24 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
 
     assert_response :redirect
     follow_redirect!
+
     assert_response :success
 
     @transaction.reload
+
     assert_equal 'updated via form', @transaction.description
     assert_equal 75.dollars, @transaction.amount
   end
 
   test 'show page renders money attributes without error' do
     get financial_transaction_url(@transaction)
+
     assert_response :success
   end
 
   test 'index page renders money attributes without error' do
     get financial_transactions_url
+
     assert_response :success
   end
 end

@@ -100,8 +100,8 @@ begin
     MODELS = {
       'money_attribute  (single integer):' => MintingSingle,
       'money_attribute  (single decimal):' => MintingSingleDecimal,
-      'money_attribute  (comp integer):'   => MintingComposite,
-      'money_attribute  (comp decimal):'   => MintingCompositeDecimal,
+      'money_attribute  (comp integer):' => MintingComposite,
+      'money_attribute  (comp decimal):' => MintingCompositeDecimal
     }.freeze
 
   when 'money_rails'
@@ -118,7 +118,7 @@ begin
 
     MODELS = {
       'money-rails   (single integer):' => MoneyRailsSingle,
-      'money-rails   (comp integer):'   => MoneyRailsComposite,
+      'money-rails   (comp integer):' => MoneyRailsComposite
     }.freeze
   end
 
@@ -136,19 +136,16 @@ begin
   puts
 
   # Build model groups for section-specific iteration
-  single_integer_models = MODELS.select { |k, _| k.include?('single integer') }
-  comp_integer_models   = MODELS.select { |k, _| k.include?('comp integer') }
-  single_decimal_models = MODELS.select { |k, _| k.include?('single decimal') }
-  comp_decimal_models   = MODELS.select { |k, _| k.include?('comp decimal') }
-  all_models = MODELS
+  MODELS.select { |k, _| k.include?('single integer') }
+  MODELS.select { |k, _| k.include?('comp integer') }
+  MODELS.select { |k, _| k.include?('single decimal') }
+  MODELS.select { |k, _| k.include?('comp decimal') }
 
   # ── 1. Instantiation ──────────────────────────────────────────
 
   puts '-' * 60
   puts 'Instantiation (passing Money object to setter)'
   puts '-' * 60
-
-  instantiation_results = {}
   Benchmark.bm(40) do |x|
     MODELS.each do |label, model|
       x.report(label) do

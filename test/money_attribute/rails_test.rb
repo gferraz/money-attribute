@@ -170,7 +170,7 @@ class RailsTest < ActiveSupport::TestCase
     with_money_attribute_config(added_currencies: [
                                   { currency: 'CFGA', subunit: 2, symbol: 'A' },
                                   { currency: 'CFGB', subunit: 3, symbol: 'B' }
-                                  ]) do
+                                ]) do
       c = Mint::Currency.for_code('CFGA')
 
       assert_equal 'CFGA', c.code
@@ -188,7 +188,7 @@ class RailsTest < ActiveSupport::TestCase
   test 'money can be minted with configured currency' do
     with_money_attribute_config(added_currencies: [
                                   { currency: 'CFGC', subunit: 2, symbol: 'C' }
-                                  ]) do
+                                ]) do
       money = Mint.money(42.50, 'CFGC')
 
       assert_in_delta(42.50, money.amount)

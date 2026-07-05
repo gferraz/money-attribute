@@ -124,28 +124,28 @@ Two families of helpers — one per storage mode.
 | Method | Action |
 |---|---|
 | `add_money_amount` / `t.money_amount` | Amount column only (no currency) |
-| `remove_money_amount` / `t.remove_money_amount` | Drops the column, same as `remove_colum` |
+| `remove_money_amount` / `t.remove_money_amount` | Drops the column |
 
 By default `t.money_attribute :price` creates a `decimal(20,4)` amount column and a `string` currency column. For single-column mode, `t.money_amount :price` creates just the decimal column.
 
 Control the amount column type with `amount: { type: }` (composite) or the top-level `type:` shortcut (single-column):
 
-| Amount type |Column type | `precision/scale` | Maximum | Integer digits |
+| Amount type | Column type | Precision/Scale | Maximum | Integer digits |
 |---|---|---|---|---|
-| `:crypto_decimal` | `decimal` | `36/18`  | < 1 quintillion  | 18  |
-| `:fiat_decimal`   | `decimal` | `20/4`   | < 10 quatrillion | 16  |
-| `:fiat_integer`   | `bigint`  | stripped | < 922 trillion   | ~15 |
+| `:crypto_decimal` | `decimal` | `36/18` | ~1 quintillion | 18 |
+| `:fiat_decimal`   | `decimal` | `20/4`  | ~10 quadrillion | 16 |
+| `:fiat_integer`   | `bigint`  | — | ~922 trillion | ~15 |
 
 ```ruby
 class CreateProducts < ActiveRecord::Migration[8.1]
   def change
     create_table :products do |t|
       t.string :name
-      t.money_amount :price                            # decimal(20,4)
-      t.money_amount :btc_balance, type: :crypto_decimal  # decimal(36,18)
-      t.money_amount :qty,        type: :fiat_integer     # integer
-      t.money_attribute :multi                         # decimal(20,4) + currency
-      t.money_attribute :tax, amount: { type: :bigint }  # bigint + currency
+      t.money_amount :price                                # decimal(20,4)
+      t.money_amount :btc_balance, type: :crypto_decimal   # decimal(36,18)
+      t.money_amount :qty,        type: :fiat_integer      # bigint
+      t.money_attribute :multi                             # decimal(20,4) + currency
+      t.money_attribute :tax, amount: { type: :fiat_integer }  # bigint + currency
       t.timestamps
     end
   end
@@ -153,9 +153,9 @@ end
 
 class AddPriceToProducts < ActiveRecord::Migration[8.1]
   def change
-    add_money_attribute :products, :price                 # add price + price_currency
+    add_money_attribute :products, :price                     # price + price_currency
     add_money_amount   :products, :fee, type: :fiat_integer
-    remove_money_attribute :products, :obsolete_fee       # reversible in change
+    remove_money_attribute :products, :obsolete_fee           # reversible in change
     remove_money_amount   :products, :old_fixed_fee
   end
 end
@@ -165,16 +165,15 @@ end
 
 | Migration call | Columns created | Model declaration |
 |---|---|---|
-| `t.money_attribute :price` | `price` decimal + `price_currency` string | `money_attribute :price` |
-| `t.money_attribute :price_amount` | `price_amount` decimal + `price_currency` string | `money_attribute :price` |
+| `t.money_attribute :price` | `price` decimal(20,4) + `price_currency` string(16) | `money_attribute :price` |
+| `t.money_attribute :price_amount` | `price_amount` decimal(20,4) + `price_currency` string(16) | `money_attribute :price` |
 | `t.money_amount :price` | `price` decimal(20,4) | `money_amount :price` |
 | `t.money_amount :btc, type: :crypto_decimal` | `btc` decimal(36,18) | `money_amount :btc` |
-| `t.money_amount :price, type: :fiat_integer` | `price` integer | `money_amount :price` |
+| `t.money_amount :price, type: :fiat_integer` | `price` bigint | `money_amount :price` |
 | `t.money_amount :price, type: :fiat_decimal` | `price` decimal(20,4) | `money_amount :price` |
-| `t.money_attribute :price, amount: { type: :integer }` | `price` integer + `price_currency` string | `money_attribute :price` |
+| `t.money_attribute :price, amount: { type: :fiat_integer }` | `price` bigint + `price_currency` string(16) | `money_attribute :price` |
 | `t.money_attribute :price, amount: { column: :a }, currency: { column: :c }` | `a` + `c` | `money_attribute :price, mapping: { amount: :a, currency: :c }` |
-| `t.money_attribute :price, currency: { limit: 3 }` | `price` decimal(20,4) + `price_currency` string(3) | `money_attribute :price` |
-| `t.money_attribute :price, amount: { precision: 14, scale: 2, null: false }, currency: { limit: 3, default: 'USD' }` | `price` decimal(14,2) NOT NULL + `price_currency` string(3) DEFAULT 'USD' | `money_attribute :price` |
+| `t.money_attribute :price, currency: { limit: 5 }` | `price` decimal(20,4) + `price_currency` string(5) | `money_attribute :price` |
 | `t.remove_money_attribute :price` | Removes `price` + `price_currency` | `money_attribute :price` |
 
 Inside `change_table`:
@@ -250,7 +249,7 @@ If none of those keys are set, `format` is used as a plain string (simple format
 | **Migration** | `t.money_amount :price` (or `t.decimal :price`) | `t.money_attribute :price` (or `t.decimal :price_amount` + `t.string :price_currency`) |
 | **Model** | `money_amount :price, currency: 'USD'` | `money_attribute :price` |
 | **When to use** | Column always holds the same currency | Each row can hold a different currency |
-| **Column type** | `decimal`, `integer`, or `bigint` | `decimal`, `integer`, or `bigint` for amount; `string` for currency |
+| **Column type** | Select via `type:` — `:fiat_decimal`, `:fiat_integer`, or `:crypto_decimal` | Same, plus `string` for currency |
 | **Query** | `Product.where(price: 10.to_money('USD'))` — full type support | `Offer.where(price: 10.to_money('EUR'))` — equality only |
 
 ### Fixed currency
@@ -287,12 +286,12 @@ Unlike fixed-currency attributes, composite mode does not enforce a specific cur
 
 ## Column type detection
 
-Declare the column as `decimal`, `integer`, or `bigint` — the gem adapts:
+Select the amount column type via the `type:` option. The gem adapts serialization accordingly:
 
 ```ruby
 # Migration
 create_table :orders do |t|
-  t.money_attribute :total, amount: { type: :bigint }   # stored as cents (subunits)
+  t.money_attribute :total, amount: { type: :fiat_integer }   # bigint — stored as subunits
 end
 
 # Model
@@ -303,17 +302,17 @@ end
 Order.new(total: 19.99.to_money('USD')).total_amount # => 1999
 ```
 
-For fixed-currency attributes, use `t.money_amount` with the `type:` shortcut:
+For fixed-currency attributes, use `t.money_amount` with the top-level `type:` shortcut:
 
 ```ruby
 # Migration
-t.money_amount :price, type: :fiat_integer  # integer column
+t.money_amount :price, type: :fiat_integer  # bigint column
 
 # Model
 money_amount :price, currency: 'USD'
 ```
 
-> Use `integer`/`bigint` for large tables (faster, smaller). Use `decimal` when SQL-level readability matters.
+> Use `:fiat_integer` (bigint) for large tables — faster, smaller, and sufficient for most fiat use cases (~922 trillion max). Use `:fiat_decimal` (decimal) when SQL-level readability matters.
 
 ## Custom column names
 

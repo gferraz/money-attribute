@@ -8,10 +8,10 @@ module MoneyAttribute
       AMOUNT_CONFIG = {
         crypto_decimal: { type: :decimal, precision: 36, scale: 18 },
         fiat_decimal:   { type: :decimal, precision: 20, scale: 4 },
-        fiat_integer:   { type: :integer, limit: 20 }
+        fiat_integer:   { type: :bigint }
       }.freeze
 
-      CURRENCY_LIMIT = 20
+      CURRENCY_LIMIT_RANGE = 4..32
 
       def parse_money_amount_args(accessor, options)
         options ||= {}
@@ -38,8 +38,8 @@ module MoneyAttribute
             column = "#{radical}_currency"
           end
         end
-        limit = options[:limit].to_i.clamp(10..)
-        [column, { type: :string, limit: limit, null: options[:null], default: options[:default] }.compact]
+          limit = (options[:limit] || 16).to_i.clamp(CURRENCY_LIMIT_RANGE)
+        [column, { limit: limit, null: options[:null], default: options[:default] }.compact]
       end
 
       def parse_money_args(accessor, options = {})

@@ -22,7 +22,7 @@ Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.
 - **Framework:** Minitest via `ActiveSupport::TestCase` (no RSpec), fixtures loaded automatically
 - Dummy Rails app at `test/dummy/` — migrate before running (`rake test` does this); SQLite3 DB at `test/dummy/storage/test.sqlite3`
 - **7** test files in `test/money_attribute/`
-- **98** tests, all passing
+- **97** tests, all passing
 - Dummy app initializer sets `default_currency = 'BRL'` — test expectations assume BRL, not USD
 - Config-mutating tests: use `with_money_attribute_config` (in `rails_test.rb:215`), which saves/restores config and re-registers currencies
 - RuboCop enforces `Minitest/MultipleAssertions: max 4` — warns on 5+ assertions
@@ -46,6 +46,8 @@ Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.
   2. `name == 'amount'` AND `currency` column exists → composite (`amount` + `currency`)
   3. Otherwise → convention (`name_amount` + `name_currency`); raises `ArgumentError` if missing
 - Using `money_attribute` when only a single column exists raises with a hint to use `money_amount`
+- `money_attribute` never uses `type:` top-level option — use `amount: { type: }` instead
+- `money_attribute` never uses `type:` top-level option — use `amount: { type: }` instead
 - Custom currency registration: `MoneyAttribute::Railtie.register_custom_currencies!`
 
 ## Migration helpers
@@ -68,8 +70,15 @@ Two separate helpers — one per storage mode:
 
 `money_amount` naming: column name = accessor (no currency column).
 
-- Default amount type: `:decimal` precision 20, scale 4 (fiat); `type: :crypto_decimal` → `decimal(36,18)`; `type: :fiat_integer` → `bigint`
-- `:integer`/`:bigint` types strip precision/scale
+- Amount column type selected via `type:` option — three values:
+  - `:fiat_decimal` (default) → `decimal(20,4)` — up to ~10 quadrillion units
+  - `:crypto_decimal` → `decimal(36,18)` — up to ~1 quintillion units
+  - `:fiat_integer` → `bigint` — up to ~922 trillion units (subunits)
+- Config-driven via `AMOUNT_CONFIG` hash in `helper.rb`; raw Rails types (`:decimal`, `:bigint`) not accepted directly
+- `:fiat_integer` maps to `bigint`, not `integer`, matching `decimal(20,4)` capacity
+- Precision/scale overrides intentionally dropped — error-prone for crypto
+- Currency column default limit 16, range `4..32`, enforced via `clamp`
+- `parse_money_amount_args` is the shared entry point for both migration helpers
 - Methods are reversible inside `change`
 
 ## Style

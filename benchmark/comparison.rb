@@ -170,31 +170,33 @@ begin
     end
   end
 
-  # ── 4. Query ──────────────────────────────────────────────────
+  # ── 4. Query: aggregate (Money object) ───────────────────────
 
   puts '-' * 60
-  puts 'Query (raw column values — both query the same way)'
+  puts 'Query by aggregate (Money object — tests composed_of / monetize decomposition)'
   puts '-' * 60
 
   Benchmark.bm(40) do |x|
     case BENCH_SIDE
     when 'minting'
-      MintingComposite.create!(price: MONEY)
-      MintingCompositeDecimal.create!(price: MONEY)
-
       x.report('money_attribute (integer column):') do
-        ITERATIONS.times { MintingComposite.find_by(price: MONEY) }
+        ITERATIONS.times do
+          r = MintingComposite.find_by(price: MONEY)
+          r.price == MONEY
+        end
       end
       x.report('money_attribute (decimal column):') do
-        ITERATIONS.times { MintingCompositeDecimal.find_by(price: MONEY) }
+        ITERATIONS.times do
+          r = MintingCompositeDecimal.find_by(price: MONEY)
+          r.price == MONEY
+        end
       end
     when 'money_rails'
-      MoneyRailsComposite.create!(price: MONEY)
-
-      x.report('money-rails (integer cents):') do
+      x.report('money-rails (integer cents, currency):') do
         ITERATIONS.times do
-          MoneyRailsComposite.find_by(price_cents: MONEY,
-                                      price_currency: MONEY.currency)
+          r = MoneyRailsComposite.find_by(price_cents: MONEY.cents,
+                                      price_currency: MONEY.currency.to_s)
+          r.price == MONEY
         end
       end
     end

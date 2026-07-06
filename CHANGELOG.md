@@ -1,9 +1,19 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.0] (2026-07-05)
 
-### Migration helpers
-- **`type:` option for `money_amount` migration helpers** — `money_amount :btc, type: :crypto_decimal` creates `decimal(36,18)`. `money_amount :count, type: :fiat_integer` creates an integer column. `money_amount :price, type: :fiat_decimal` (or omit) creates `decimal(20,4)`. Composite `money_attribute` continues to use `amount: { type: }` — no top-level `type:`.
+### Stable release
+
+After extensive iteration through the 0.x series, MoneyAttribute is now stable at 1.0.0.
+
+- **API frozen** — `money_attribute`, `money_amount`, migration helpers, configuration, and form helpers are stable. No breaking changes planned without a major version bump.
+- **Currency normalization** — Lowercase and mixed-case currency codes in the database (e.g. `'eur'`, `'Eur'`) are now normalized to uppercase (`'EUR'`) on read, preventing `Mint::UnknownCurrency` errors.
+- **Nil currency fallback** — When the currency column is nil in composite mode, the default currency is used instead of raising.
+- **Generator type registration deferred** — `rails g model` support for `money_attribute`/`money_amount` types moved to post-1.0 to avoid monkey-patching Rails internals before the API stabilizes.
+
+### Edge case hardening
+- **Migration helper reversibility** — Added tests for `add_money_attribute` / `add_money_amount` with `:fiat_integer`, `:crypto_decimal`, custom column mappings, and currency limits.
+- **Test count** — 106 tests, 364 assertions, 0 failures.
 
 ## [v0.14.5] (2026-06-29)
 

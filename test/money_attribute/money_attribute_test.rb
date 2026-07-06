@@ -98,4 +98,5 @@ class MoneyAttributeTest < ActiveSupport::TestCase
     assert_equal 'EUR', money.currency.code
     assert_in_delta 12.50, money.amount
   end
+
 end

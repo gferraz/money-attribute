@@ -22,10 +22,10 @@ Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.
 - **Framework:** Minitest via `ActiveSupport::TestCase` (no RSpec), fixtures loaded automatically
 - Dummy Rails app at `test/dummy/` — migrate before running (`rake test` does this); SQLite3 DB at `test/dummy/storage/test.sqlite3`
 - **7** test files in `test/money_attribute/`
-- **97** tests, all passing
+- **106** tests, **364** assertions, all passing
 - Dummy app initializer sets `default_currency = 'BRL'` — test expectations assume BRL, not USD
 - Config-mutating tests: use `with_money_attribute_config` (in `rails_test.rb:215`), which saves/restores config and re-registers currencies
-- RuboCop enforces `Minitest/MultipleAssertions: max 4` — warns on 5+ assertions
+- RuboCop enforces `Minitest/MultipleAssertions: max 4` — warns on 5+ assertions; runs in CI
 - `-rtest_helper.rb` is baked into Rakefile via `t.ruby_opts`
 
 ## Gotchas
@@ -91,5 +91,5 @@ Two separate helpers — one per storage mode:
 
 ## Dependencies
 
-- Ruby >= 3.3 (`.tool-versions`: 4.0.5), Rails >= 7.1.3.2, minting >= 1.9.0
-- CI tests Ruby 3.3, 3.4, 4.0 (GitHub Actions, `bundler-cache: true`)
+- Ruby >= 3.3 (`.tool-versions`: 4.0.5), Rails >= 7.1.3.2, minting >= 2.0.0
+- CI tests Ruby 3.3, 3.4, 4.0 (GitHub Actions, `bundler-cache: true`; RuboCop runs in CI)

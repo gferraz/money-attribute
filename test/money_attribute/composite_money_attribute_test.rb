@@ -114,4 +114,12 @@ class CompositeMoneyAttributeTest < ActiveSupport::TestCase
     assert_equal 19, offer.price_amount
     assert_equal 'EUR', offer.price_currency
   end
+
+  test 'nil currency falls back to default currency' do
+    offer = Offer.new(price_amount: 10, price_currency: nil)
+
+    assert_equal MoneyAttribute.default_currency, offer.price.currency
+    assert_equal 10, offer.price.amount
+  end
+
 end

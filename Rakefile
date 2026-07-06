@@ -43,6 +43,6 @@ task :bench do
 end
 
 desc 'Generate consolidated benchmark report (markdown)'
-task :bench_report do
+task 'bench:report' do
   ruby 'benchmark/report.rb'
 end

@@ -164,6 +164,51 @@ begin
     end
   end
 
+  # ── 2b. Update existing record ──────────────────────────────────
+
+  puts '-' * 60
+  puts 'Update existing record (write path without record creation overhead)'
+  puts '-' * 60
+
+  update_records = {}
+  MODELS.each do |label, model|
+    update_records[label] = model.create!(price: MONEY)
+  end
+
+  Benchmark.bm(40) do |x|
+    MODELS.each do |label, model|
+      record = model.find(update_records[label].id)
+      money_b = Mint::Money.from(AMOUNT + 1, CURRENCY_CODE) if BENCH_SIDE == 'minting'
+      money_b = Money.from_amount(AMOUNT + 1, CURRENCY_CODE) if BENCH_SIDE == 'money_rails'
+
+      x.report(label) do
+        ITERATIONS.times do |i|
+          record.update!(price: i.even? ? MONEY : money_b)
+        end
+      end
+    end
+  end
+
+  # ── 2c. Setter only (no DB write) ───────────────────────────────
+
+  puts '-' * 60
+  puts 'Setter only (record.price = MONEY — isolates conversion cost)'
+  puts '-' * 60
+
+  setter_records = {}
+  MODELS.each do |label, model|
+    setter_records[label] = model.create!(price: MONEY)
+  end
+
+  Benchmark.bm(40) do |x|
+    MODELS.each do |label, model|
+      record = model.find(setter_records[label].id)
+      x.report(label) do
+        ITERATIONS.times { record.price = MONEY }
+      end
+    end
+  end
+
   # ── 3. Read after reload ──────────────────────────────────────
 
   puts '-' * 60
@@ -412,40 +457,80 @@ begin
   end
   puts
 
-  # ── Mass insert ─────────────────────────────────────────────────
+  # ── Scaling ───────────────────────────────────────────────────────
 
   puts
   puts '─' * 60
-  puts "Mass insert (#{NUM_RECORDS} records in transaction, Money through setter)"
+  puts 'Scaling: mass insert and bulk update at various batch sizes'
   puts '─' * 60
+
+  BATCH_SIZES = [100, 500, 1000, 2000].freeze
 
   case BENCH_SIDE
   when 'minting'
-    mass_minting_composite = Benchmark.measure do
-      MintingComposite.transaction do
-        NUM_RECORDS.times { MintingComposite.create!(price: MONEY) }
-      end
-    end
-    mass_minting_composite_decimal = Benchmark.measure do
-      MintingCompositeDecimal.transaction do
-        NUM_RECORDS.times { MintingCompositeDecimal.create!(price: MONEY) }
-      end
-    end
+    puts
+    puts format('%-8s %-18s %-18s %-18s %-18s', 'size', 'int insert', 'int update', 'dec insert', 'dec update')
 
-    puts format('%-40s %10s', 'money_attribute (integer column):',
-                "#{mass_minting_composite.real.round(4)}s")
-    puts format('%-40s %10s', 'money_attribute (decimal column):',
-                "#{mass_minting_composite_decimal.real.round(4)}s")
+    BATCH_SIZES.each do |n|
+      records_i = n.times.map { MintingComposite.new(price: MONEY) }
+
+      t_ins_i = Benchmark.measure do
+        MintingComposite.transaction { records_i.each(&:save!) }
+      end
+
+      ids_i = records_i.map(&:id)
+      bu_b = Mint::Money.from(AMOUNT + 1, CURRENCY_CODE)
+      t_up_i = Benchmark.measure do
+        MintingComposite.update(ids_i, ids_i.each_with_index.map { |id, i|
+          {price: i.even? ? MONEY : bu_b}
+        })
+      end
+
+      MintingComposite.delete_all
+
+      records_d = n.times.map { MintingCompositeDecimal.new(price: MONEY) }
+
+      t_ins_d = Benchmark.measure do
+        MintingCompositeDecimal.transaction { records_d.each(&:save!) }
+      end
+
+      ids_d = records_d.map(&:id)
+      t_up_d = Benchmark.measure do
+        MintingCompositeDecimal.update(ids_d, ids_d.each_with_index.map { |id, i|
+          {price: i.even? ? MONEY : bu_b}
+        })
+      end
+
+      MintingCompositeDecimal.delete_all
+
+      puts format('%-8s %-18s %-18s %-18s %-18s',
+                  "#{n}:", "#{t_ins_i.real.round(4)}s", "#{t_up_i.real.round(4)}s",
+                  "#{t_ins_d.real.round(4)}s", "#{t_up_d.real.round(4)}s")
+    end
 
   when 'money_rails'
-    mass_money_rails_composite = Benchmark.measure do
-      MoneyRailsComposite.transaction do
-        NUM_RECORDS.times { MoneyRailsComposite.create!(price: MONEY) }
-      end
-    end
+    puts
+    puts format('%-8s %-18s %-18s', 'size', 'mr insert', 'mr update')
 
-    puts format('%-40s %10s', 'money-rails (integer cents):',
-                "#{mass_money_rails_composite.real.round(4)}s")
+    BATCH_SIZES.each do |n|
+      records = n.times.map { MoneyRailsComposite.new(price: MONEY) }
+
+      t_ins = Benchmark.measure do
+        MoneyRailsComposite.transaction { records.each(&:save!) }
+      end
+
+      ids = records.map(&:id)
+      bu_b = Money.from_amount(AMOUNT + 1, CURRENCY_CODE)
+      t_up = Benchmark.measure do
+        MoneyRailsComposite.update(ids, ids.each_with_index.map { |id, i|
+          {price: i.even? ? MONEY : bu_b}
+        })
+      end
+
+      MoneyRailsComposite.delete_all
+
+      puts format('%-8s %-18s %-18s', "#{n}:", "#{t_ins.real.round(4)}s", "#{t_up.real.round(4)}s")
+    end
   end
 
 # ── Cleanup ─────────────────────────────────────────────────────

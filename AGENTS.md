@@ -32,17 +32,40 @@ Key findings (integer column, 5000 iters unless noted):
 
 | Test | money_attribute | money-rails | ratio |
 |---|---|---|---|
-| Instantiation | 0.044s | 0.047s | **0.9×** |
-| Create+save | 0.684s | 0.990s | **0.7×** |
-| Read cached | 0.001s | 0.018s | **18×** |
-| Query raw columns | 0.197s | 0.218s | **0.9×** |
-| SQL generation | 0.182s | 0.194s | **0.9×** |
-| Multi-record (100×1000) | 0.550s | 0.816s | **0.7×** |
-| Repeated access | 0.0005s | 0.016s | **35×** |
+| Instantiation | 0.041s | 0.045s | **0.9×** |
+| Create+save | 0.664s | 1.015s | **0.7×** |
+| Update existing (2 values) | 0.684s | 0.981s | **0.7×** |
+| Setter only | 0.009s | 0.014s | **0.6×** |
+| Read cached | 0.0005s | 0.018s | **38×** |
+| Query raw columns | 0.200s | 0.212s | **0.9×** |
+| SQL generation | 0.189s | 0.243s | **0.8×** |
+| Multi-record (100×1000) | 0.588s | 0.923s | **0.6×** |
+| Repeated access | 0.0005s | 0.017s | **34×** |
 | Allocations (×5000) | 2 | 75,002 | — |
-| Mass insert (1000 recs) | 0.090s | 0.213s | **0.4×** |
 
-money_attribute's main advantages: **zero-allocation caching** (35× reader speed), **2.3× faster bulk writes**, support for **Money-object queries** via composed_of decomposition (money-rails cannot decompose `Money` in WHERE clauses).
+### Scaling (mass insert and bulk update)
+
+Ratio stays constant across all batch sizes — overhead is purely per-record, not per-batch.
+
+**Mass insert (records × 1 transaction):**
+
+| Size | money_attribute int | money_attribute dec | money-rails | ratio |
+|---|---|---|---|---|
+| 100 | 0.008s | 0.009s | 0.014s | **0.6×** |
+| 500 | 0.039s | 0.041s | 0.073s | **0.5×** |
+| 1000 | 0.076s | 0.081s | 0.135s | **0.6×** |
+| 2000 | 0.157s | 0.169s | 0.278s | **0.6×** |
+
+**Bulk update (Model.update, N records, alternating values):**
+
+| Size | money_attribute int | money_attribute dec | money-rails | ratio |
+|---|---|---|---|---|
+| 100 | 0.013s | 0.014s | 0.021s | **0.6×** |
+| 500 | 0.080s | 0.073s | 0.111s | **0.7×** |
+| 1000 | 0.145s | 0.145s | 0.207s | **0.7×** |
+| 2000 | 0.285s | 0.295s | 0.419s | **0.7×** |
+
+money_attribute's main advantages: **zero-allocation caching** (34-38× reader speed), **1.7× faster inserts**, **1.4× faster bulk updates**, support for **Money-object queries** via composed_of decomposition (money-rails cannot decompose `Money` in WHERE clauses).
 
 ## Tests
 

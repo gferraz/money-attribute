@@ -6,7 +6,6 @@
 # Run: bundle exec ruby benchmark/report.rb
 
 require 'open3'
-require 'json'
 require 'fileutils'
 require 'bundler/setup'
 require 'rails'
@@ -37,40 +36,59 @@ def run_side(side)
 end
 
 # Parse Benchmark.bm lines: 3+ space-separated columns ending with (real)
-# Example:
-#   money_attribute  (single integer):         0.006135   0.000122   0.006257 (  0.006265)
 BM_RE = /^\s*(.+?):\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+\(\s*([\d.]+)\)\s*$/
 
-# Parse mass-insert lines:
-#   money_attribute (single integer):           0.0295s
-MASS_RE = /^\s*(.+?):?\s+([\d.]+)s\s*$/
-
 # Parse allocation lines:
-#   money_attribute (comp integer) allocated:          2
 ALLOC_RE = /^\s*(.+?) allocated:\s+(\d+)\s*$/
 
 # Parse identity lines:
-#   money_attribute composite int same object? true
 IDENTITY_RE = /^\s*(.+?)\s+same object\?\s+(true|false)\s*$/
+
+# Parse scaling lines (minting side: 4 values + label):
+#   100:     0.0081s            0.0126s            0.0092s            0.0136s
+SCALING_MINT_RE = /^\s*(\d+):\s+([\d.]+)s\s+([\d.]+)s\s+([\d.]+)s\s+([\d.]+)s\s*$/
+
+# Parse scaling lines (money_rails side: 2 values + label):
+#   100:     0.0135s            0.021s
+SCALING_MR_RE = /^\s*(\d+):\s+([\d.]+)s\s+([\d.]+)s\s*$/
 
 SECTION_HEADERS = {
   /Instantiation/ => :instantiation,
   /Create \+ save/ => :create_save,
+  /Update existing/ => :update_existing,
+  /Setter only/ => :setter_only,
   /Read Money attribute/ => :read,
-  /Query/ => :query,
+  /Query by raw columns/ => :query_raw,
+  /Query by Money object/ => :query_money_object,
+  /SQL generation/ => :sql_gen,
+  /multi-record/ => :multi_record,
   /Arithmetic/ => :arithmetic,
-  /Repeated access|Repeated read|caching/ => :caching,
-  /Mass insert/ => :mass_insert
+  /Repeated access|caching/ => :caching,
+  /Scaling/ => :scaling
 }.freeze
 
 def parse_output(text)
-  data = { bm: {}, mass: {}, alloc: {}, identity: {} }
+  data = { bm: {}, mass: {}, alloc: {}, identity: {}, scaling: { insert: [], update: [] } }
   current_section = nil
+  in_scaling = false
 
   text.each_line do |line|
+    if SECTION_HEADERS.any? { |re, _| line.match?(re) }
+      SECTION_HEADERS.each do |re, section|
+        if line.match?(re)
+          current_section = section
+          in_scaling = (section == :scaling)
+          break
+        end
+      end
+      next
+    end
+
     case line
 
     when BM_RE
+      next if in_scaling
+
       label = Regexp.last_match(1).strip
       data[:bm][current_section] ||= {}
       data[:bm][current_section][label] = {
@@ -80,44 +98,65 @@ def parse_output(text)
         real: Regexp.last_match(5).to_f
       }
 
-    when MASS_RE
-      data[:mass][Regexp.last_match(1).strip] = Regexp.last_match(2).to_f
+    when SCALING_MINT_RE
+      size = Regexp.last_match(1).to_i
+      data[:scaling][:insert] << { size: size, int: Regexp.last_match(2).to_f, dec: Regexp.last_match(4).to_f }
+      data[:scaling][:update] << { size: size, int: Regexp.last_match(3).to_f, dec: Regexp.last_match(5).to_f }
+
+    when SCALING_MR_RE
+      next unless in_scaling
+
+      size = Regexp.last_match(1).to_i
+      data[:scaling][:insert] << { size: size, mr: Regexp.last_match(2).to_f }
+      data[:scaling][:update] << { size: size, mr: Regexp.last_match(3).to_f }
 
     when ALLOC_RE
       data[:alloc][Regexp.last_match(1).strip] = Regexp.last_match(2).to_i
 
     when IDENTITY_RE
       data[:identity][Regexp.last_match(1).strip] = Regexp.last_match(2) == 'true'
-
-    else
-      SECTION_HEADERS.each do |re, section|
-        if line.match?(re)
-          current_section = section
-          break
-        end
-      end
     end
   end
 
   data
 end
 
-def compare_val(a, b)
-  return '—' if a.nil? || b.nil?
-  return '—' if b.zero?
+def ratio(a, b)
+  return nil if a.nil? || b.nil? || b.zero?
 
-  ratio = a / b
-  if ratio > 1
-    "#{ratio.round(2)}× slower"
-  else
-    "#{(1 / ratio).round(2)}× faster"
-  end
+  a < b ? format('%.1f× faster', b / a) : format('%.1f× slower', a / b)
 end
 
 def fmt(val)
   return '—' unless val
 
   format('%.5f', val)
+end
+
+def fmt2(val)
+  return '—' unless val
+
+  format('%.4f', val)
+end
+
+def bm_val(data, section, label)
+  data.dig(:bm, section, label, :real)
+end
+
+def section_table(data_mint, data_mr, section, title, int_label, dec_label, mr_label)
+  m_i = bm_val(data_mint, section, int_label)
+  m_d = dec_label ? bm_val(data_mint, section, dec_label) : nil
+  r   = mr_label ? bm_val(data_mr, section, mr_label) : nil
+  comp = ratio(m_i, r)
+  comp_d = dec_label ? ratio(m_d, r) : nil
+
+  report = +""
+  report << "## #{title}\n\n"
+  report << "| Variant | money_attribute (int) | money_attribute (dec) | money-rails | Comparison |\n"
+  report << "|---|---|---|---|---|\n"
+  report << "| integer column | #{fmt(m_i)} | #{fmt(m_d)} | #{fmt(r)} | #{comp} |\n"
+  report << "\n"
+  report
 end
 
 puts 'Running money_attribute benchmark...'
@@ -134,104 +173,114 @@ puts "\nGenerating report..."
 
 report = +''
 report << "# Benchmark Report: money_attribute vs money-rails\n\n"
-report << "Run at: #{Time.zone.now.strftime('%Y-%m-%d %H:%M:%S')}\n"
+report << "Run at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}\n"
 report << "Ruby #{RUBY_VERSION}, Rails #{Rails::VERSION::STRING}\n\n"
 
-report << "## Instantiation (passing Money object to setter)\n\n"
-report << "| Variant | minting (s) | money-rails (s) | Comparison |\n"
-report << "|---|---|---|---|\n"
+INT  = 'money_attribute (integer column)'.freeze
+DEC  = 'money_attribute (decimal column)'.freeze
+MR   = 'money-rails (integer cents)'.freeze
+MRQ  = 'money-rails (integer cents, currency)'.freeze
 
-rows = [
-  ['single integer', 'money_attribute  (single integer)', 'money-rails   (single integer)'],
-  ['single decimal', 'money_attribute  (single decimal)', nil],
-  ['comp integer',   'money_attribute  (comp integer)',   'money-rails   (comp integer)'],
-  ['comp decimal',   'money_attribute  (comp decimal)',   nil]
-]
-rows.each do |variant, mint_label, rails_label|
-  m = minting[:bm][:instantiation][mint_label]
-  r = rails[:bm][:instantiation][rails_label] if rails_label
-  comp = compare_val(m&.dig(:real), r&.dig(:real))
-  report << "| #{variant} | #{fmt(m&.dig(:real))} | #{fmt(r&.dig(:real))} | #{comp} |\n"
-end
+# 1. Instantiation
+report << section_table(minting, rails, :instantiation, 'Instantiation', INT, DEC, MR)
 
-report << "\n## Create + save individual (Money through setter)\n\n"
-report << "| Variant | minting (s) | money-rails (s) | Comparison |\n"
-report << "|---|---|---|---|\n"
+# 2. Create + save
+report << section_table(minting, rails, :create_save, 'Create + save', INT, DEC, MR)
 
-rows.each do |variant, mint_label, rails_label|
-  m = minting[:bm][:create_save][mint_label]
-  r = rails[:bm][:create_save][rails_label] if rails_label
-  comp = compare_val(m&.dig(:real), r&.dig(:real))
-  report << "| #{variant} | #{fmt(m&.dig(:real))} | #{fmt(r&.dig(:real))} | #{comp} |\n"
-end
+# 3. Update existing
+report << section_table(minting, rails, :update_existing, 'Update existing record', INT, DEC, MR)
 
-report << "\n## Read Money attribute from persisted record\n\n"
-report << "| Variant | minting (s) | money-rails (s) | Comparison |\n"
-report << "|---|---|---|---|\n"
+# 4. Setter only
+report << section_table(minting, rails, :setter_only, 'Setter only (no DB write)', INT, DEC, MR)
 
-rows.each do |variant, mint_label, rails_label|
-  m = minting[:bm][:read][mint_label]
-  r = rails[:bm][:read][rails_label] if rails_label
-  comp = compare_val(m&.dig(:real), r&.dig(:real))
-  report << "| #{variant} | #{fmt(m&.dig(:real))} | #{fmt(r&.dig(:real))} | #{comp} |\n"
-end
+# 5. Read cached
+report << section_table(minting, rails, :read, 'Read from cached record', INT, DEC, MR)
 
-report << "\n## Query (raw column values)\n\n"
-report << "| Variant | minting (s) | money-rails (s) | Comparison |\n"
-report << "|---|---|---|---|\n"
+# 6. Query raw columns
+report << section_table(minting, rails, :query_raw, 'Query by raw columns', INT, DEC, MRQ)
 
-rows.each do |variant, mint_label, rails_label|
-  m = minting[:bm][:query][mint_label]
-  r = rails[:bm][:query][rails_label] if rails_label
-  comp = compare_val(m&.dig(:real), r&.dig(:real))
-  report << "| #{variant} | #{fmt(m&.dig(:real))} | #{fmt(r&.dig(:real))} | #{comp} |\n"
-end
-
-report << "\n## Arithmetic (add two money attributes)\n\n"
-report << "Only money_attribute has decimal-amount arithmetic; money-rails stores cents (integer).\n\n"
-report << "| Variant | minting (s) |\n"
+# 7. Query Money object (money_attribute only)
+m_val_obj_i = bm_val(minting, :query_money_object, INT)
+m_val_obj_d = bm_val(minting, :query_money_object, DEC)
+report << "## Query by Money object (composed_of decomposition)\n\n"
+report << "Only money_attribute supports this — money-rails cannot decompose `Money` in WHERE clauses.\n\n"
+report << "| Variant | money_attribute |\n"
 report << "|---|---|\n"
-report << "| single integer | #{fmt(minting[:bm][:arithmetic]['money_attribute  (single integer)']&.dig(:real))} |\n"
+report << "| integer column | #{fmt(m_val_obj_i)} |\n"
+report << "| decimal column | #{fmt(m_val_obj_d)} |\n\n"
 
-report << "\n## Repeated access (caching demonstration)\n\n"
-report << "| Property | money_attribute | money-rails |\n"
-report << "|---|---|---|\n"
-report << "| composite int same object? | #{minting[:identity]['money_attribute composite int']} | #{rails[:identity]['money-rails   composite int']} |\n"
-report << "| composite dec same object? | #{minting[:identity]['money_attribute composite dec']} | — |\n"
-report << "| Repeated read (real, s) | #{fmt(minting[:bm][:caching]['money_attribute  (comp integer)']&.dig(:real))} | #{fmt(rails[:bm][:caching]['money-rails   (comp integer)']&.dig(:real))} |\n"
-report << "| Repeated read decimal (real, s) | #{fmt(minting[:bm][:caching]['money_attribute  (comp decimal)']&.dig(:real))} | — |\n"
+# 8. SQL generation
+report << section_table(minting, rails, :sql_gen, 'SQL generation (.to_sql)', INT, DEC, MRQ)
 
-alloc_mint_int = minting[:alloc]['money_attribute (comp integer)']
-alloc_mint_dec = minting[:alloc]['money_attribute (comp decimal)']
-alloc_rails    = rails[:alloc]['money-rails (comp integer)']
-report << "| Objects allocated per read | #{alloc_mint_int} | #{alloc_rails} |\n"
-report << "| Objects allocated per read (decimal) | #{alloc_mint_dec} | — |\n"
+# 9. Multi-record query
+report << section_table(minting, rails, :multi_record, 'Multi-record query (100 records × 1000 iters)', INT, DEC, MR)
 
-report << "\n## Mass insert (100 records in transaction)\n\n"
-report << "| Variant | minting (s) | money-rails (s) | Comparison |\n"
+# 10. Arithmetic
+m_arith = bm_val(minting, :arithmetic, INT)
+report << "## Arithmetic\n\n"
+report << "| Variant | money_attribute |\n"
+report << "|---|---|\n"
+report << "| integer column | #{fmt(m_arith)} |\n\n"
+
+# 11. Caching
+m_int_same = minting.dig(:identity, 'money_attribute composite int')
+m_dec_same = minting.dig(:identity, 'money_attribute composite dec')
+mr_same    = rails.dig(:identity, 'money-rails composite int')
+m_cache_i  = bm_val(minting, :caching, INT)
+m_cache_d  = bm_val(minting, :caching, DEC)
+mr_cache   = bm_val(rails, :caching, MR)
+m_alloc_i  = minting.dig(:alloc, 'money_attribute (integer column)')
+m_alloc_d  = minting.dig(:alloc, 'money_attribute (decimal column)')
+mr_alloc   = rails.dig(:alloc, 'money-rails (integer cents)')
+
+report << "## Caching\n\n"
+report << "| Property | money_attribute (int) | money_attribute (dec) | money-rails |\n"
 report << "|---|---|---|---|\n"
+report << "| Same object on repeated read? | #{m_int_same} | #{m_dec_same} | #{mr_same} |\n"
+report << "| Repeated read ×5000 | #{fmt(m_cache_i)} | #{fmt(m_cache_d)} | #{fmt(mr_cache)} |\n"
+report << "| Objects allocated (×5000 reads) | #{m_alloc_i} | #{m_alloc_d} | #{mr_alloc} |\n\n"
 
-mass_rows = [
-  ['single integer', 'money_attribute (single integer)', 'money-rails  (single integer)'],
-  ['single decimal', 'money_attribute (single decimal)', nil],
-  ['comp integer',   'money_attribute (comp integer)',   'money-rails  (comp integer)'],
-  ['comp decimal',   'money_attribute (comp decimal)',   nil]
-]
-mass_rows.each do |variant, mint_label, rails_label|
-  m = minting[:mass][mint_label]
-  r = rails[:mass][rails_label] if rails_label
-  comp = compare_val(m, r)
-  report << "| #{variant} | #{fmt(m)} | #{fmt(r)} | #{comp} |\n"
+# 12. Scaling
+mint_ins = minting.dig(:scaling, :insert) || []
+mint_up  = minting.dig(:scaling, :update) || []
+mr_ins   = rails.dig(:scaling, :insert) || []
+mr_up    = rails.dig(:scaling, :update) || []
+
+report << "## Scaling: Mass insert\n\n"
+report << "| Size | money_attribute (int) | money_attribute (dec) | money-rails | ratio (int) |\n"
+report << "|---|---|---|---|---|\n"
+
+mint_ins.each do |row|
+  fmt_mi = fmt2(row[:int])
+  fmt_md = fmt2(row[:dec])
+  mr_row = mr_ins.find { |r| r[:size] == row[:size] }
+  fmt_mr = mr_row ? fmt2(mr_row[:mr]) : '—'
+  r = row[:int] && mr_row&.dig(:mr) ? ratio(row[:int], mr_row[:mr]) : '—'
+  report << "| #{row[:size]} | #{fmt_mi} | #{fmt_md} | #{fmt_mr} | #{r} |\n"
 end
 
+report << "\n## Scaling: Bulk update\n\n"
+report << "| Size | money_attribute (int) | money_attribute (dec) | money-rails | ratio (int) |\n"
+report << "|---|---|---|---|---|\n"
+
+mint_up.each do |row|
+  fmt_mi = fmt2(row[:int])
+  fmt_md = fmt2(row[:dec])
+  mr_row = mr_up.find { |r| r[:size] == row[:size] }
+  fmt_mr = mr_row ? fmt2(mr_row[:mr]) : '—'
+  r = row[:int] && mr_row&.dig(:mr) ? ratio(row[:int], mr_row[:mr]) : '—'
+  report << "| #{row[:size]} | #{fmt_mi} | #{fmt_md} | #{fmt_mr} | #{r} |\n"
+end
+
+# Environment
 report << "\n## Environment\n\n"
 report << "- Ruby: #{RUBY_VERSION}\n"
 report << "- Rails: #{Rails::VERSION::STRING}\n"
 report << "- SQLite3\n"
-report << "- Iterations per test: 5.000\n"
-report << "- Records for mass insert: 1.000\n"
+report << "- 5000 iterations per test (unless noted)\n"
 report << "- Both sides pass a Money object through the attribute setter\n"
 report << "- Each side runs in a separate process (no gem conflict)\n"
+report << "- Minimal environment (no full Rails app boot)\n"
 
 report_path = File.join(RESULTS_DIR, 'benchmark_report.md')
 File.write(report_path, report)

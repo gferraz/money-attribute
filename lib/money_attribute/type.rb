@@ -49,7 +49,6 @@ module MoneyAttribute
         value.to_d
       end
     end
-
   end
 end
 

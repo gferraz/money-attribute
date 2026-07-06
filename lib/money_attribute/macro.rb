@@ -43,17 +43,19 @@ module MoneyAttribute
       def money_constructor_for(amount_column)
         default = MoneyAttribute.default_currency
         if integer_column?(amount_column)
-          lambda { |amount, currency|
-            return nil if amount.nil?
+          lambda do |amount, currency|
+            next nil if amount.nil?
 
-            Mint::Money.from_subunits(amount, currency.presence || default)
-          }
+            resolved = Mint::Currency.resolve(currency.presence || default) || 'XXX'
+            Mint::Money.from_subunits(amount, resolved)
+          end
         else
-          lambda { |amount, currency|
-            return nil if amount.nil?
+          lambda do |amount, currency|
+            next nil if amount.nil?
 
-            Mint::Money.from(amount, currency.presence || default)
-          }
+            resolved = Mint::Currency.resolve(currency.presence || default) || 'XXX'
+            Mint::Money.from(amount, resolved)
+          end
         end
       end
 

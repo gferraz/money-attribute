@@ -49,11 +49,17 @@ class MoneyAttributeTest < ActiveSupport::TestCase
   test 'parse keeps money values unchanged' do # rubocop:disable Minitest/MultipleAssertions
     converter = MoneyAttribute::Converter.new('USD')
 
-    assert_equal 23.euros, converter.call('+23.00', 'EUR')
-    assert_equal 23.euros, converter.call(23, 'EUR')
+    assert_equal 23.dollars, converter.call('+23.00')
+    assert_equal 23.dollars, converter.call(23)
     assert_equal(-25.34.dollars, converter.call('-25.34'))
     assert_equal(-29.33.euros, converter.call('-29.33 EUR'))
-    assert_nil MoneyAttribute::Converter.new.call(nil, 'USD')
+    assert_nil MoneyAttribute::Converter.new.call(nil)
+  end
+
+  test 'converter returns nil for nil amount even with valid currency' do
+    converter = MoneyAttribute::Converter.new('USD')
+
+    assert_nil converter.call(nil)
   end
 
   test 'Numeric#to_money without currency uses default' do
@@ -98,5 +104,4 @@ class MoneyAttributeTest < ActiveSupport::TestCase
     assert_equal 'EUR', money.currency.code
     assert_in_delta 12.50, money.amount
   end
-
 end

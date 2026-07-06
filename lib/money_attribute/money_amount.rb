@@ -14,7 +14,7 @@ module MoneyAttribute
         currency = ::Mint::Currency.resolve!(currency)
         column_type = detect_column_type(name)
 
-        attribute(name.to_sym, :mint_money, currency:, column_type:)
+        attribute(name.to_sym, MoneyAttribute::Type.new(currency:, column_type:))
         normalizes(name.to_sym, with: Converter.new(currency))
       end
 

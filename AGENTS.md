@@ -30,7 +30,7 @@ Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.
 
 ## Gotchas
 
-1. **AR type key is `:mint_money`, not `:money`.** Despite the rebrand plan (`REBRAND.md` listed `:money`), `type.rb:59` and `macro.rb:83` still use the old key.
+1. **No AR type key registered.** `money_amount` passes a `MoneyAttribute::Type` instance directly to `attribute()` — no global `:mint_money` registration. The old `:money` key was dropped during rebranding due to PostgreSQL adapter conflicts.
 2. **Converter plays two roles.** `MoneyAttribute::Converter` is passed as `:converter` to `composed_of` (composite path) and as the normalizer block to `normalizes` (single-column path).
 3. **Schema has mixed column types.** `financial_transactions.amount` is integer (subunits), `price_amount`/`total_amount` are decimal (unit value). Query expectations differ.
 4. **Form builder helpers render unbound `<input>` tags** (not form-builder-bound fields). `money_field` → text with `to_fs(:currency)`; `money_amount_field` → number with raw decimal.
@@ -39,7 +39,7 @@ Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.
 
 - **Entry point:** `lib/money_attribute.rb` requires all components in dependency order
 - **Two explicit helpers** (no auto-detect — the method name declares the mode):
-  1. `money_amount :price, currency: 'USD'` — **single-column fixed-currency.** Stores amount in one column (`price`). Uses `ActiveRecord::Type` subclass `MoneyAttribute::Type` (registered as `:mint_money`) + `normalizes`. Currency never changes per row.
+  1. `money_amount :price, currency: 'USD'` — **single-column fixed-currency.** Stores amount in one column (`price`). Uses `ActiveRecord::Type` subclass `MoneyAttribute::Type` + `normalizes`. Currency never changes per row.
   2. `money_attribute :price` — **composite amount+currency.** Two DB columns (`price_amount` + `price_currency` or custom via `mapping:`). Per-row currency via `composed_of` + `Converter`. Integer/bigint → subunits, decimal → unit value.
 - **Column resolution** for `money_attribute` (composite only, checked after `mapping:`):
   1. `name_currency` column exists AND `name` column exists → composite (`name` + `name_currency`)

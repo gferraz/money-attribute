@@ -10,9 +10,10 @@ module MoneyAttribute
     end
 
     def cast(value)
-      case value
-      when String then Mint::Money.parse(value, @currency)
-      else             super
+      if value.is_a?(String)
+        Mint::Money.parse(value, @currency)
+      else
+        super
       end
     end
 
@@ -49,13 +50,10 @@ module MoneyAttribute
       end
     end
 
-    def self.type = :mint_money
   end
 end
 
 ActiveSupport.on_load(:active_record) do
   include MoneyAttribute::Macro
   include MoneyAttribute::MoneyAmount
-
-  ActiveRecord::Type.register(:mint_money, MoneyAttribute::Type)
 end

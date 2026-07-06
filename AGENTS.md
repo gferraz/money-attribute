@@ -11,7 +11,7 @@ bundle exec rake           # run tests only (default task, no migration)
 bundle exec rake test      # migrate test DB + run tests
 bundle exec rake test_run  # run tests only (same as default)
 bundle exec rake test_db_migrate  # migrate test DB only
-bundle exec rake bench     # money_attribute vs money-rails benchmark
+bundle exec rake bench     # money_attribute vs money-rails benchmark (money-rails side uses Gemfile.benchmark to avoid gem conflict)
 bundle exec rubocop        # lint (commented out in CI, but run manually)
 ```
 

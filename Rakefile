@@ -25,7 +25,7 @@ desc 'Run tests (migrates test DB first)'
 task test: %i[test_db_migrate test_run]
 
 desc 'Run money_attribute vs money-rails benchmark'
-task bench: :environment do
+task :bench do
   puts
   puts '=' * 80
   puts 'money_attribute (minting gem)'
@@ -37,11 +37,12 @@ task bench: :environment do
   puts '=' * 80
   puts 'money-rails (money gem)'
   puts '=' * 80
-  sh({ 'RAILS_ENV' => 'test', 'BENCH_SIDE' => 'money_rails' },
+  sh({ 'RAILS_ENV' => 'test', 'BENCH_SIDE' => 'money_rails',
+      'BUNDLE_GEMFILE' => 'Gemfile.benchmark' },
      'bundle', 'exec', 'ruby', 'benchmark/comparison.rb')
 end
 
 desc 'Generate consolidated benchmark report (markdown)'
-task bench_report: :environment do
+task :bench_report do
   ruby 'benchmark/report.rb'
 end

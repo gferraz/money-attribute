@@ -12,15 +12,27 @@
 ENV['RAILS_ENV'] = 'test'
 
 require 'bundler/setup'
-require_relative '../test/dummy/config/environment'
 require 'benchmark'
 
 BENCH_SIDE = ENV.fetch('BENCH_SIDE', 'minting')
 
 case BENCH_SIDE
 when 'minting'
-  # Money_attribute uses the minting gem — no money-rails loaded here.
+  require_relative '../test/dummy/config/environment'
 when 'money_rails'
+  require 'active_record'
+  require 'sqlite3'
+
+  db_path = File.expand_path('../test/dummy/storage/test.sqlite3', __dir__)
+  ActiveRecord::Base.establish_connection(
+    adapter: 'sqlite3',
+    database: db_path
+  )
+
+  class ApplicationRecord < ActiveRecord::Base
+    primary_abstract_class
+  end
+
   require 'money-rails'
   MoneyRails::Hooks.init
 else
@@ -131,7 +143,7 @@ begin
 
   puts '=' * 80
   puts HEADER
-  puts "Ruby #{RUBY_VERSION}, Rails #{Rails.version}, SQLite3"
+  puts "Ruby #{RUBY_VERSION}, Rails #{Gem.loaded_specs['rails']&.version || '?'}, SQLite3"
   puts "#{ITERATIONS} iterations per test, #{NUM_RECORDS} records for mass insert"
   puts '=' * 80
   puts

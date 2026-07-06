@@ -18,8 +18,22 @@ BENCH_SIDE = ENV.fetch('BENCH_SIDE', 'minting')
 
 case BENCH_SIDE
 when 'minting'
-  require_relative '../test/dummy/config/environment'
+  require 'rails'
+  require 'active_record'
+  require 'sqlite3'
+  require 'money_attribute'
+
+  db_path = File.expand_path('../test/dummy/storage/test.sqlite3', __dir__)
+  ActiveRecord::Base.establish_connection(
+    adapter: 'sqlite3',
+    database: db_path
+  )
+
+  class ApplicationRecord < ActiveRecord::Base
+    primary_abstract_class
+  end
 when 'money_rails'
+  require 'rails'
   require 'active_record'
   require 'sqlite3'
 
@@ -170,10 +184,10 @@ begin
     end
   end
 
-  # ── 4. Query: aggregate (Money object) ───────────────────────
+  # ── 4. Query: raw columns (fair comparison) ──────────────────
 
   puts '-' * 60
-  puts 'Query by aggregate (Money object — tests composed_of / monetize decomposition)'
+  puts 'Query by raw columns (fair — both sides use column values)'
   puts '-' * 60
 
   Benchmark.bm(40) do |x|
@@ -181,28 +195,146 @@ begin
     when 'minting'
       x.report('money_attribute (integer column):') do
         ITERATIONS.times do
-          r = MintingComposite.find_by(price: MONEY)
-          r.price == MONEY
+          MintingComposite.find_by(
+            price_amount: MONEY.subunits,
+            price_currency: MONEY.currency_code
+          )
         end
       end
       x.report('money_attribute (decimal column):') do
         ITERATIONS.times do
-          r = MintingCompositeDecimal.find_by(price: MONEY)
-          r.price == MONEY
+          MintingCompositeDecimal.find_by(
+            price_amount: MONEY.amount,
+            price_currency: MONEY.currency_code
+          )
         end
       end
     when 'money_rails'
       x.report('money-rails (integer cents, currency):') do
         ITERATIONS.times do
-          r = MoneyRailsComposite.find_by(price_cents: MONEY.cents,
-                                      price_currency: MONEY.currency.to_s)
-          r.price == MONEY
+          MoneyRailsComposite.find_by(
+            price_cents: MONEY.cents,
+            price_currency: MONEY.currency.to_s
+          )
         end
       end
     end
   end
 
-  # ── 5. Arithmetic ─────────────────────────────────────────────
+  # ── 5. Query: Money object (money_attribute only) ────────────
+
+  if BENCH_SIDE == 'minting'
+    puts '-' * 60
+    puts 'Query by Money object (money_attribute only — composed_of decomposition)'
+    puts 'money-rails cannot decompose Money in WHERE — uses raw columns above'
+    puts '-' * 60
+
+    Benchmark.bm(40) do |x|
+      x.report('money_attribute (integer column):') do
+        ITERATIONS.times { MintingComposite.find_by(price: MONEY) }
+      end
+      x.report('money_attribute (decimal column):') do
+        ITERATIONS.times { MintingCompositeDecimal.find_by(price: MONEY) }
+      end
+    end
+  end
+
+  # ── 6. SQL generation ────────────────────────────────────────
+
+  puts '-' * 60
+  puts 'SQL generation (.to_sql)'
+  puts '-' * 60
+
+  Benchmark.bm(40) do |x|
+    case BENCH_SIDE
+    when 'minting'
+      x.report('money_attribute (integer column):') do
+        ITERATIONS.times {
+          MintingComposite.where(
+            price_amount: MONEY.subunits,
+            price_currency: MONEY.currency_code
+          ).to_sql
+        }
+      end
+      x.report('money_attribute (decimal column):') do
+        ITERATIONS.times {
+          MintingCompositeDecimal.where(
+            price_amount: MONEY.amount,
+            price_currency: MONEY.currency_code
+          ).to_sql
+        }
+      end
+    when 'money_rails'
+      x.report('money-rails (integer cents, currency):') do
+        ITERATIONS.times do
+          MoneyRailsComposite.where(
+            price_cents: MONEY.cents,
+            price_currency: MONEY.currency.to_s
+          ).to_sql
+        end
+      end
+    end
+  end
+
+  # ── 6. Query: multi-record result set ─────────────────────────
+
+  puts '-' * 60
+  puts 'Query multi-record (load 100 records × 1000 iters — deserialization stress test)'
+  puts '-' * 60
+
+  BATCH_SIZE = 100
+  QUERY_ITERS = 1_000
+
+  case BENCH_SIDE
+  when 'minting'
+    ids_int = BATCH_SIZE.times.map { MintingComposite.create!(price: MONEY).id }
+
+    Benchmark.bm(40) do |x|
+      x.report('money_attribute (integer column):') do
+        QUERY_ITERS.times do
+          MintingComposite.where(
+            price_amount: MONEY.subunits,
+            price_currency: MONEY.currency_code
+          ).to_a.each(&:price)
+        end
+      end
+    end
+
+    MintingComposite.where(id: ids_int).delete_all
+
+    ids_dec = BATCH_SIZE.times.map { MintingCompositeDecimal.create!(price: MONEY).id }
+
+    Benchmark.bm(40) do |x|
+      x.report('money_attribute (decimal column):') do
+        QUERY_ITERS.times do
+          MintingCompositeDecimal.where(
+            price_amount: MONEY.amount,
+            price_currency: MONEY.currency_code
+          ).to_a.each(&:price)
+        end
+      end
+    end
+
+    MintingCompositeDecimal.where(id: ids_dec).delete_all
+
+  when 'money_rails'
+    ids_mr = BATCH_SIZE.times.map { MoneyRailsComposite.create!(price: MONEY).id }
+
+    Benchmark.bm(40) do |x|
+      x.report('money-rails (integer cents):') do
+        QUERY_ITERS.times do
+          MoneyRailsComposite.where(
+            price_cents: MONEY.cents,
+            price_currency: MONEY.currency.to_s
+          ).to_a.each(&:price)
+        end
+      end
+    end
+
+    MoneyRailsComposite.where(id: ids_mr).delete_all
+  end
+
+  # ── 7. Arithmetic ─────────────────────────────────────────────
 
   if BENCH_SIDE == 'minting'
     puts '-' * 60
@@ -219,7 +351,7 @@ begin
     end
   end
 
-  # ── 6. Caching ──────────────────────────────────────────────────
+  # ── 8. Caching ──────────────────────────────────────────────────
 
   puts '-' * 60
   puts 'Repeated access ×1000 (caching demonstration)'

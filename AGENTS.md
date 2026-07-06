@@ -17,6 +17,33 @@ bundle exec rubocop        # lint (commented out in CI, but run manually)
 
 Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.rb`
 
+## Benchmark
+
+Run via `rake bench` — spawns two processes (one per gem stack) to avoid gem conflicts:
+
+1. `BENCH_SIDE=minting` — uses money_attribute + minting gems
+2. `BENCH_SIDE=money_rails BUNDLE_GEMFILE=Gemfile.benchmark` — uses money-rails + money gems
+
+Both sides use the same minimal environment: `require 'rails'`, `require 'active_record'`, direct SQLite connection to `test/dummy/storage/test.sqlite3` (no full Rails app boot). Fair comparison.
+
+Query sections use **raw column values** on both sides — money-rails cannot decompose `Money` objects in `find_by`. Section 5 (money_attribute only) separately benchmarks composed_of decomposition of `Mint::Money` objects.
+
+Key findings (integer column, 5000 iters unless noted):
+
+| Test | money_attribute | money-rails | ratio |
+|---|---|---|---|
+| Instantiation | 0.044s | 0.047s | **0.9×** |
+| Create+save | 0.684s | 0.990s | **0.7×** |
+| Read cached | 0.001s | 0.018s | **18×** |
+| Query raw columns | 0.197s | 0.218s | **0.9×** |
+| SQL generation | 0.182s | 0.194s | **0.9×** |
+| Multi-record (100×1000) | 0.550s | 0.816s | **0.7×** |
+| Repeated access | 0.0005s | 0.016s | **35×** |
+| Allocations (×5000) | 2 | 75,002 | — |
+| Mass insert (1000 recs) | 0.090s | 0.213s | **0.4×** |
+
+money_attribute's main advantages: **zero-allocation caching** (35× reader speed), **2.3× faster bulk writes**, support for **Money-object queries** via composed_of decomposition (money-rails cannot decompose `Money` in WHERE clauses).
+
 ## Tests
 
 - **Framework:** Minitest via `ActiveSupport::TestCase` (no RSpec), fixtures loaded automatically

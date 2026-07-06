@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Naming/MethodParameterName, Layout/LineLength
+# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Naming/MethodParameterName
 
 # Generate a consolidated markdown benchmark report.
 # Run: bundle exec ruby benchmark/report.rb
@@ -75,11 +75,11 @@ def parse_output(text)
   text.each_line do |line|
     if SECTION_HEADERS.any? { |re, _| line.match?(re) }
       SECTION_HEADERS.each do |re, section|
-        if line.match?(re)
-          current_section = section
-          in_scaling = (section == :scaling)
-          break
-        end
+        next unless line.match?(re)
+
+        current_section = section
+        in_scaling = (section == :scaling)
+        break
       end
       next
     end
@@ -148,9 +148,9 @@ def section_table(data_mint, data_mr, section, title, int_label, dec_label, mr_l
   m_d = dec_label ? bm_val(data_mint, section, dec_label) : nil
   r   = mr_label ? bm_val(data_mr, section, mr_label) : nil
   comp = ratio(m_i, r)
-  comp_d = dec_label ? ratio(m_d, r) : nil
+  dec_label ? ratio(m_d, r) : nil
 
-  report = +""
+  report = +''
   report << "## #{title}\n\n"
   report << "| Variant | money_attribute (int) | money_attribute (dec) | money-rails | Comparison |\n"
   report << "|---|---|---|---|---|\n"
@@ -176,10 +176,10 @@ report << "# Benchmark Report: money_attribute vs money-rails\n\n"
 report << "Run at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}\n"
 report << "Ruby #{RUBY_VERSION}, Rails #{Rails::VERSION::STRING}\n\n"
 
-INT  = 'money_attribute (integer column)'.freeze
-DEC  = 'money_attribute (decimal column)'.freeze
-MR   = 'money-rails (integer cents)'.freeze
-MRQ  = 'money-rails (integer cents, currency)'.freeze
+INT  = 'money_attribute (integer column)'
+DEC  = 'money_attribute (decimal column)'
+MR   = 'money-rails (integer cents)'
+MRQ  = 'money-rails (integer cents, currency)'
 
 # 1. Instantiation
 report << section_table(minting, rails, :instantiation, 'Instantiation', INT, DEC, MR)
@@ -285,4 +285,4 @@ report << "- Minimal environment (no full Rails app boot)\n"
 report_path = File.join(RESULTS_DIR, 'benchmark_report.md')
 File.write(report_path, report)
 puts "Report written to #{report_path}"
-# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Naming/MethodParameterName, Layout/LineLength
+# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Naming/MethodParameterName

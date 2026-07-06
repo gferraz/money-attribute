@@ -38,7 +38,7 @@ task :bench do
   puts 'money-rails (money gem)'
   puts '=' * 80
   sh({ 'RAILS_ENV' => 'test', 'BENCH_SIDE' => 'money_rails',
-      'BUNDLE_GEMFILE' => 'Gemfile.benchmark' },
+       'BUNDLE_GEMFILE' => 'Gemfile.benchmark' },
      'bundle', 'exec', 'ruby', 'benchmark/comparison.rb')
 end
 

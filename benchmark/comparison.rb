@@ -294,20 +294,20 @@ begin
     case BENCH_SIDE
     when 'minting'
       x.report('money_attribute (integer column):') do
-        ITERATIONS.times {
+        ITERATIONS.times do
           MintingComposite.where(
             price_amount: MONEY.subunits,
             price_currency: MONEY.currency_code
           ).to_sql
-        }
+        end
       end
       x.report('money_attribute (decimal column):') do
-        ITERATIONS.times {
+        ITERATIONS.times do
           MintingCompositeDecimal.where(
             price_amount: MONEY.amount,
             price_currency: MONEY.currency_code
           ).to_sql
-        }
+        end
       end
     when 'money_rails'
       x.report('money-rails (integer cents, currency):') do
@@ -481,9 +481,9 @@ begin
       ids_i = records_i.map(&:id)
       bu_b = Mint::Money.from(AMOUNT + 1, CURRENCY_CODE)
       t_up_i = Benchmark.measure do
-        MintingComposite.update(ids_i, ids_i.each_with_index.map { |id, i|
-          {price: i.even? ? MONEY : bu_b}
-        })
+        MintingComposite.update(ids_i, ids_i.each_with_index.map do |_id, i|
+          { price: i.even? ? MONEY : bu_b }
+        end)
       end
 
       MintingComposite.delete_all
@@ -496,9 +496,9 @@ begin
 
       ids_d = records_d.map(&:id)
       t_up_d = Benchmark.measure do
-        MintingCompositeDecimal.update(ids_d, ids_d.each_with_index.map { |id, i|
-          {price: i.even? ? MONEY : bu_b}
-        })
+        MintingCompositeDecimal.update(ids_d, ids_d.each_with_index.map do |_id, i|
+          { price: i.even? ? MONEY : bu_b }
+        end)
       end
 
       MintingCompositeDecimal.delete_all
@@ -522,9 +522,9 @@ begin
       ids = records.map(&:id)
       bu_b = Money.from_amount(AMOUNT + 1, CURRENCY_CODE)
       t_up = Benchmark.measure do
-        MoneyRailsComposite.update(ids, ids.each_with_index.map { |id, i|
-          {price: i.even? ? MONEY : bu_b}
-        })
+        MoneyRailsComposite.update(ids, ids.each_with_index.map do |_id, i|
+          { price: i.even? ? MONEY : bu_b }
+        end)
       end
 
       MoneyRailsComposite.delete_all

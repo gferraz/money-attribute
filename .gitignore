@@ -2,6 +2,7 @@
 /doc/
 doc/*
 !doc/agents/
+/Gemfile.lock
 /log/*.log
 /pkg/
 /tmp/

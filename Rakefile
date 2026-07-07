@@ -25,7 +25,7 @@ desc 'Run tests (migrates test DB first)'
 task test: %i[test_db_migrate test_run]
 
 desc 'Run money_attribute vs money-rails benchmark'
-task :bench do
+task :bench do # rubocop:disable Rails/RakeEnvironment
   puts
   puts '=' * 80
   puts 'money_attribute (minting gem)'
@@ -43,6 +43,6 @@ task :bench do
 end
 
 desc 'Generate consolidated benchmark report (markdown)'
-task 'bench:report' do
+task 'bench:report' do # rubocop:disable Rails/RakeEnvironment
   ruby 'benchmark/report.rb'
 end

@@ -40,7 +40,7 @@ module MoneyAttribute
 
       def amount_extractor_for(column_name) = integer_column?(column_name) ? :subunits : :to_d
 
-      def money_constructor_for(amount_column)
+      def money_constructor_for(amount_column) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
         default = MoneyAttribute.default_currency
         if integer_column?(amount_column)
           lambda do |amount, currency|

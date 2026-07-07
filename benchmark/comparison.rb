@@ -29,6 +29,7 @@ when 'minting'
     database: db_path
   )
 
+  # :nodoc:
   class ApplicationRecord < ActiveRecord::Base
     primary_abstract_class
   end
@@ -43,6 +44,7 @@ when 'money_rails'
     database: db_path
   )
 
+  # :nodoc:
   class ApplicationRecord < ActiveRecord::Base
     primary_abstract_class
   end
@@ -332,7 +334,7 @@ begin
 
   case BENCH_SIDE
   when 'minting'
-    ids_int = BATCH_SIZE.times.map { MintingComposite.create!(price: MONEY).id }
+    ids_int = Array.new(BATCH_SIZE) { MintingComposite.create!(price: MONEY).id }
 
     Benchmark.bm(40) do |x|
       x.report('money_attribute (integer column):') do
@@ -347,7 +349,7 @@ begin
 
     MintingComposite.where(id: ids_int).delete_all
 
-    ids_dec = BATCH_SIZE.times.map { MintingCompositeDecimal.create!(price: MONEY).id }
+    ids_dec = Array.new(BATCH_SIZE) { MintingCompositeDecimal.create!(price: MONEY).id }
 
     Benchmark.bm(40) do |x|
       x.report('money_attribute (decimal column):') do
@@ -363,7 +365,7 @@ begin
     MintingCompositeDecimal.where(id: ids_dec).delete_all
 
   when 'money_rails'
-    ids_mr = BATCH_SIZE.times.map { MoneyRailsComposite.create!(price: MONEY).id }
+    ids_mr = Array.new(BATCH_SIZE) { MoneyRailsComposite.create!(price: MONEY).id }
 
     Benchmark.bm(40) do |x|
       x.report('money-rails (integer cents):') do
@@ -469,10 +471,10 @@ begin
   case BENCH_SIDE
   when 'minting'
     puts
-    puts format('%-8s %-18s %-18s %-18s %-18s', 'size', 'int insert', 'int update', 'dec insert', 'dec update')
+    puts 'size     int insert         int update         dec insert         dec update        '
 
     BATCH_SIZES.each do |n|
-      records_i = n.times.map { MintingComposite.new(price: MONEY) }
+      records_i = Array.new(n) { MintingComposite.new(price: MONEY) }
 
       t_ins_i = Benchmark.measure do
         MintingComposite.transaction { records_i.each(&:save!) }
@@ -488,7 +490,7 @@ begin
 
       MintingComposite.delete_all
 
-      records_d = n.times.map { MintingCompositeDecimal.new(price: MONEY) }
+      records_d = Array.new(n) { MintingCompositeDecimal.new(price: MONEY) }
 
       t_ins_d = Benchmark.measure do
         MintingCompositeDecimal.transaction { records_d.each(&:save!) }
@@ -510,10 +512,10 @@ begin
 
   when 'money_rails'
     puts
-    puts format('%-8s %-18s %-18s', 'size', 'mr insert', 'mr update')
+    puts 'size     mr insert          mr update         '
 
     BATCH_SIZES.each do |n|
-      records = n.times.map { MoneyRailsComposite.new(price: MONEY) }
+      records = Array.new(n) { MoneyRailsComposite.new(price: MONEY) }
 
       t_ins = Benchmark.measure do
         MoneyRailsComposite.transaction { records.each(&:save!) }

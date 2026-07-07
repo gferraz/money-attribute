@@ -5,7 +5,7 @@
 
 Store and read Active Record attributes as `Mint::Money` objects with no manual serialization.
 
-`money_attribute` uses two DB columns (amount + currency) for per-row multi-currency data. For single-currency apps, see the [`money_amount` section](#single-column-mode--money_amount).
+`money_attribute` uses two DB columns (amount + currency) for per-row multi-currency data. A simpler `money_amount` variant is also available for fixed-currency models (see [note](#single-column-mode--money_amount-fixed-currency)).
 
 ```ruby
 class Product < ApplicationRecord
@@ -31,7 +31,6 @@ p.price * 2 # => [USD 24.88]
 - [Querying](#querying)
 - [Convenience methods](#convenience-methods)
 - [Form helpers](#form-helpers)
-- [Single-column mode — `money_amount`](#single-column-mode--money_amount)
 - [Roadmap](#roadmap)
 - [Development & Contributing](#development)
 - [License](#license)
@@ -385,11 +384,11 @@ MoneyAttribute adds `money_field` and `money_amount_field` to Rails form builder
 <% end %>
 ```
 
-## Single-column mode — `money_amount`
+### Single-column mode — `money_amount` (fixed-currency)
 
-For applications with a single global currency or model-level fixed currency, `money_amount` provides a lighter-weight alternative — one DB column, no per-row currency flexibility.
+`money_amount` wraps a numeric column as `Mint::Money` using the application's default currency. No per-row currency. A lighter alternative when you don't need multi-currency support.
 
-### Migration helpers
+#### Migration helpers
 
 | Method | Action |
 |---|---|
@@ -404,7 +403,7 @@ t.money_amount :btc_balance, type: :crypto_decimal  # decimal(36,18)
 t.money_amount :qty,        type: :fiat_integer     # bigint
 ```
 
-### Naming
+#### Naming
 
 | Migration call | Columns created | Model declaration |
 |---|---|---|
@@ -413,7 +412,7 @@ t.money_amount :qty,        type: :fiat_integer     # bigint
 | `t.money_amount :price, type: :fiat_integer` | `price` bigint | `money_amount :price` |
 | `t.money_amount :price, type: :fiat_decimal` | `price` decimal(20,4) | `money_amount :price` |
 
-### Usage
+#### Usage
 
 ```ruby
 class Product < ApplicationRecord
@@ -427,7 +426,7 @@ Product.new(price: 12.to_money('EUR'))
 # => ArgumentError: ... has different currency. Only USD allowed.
 ```
 
-### Column type shortcut
+#### Column type shortcut
 
 ```ruby
 # Migration
@@ -437,7 +436,7 @@ t.money_amount :price, type: :fiat_integer  # bigint column
 money_amount :price
 ```
 
-### Querying
+#### Querying
 
 Fixed-currency attributes support Rails-native querying through the custom type:
 

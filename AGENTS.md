@@ -12,7 +12,7 @@ bundle exec rake test      # migrate test DB + run tests
 bundle exec rake test_run  # run tests only (same as default)
 bundle exec rake test_db_migrate  # migrate test DB only
 bundle exec rake bench     # money_attribute vs money-rails benchmark (money-rails side uses Gemfile.benchmark to avoid gem conflict)
-bundle exec rubocop        # lint (commented out in CI, but run manually)
+bundle exec rubocop        # lint (runs in CI; 0 offenses as of 1.0.0)
 ```
 
 Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.rb`
@@ -135,9 +135,9 @@ Two separate helpers — one per storage mode:
 
 - RuboCop with minitest, performance, packaging, rake, rails, thread_safety plugins
 - `Layout/LineLength: 120`, `Metrics/MethodLength: 30`, `Style/FrozenStringLiteralComment: always`
-- `test/dummy/` excluded from RuboCop
+- `test/dummy/` and `benchmark/` excluded from RuboCop
 - All source files have `# frozen_string_literal: true`
-- RuboCop is commented out in CI workflow — run manually
+- RuboCop runs in CI; 0 offenses as of 1.0.0
 
 ## Dependencies
 

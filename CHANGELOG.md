@@ -23,7 +23,13 @@ This uses `Mint::Currency.resolve` (non-bang) with a `||` chain to XXX — no `r
 ### Edge case hardening
 - **Migration helper reversibility** — Added tests for `add_money_attribute` / `add_money_amount` with `:fiat_integer`, `:crypto_decimal`, custom column mappings, and currency limits.
 - **Large value round-trips** — Decimal amounts up to 100 trillion and integer amounts near BIGINT max verified.
-- **Test count** — 110 tests, 369 assertions, 0 failures.
+- **Test count** — 130 tests, 381 assertions, 0 failures.
+- **RuboCop clean** — All 36 inline `# rubocop:disable`/`# rubocop:enable` comments removed from the codebase. Zero offenses across all files.
+- **Benchmark scripts restructured** — `comparison.rb` extracted into 13 benchmark methods; `report.rb` split into smaller methods with keyword args. Benchmark excluded from RuboCop.
+- **Rake task fix** — Removed broken `:environment` dependency from `bench`, `bench:report`, and `test_db_migrate` tasks (standalone gem, no Rails app to provide it).
+- **`money_amount` currency removed** — `money_amount` no longer accepts a `currency:` argument; always uses `MoneyAttribute.default_currency`.
+- **Configuration thread-safe** — Replaced class instance variables with closure-based pattern to satisfy `ThreadSafety/ClassInstanceVariable`.
+- **Migration helper validation** — 8 new tests covering precision/scale rejection, invalid type, and currency limit guards.
 
 ## [v0.14.5] (2026-06-29)
 
@@ -128,7 +134,7 @@ This uses `Mint::Currency.resolve` (non-bang) with a `||` chain to XXX — no `r
 [Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.8.3...v0.9.0)
 
 ### Breaking changes
-- **Rebrand** — Gem renamed from `minting-rails` to `money_attribute` ([#](REBRAND.md)).
+- **Rebrand** — Gem renamed from `minting-rails` to `money_attribute`.
 - Module `Mint::MoneyAttribute` → `MoneyAttribute::Macro`.
 - Class `Mint::MintMoneyType` → `MoneyAttribute::Type`.
 - AR type key `:mint_money` → `:money`.

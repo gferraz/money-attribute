@@ -451,7 +451,6 @@ Product.where(price: 10.to_money('USD')).sum(:price)            # aggregation
 ## Roadmap
 
 1. **Method-level currency** — lambda-based currency resolution for multi-tenant and instance-level scenarios
-2. Prepare for official 1.0 launch
 
 Contributions and suggestions are welcome — open an issue or PR at [gferraz/money-attribute](https://github.com/gferraz/money-attribute).
 

@@ -15,7 +15,7 @@ Rake::TestTask.new(:test_run) do |t|
 end
 
 desc 'Migrate test database'
-task test_db_migrate: :environment do
+task :test_db_migrate do
   sh({ 'RAILS_ENV' => 'test' }, 'bin/rails', 'db:migrate', chdir: 'test/dummy')
 end
 
@@ -23,7 +23,7 @@ desc 'Run tests (migrates test DB first)'
 task test: %i[test_db_migrate test_run]
 
 desc 'Run money_attribute vs money-rails benchmark'
-task bench: :environment do
+task bench: :test_db_migrate do
   puts
   puts '=' * 80
   puts 'money_attribute (minting gem)'
@@ -41,6 +41,6 @@ task bench: :environment do
 end
 
 desc 'Generate consolidated benchmark report (markdown)'
-task 'bench:report' => :environment do
+task 'bench:report' do
   ruby 'benchmark/report.rb'
 end

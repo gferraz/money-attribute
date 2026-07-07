@@ -89,7 +89,7 @@ money_attribute's main advantages: **zero-allocation caching** (34-38× reader s
 
 - **Entry point:** `lib/money_attribute.rb` requires all components in dependency order
 - **Two explicit helpers** (no auto-detect — the method name declares the mode):
-  1. `money_amount :price, currency: 'USD'` — **single-column fixed-currency.** Stores amount in one column (`price`). Uses `ActiveRecord::Type` subclass `MoneyAttribute::Type` + `normalizes`. Currency never changes per row.
+  1. `money_amount :price` — **single-column fixed-currency.** Stores amount in one column (`price`). Uses application default currency. Uses `ActiveRecord::Type` subclass `MoneyAttribute::Type` + `normalizes`. Currency never changes per row.
   2. `money_attribute :price` — **composite amount+currency.** Two DB columns (`price_amount` + `price_currency` or custom via `mapping:`). Per-row currency via `composed_of` + `Converter`. Integer/bigint → subunits, decimal → unit value.
 - **Column resolution** for `money_attribute` (composite only, checked after `mapping:`):
   1. `name_currency` column exists AND `name` column exists → composite (`name` + `name_currency`)

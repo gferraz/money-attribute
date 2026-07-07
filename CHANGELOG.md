@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.0] (2026-07-05)
+## [1.0.0] (2026-07-06)
 
 ### Stable release
 
@@ -11,9 +11,20 @@ After extensive iteration through the 0.x series, MoneyAttribute is now stable a
 - **Nil currency fallback** — When the currency column is nil in composite mode, the default currency is used instead of raising.
 - **Generator type registration deferred** — `rails g model` support for `money_attribute`/`money_amount` types moved to post-1.0 to avoid monkey-patching Rails internals before the API stabilizes.
 
+### Invalid currency fallback (XXX)
+
+When the currency column contains a value that is not a registered ISO currency (legacy codes, data corruption), the constructor lambda resolves it to **XXX** (ISO 4217 "No Currency") instead of raising `Mint::UnknownCurrency`. The monetary amount is preserved and the record remains queryable:
+
+```ruby
+Offer.where(price_currency: 'XXX') # find and fix corrupted records
+```
+
+This uses `Mint::Currency.resolve` (non-bang) with a `||` chain to XXX — no `rescue` needed.
+
 ### Edge case hardening
 - **Migration helper reversibility** — Added tests for `add_money_attribute` / `add_money_amount` with `:fiat_integer`, `:crypto_decimal`, custom column mappings, and currency limits.
-- **Test count** — 106 tests, 364 assertions, 0 failures.
+- **Large value round-trips** — Decimal amounts up to 100 trillion and integer amounts near BIGINT max verified.
+- **Test count** — 110 tests, 369 assertions, 0 failures.
 
 ## [v0.14.5] (2026-06-29)
 

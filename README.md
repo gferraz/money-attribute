@@ -246,6 +246,21 @@ offer.price.currency.code # => "USD"
 
 Unlike fixed-currency attributes, composite mode does not enforce a specific currency — any registered currency is accepted at assignment.
 
+### Invalid currencies in the database
+
+If the currency column contains a value that is not a registered currency (e.g. a legacy code that was removed, or data corruption), `money_attribute` does not crash. The currency resolves to **XXX** (ISO 4217 "No Currency") and the monetary amount is preserved:
+
+```ruby
+offer = Offer.find(42)
+offer.price # => [XXX 10.00]  # amount preserved, currency flagged
+```
+
+Records with XXX currency are easily queryable for cleanup:
+
+```ruby
+Offer.where(price_currency: 'XXX')
+```
+
 ## Column type detection
 
 Select the amount column type via the `type:` option. The gem adapts serialization accordingly:
@@ -264,7 +279,7 @@ end
 Order.new(total: 19.99.to_money('USD')).total_amount # => 1999
 ```
 
-> Use `:fiat_integer` (bigint) for large tables — faster, smaller, and sufficient for most fiat use cases (~922 trillion max). Use `:fiat_decimal` (decimal) when SQL-level readability matters.
+> Use `:fiat_integer` (bigint) for large tables — smaller and sufficient for most fiat use cases (~922 trillion max). Use `:fiat_decimal` (decimal) when SQL-level readability matters. For cryto currencies support, `:crypto_decimal` is mandatory.
 
 ## Custom column names
 
@@ -402,7 +417,7 @@ t.money_amount :qty,        type: :fiat_integer     # bigint
 
 ```ruby
 class Product < ApplicationRecord
-  money_amount :price, currency: 'USD'
+  money_amount :price
 end
 
 product = Product.new(price: 12)
@@ -419,7 +434,7 @@ Product.new(price: 12.to_money('EUR'))
 t.money_amount :price, type: :fiat_integer  # bigint column
 
 # Model
-money_amount :price, currency: 'USD'
+money_amount :price
 ```
 
 ### Querying

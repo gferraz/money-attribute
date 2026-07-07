@@ -1,4 +1,6 @@
+# frozen_string_literal: true
+
 class SimpleOffer < ApplicationRecord
-  money_amount :price, currency: 'USD'
-  money_amount :discount, currency: 'USD'
+  money_amount :price
+  money_amount :discount
 end

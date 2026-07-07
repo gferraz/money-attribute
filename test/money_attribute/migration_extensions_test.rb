@@ -90,14 +90,6 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
     assert_column_type 'price', :integer
   end
 
-  test 't.money_amount strips precision and scale for non-decimal types' do
-    create_money_table do |t|
-      t.money_amount :price, type: :fiat_integer, precision: 10, scale: 2
-    end
-
-    assert_column_type 'price', :integer
-  end
-
   test 't.money_attribute with amount type creates integer column' do
     create_money_table do |t|
       t.money_attribute :price, amount: { type: :fiat_integer }
@@ -106,12 +98,12 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
     assert_column_type 'price', :integer
   end
 
-  test 't.money_attribute strips precision and scale for non-decimal types' do
-    create_money_table do |t|
-      t.money_attribute :price, amount: { type: :fiat_integer, precision: 10, scale: 2 }
+  test 't.money_attribute does not accept precision and scale' do
+    assert_raises(ArgumentError) do
+      create_money_table do |t|
+        t.money_attribute :price, amount: { type: :fiat_integer, precision: 10, scale: 2 }
+      end
     end
-
-    assert_column_type 'price', :integer
   end
 
   test 't.money_attribute with explicit amount and currency mapping' do
@@ -140,12 +132,12 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
 
   test 't.money_attribute with currency limit sets string limit' do
     create_money_table do |t|
-      t.money_attribute :price, currency: { limit: 10 }
+      t.money_attribute :price, currency: { limit: 90 }
     end
 
     col = @connection.columns(:test_money_ext).find { |c| c.name == 'price_currency' }
 
-    assert_equal 10, col.limit
+    assert_equal 90, col.limit
   end
 
   # --- change_table ---
@@ -326,6 +318,99 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
   end
 
   # --- remove_money_attribute via migration ---
+
+  # --- Validation edge cases ---
+
+  test 'add_money_amount rejects precision or scale' do
+    @connection.create_table(:test_money_items, force: true)
+
+    migration = Class.new(ActiveRecord::Migration[8.1]) do
+      def change
+        add_money_amount :test_money_items, :price, precision: 10
+      end
+    end.new('Test', 100)
+    assert_raises(ArgumentError) { migration.migrate(:up) }
+
+    migration2 = Class.new(ActiveRecord::Migration[8.1]) do
+      def change
+        add_money_amount :test_money_items, :price, scale: 2
+      end
+    end.new('Test', 101)
+    assert_raises(ArgumentError) { migration2.migrate(:up) }
+  end
+
+  test 'add_money_amount rejects invalid type' do
+    @connection.create_table(:test_money_items, force: true)
+
+    migration = Class.new(ActiveRecord::Migration[8.1]) do
+      def change
+        add_money_amount :test_money_items, :price, type: :bogus
+      end
+    end.new('Test', 102)
+
+    assert_raises(ArgumentError) { migration.migrate(:up) }
+  end
+
+  test 't.money_amount rejects precision or scale' do
+    assert_raises(ArgumentError) do
+      create_money_table do |t|
+        t.money_amount :price, precision: 10
+      end
+    end
+    assert_raises(ArgumentError) do
+      create_money_table do |t|
+        t.money_amount :price, scale: 2
+      end
+    end
+  end
+
+  test 't.money_amount rejects invalid type' do
+    assert_raises(ArgumentError) do
+      create_money_table do |t|
+        t.money_amount :price, type: :bogus
+      end
+    end
+  end
+
+  test 'add_money_attribute rejects small currency limit' do
+    @connection.create_table(:test_money_items, force: true)
+
+    migration = Class.new(ActiveRecord::Migration[8.1]) do
+      def change
+        add_money_attribute :test_money_items, :price, currency: { limit: 3 }
+      end
+    end.new('Test', 103)
+
+    assert_raises(ArgumentError) { migration.migrate(:up) }
+  end
+
+  test 't.money_attribute rejects small currency limit' do
+    assert_raises(ArgumentError) do
+      create_money_table do |t|
+        t.money_attribute :price, currency: { limit: 3 }
+      end
+    end
+  end
+
+  test 'add_money_attribute rejects invalid amount type' do
+    @connection.create_table(:test_money_items, force: true)
+
+    migration = Class.new(ActiveRecord::Migration[8.1]) do
+      def change
+        add_money_attribute :test_money_items, :price, amount: { type: :bogus }
+      end
+    end.new('Test', 104)
+
+    assert_raises(ArgumentError) { migration.migrate(:up) }
+  end
+
+  test 't.money_attribute rejects invalid amount type' do
+    assert_raises(ArgumentError) do
+      create_money_table do |t|
+        t.money_attribute :price, amount: { type: :bogus }
+      end
+    end
+  end
 
   test 'remove_money_attribute drops columns via migration' do
     @connection.create_table(:test_money_items, force: true) do |t|

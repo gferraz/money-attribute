@@ -7,7 +7,6 @@
 After extensive iteration through the 0.x series, MoneyAttribute is now stable at 1.0.0.
 
 - **API frozen** — `money_attribute`, `money_amount`, migration helpers, configuration, and form helpers are stable. No breaking changes planned without a major version bump.
-- **Currency normalization** — Lowercase and mixed-case currency codes in the database (e.g. `'eur'`, `'Eur'`) are now normalized to uppercase (`'EUR'`) on read, preventing `Mint::UnknownCurrency` errors.
 - **Nil currency fallback** — When the currency column is nil in composite mode, the default currency is used instead of raising.
 - **Generator type registration deferred** — `rails g model` support for `money_attribute`/`money_amount` types moved to post-1.0 to avoid monkey-patching Rails internals before the API stabilizes.
 

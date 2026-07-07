@@ -10,12 +10,20 @@ module MoneyAttribute
         fiat_integer: { type: :bigint }
       }.freeze
 
-      CURRENCY_LIMIT_RANGE = 4..32
+      CURRENCY_MIN_LIMIT = 8
+      CURRENCY_DEFAULT_LIMIT = 20
 
       private
 
       def parse_money_amount_args(accessor, options)
         options ||= {}
+        if options.key?(:precision) || options.key?(:scale)
+          raise ArgumentError,
+                'precision:/scale: are not configurable — money_attribute uses fixed, ' \
+                'vetted values per type (:crypto_decimal, :fiat_decimal, :fiat_integer) ' \
+                'to prevent under-precision bugs, particularly for crypto amounts.'
+        end
+
         column = (options[:column] || accessor).to_s
 
         config = AMOUNT_CONFIG[options[:type] || :fiat_decimal]
@@ -30,18 +38,26 @@ module MoneyAttribute
 
       def parse_currency_args(accessor, options)
         options ||= {}
-        column = options[:column]&.to_s
-        unless column
-          name = accessor.to_s
-          if name == 'amount'
-            column = 'currency'
-          else
-            radical = name.end_with?('_amount') ? name.sub(/_amount$/, '') : name
-            column = "#{radical}_currency"
-          end
+        limit = (options[:limit] || CURRENCY_DEFAULT_LIMIT).to_i
+        if limit < CURRENCY_MIN_LIMIT
+          raise ArgumentError,
+                "currency limit: #{limit} is too small to hold an ISO 4217 code and crypto popular codes" \
+                "(minimum #{CURRENCY_MIN_LIMIT}). Omit limit: to use the default of #{CURRENCY_DEFAULT_LIMIT}, " \
+                "or pass a value >= #{CURRENCY_MIN_LIMIT}."
         end
-        limit = (options[:limit] || 16).to_i.clamp(CURRENCY_LIMIT_RANGE)
-        [column, { limit: limit, null: options[:null], default: options[:default] }.compact]
+
+        column = currency_column_name(accessor, options[:column])
+        [column, { limit:, null: options[:null], default: options[:default] }.compact]
+      end
+
+      def currency_column_name(accessor, column_override)
+        return column_override.to_s if column_override
+
+        name = accessor.to_s
+        return 'currency' if name == 'amount'
+
+        radical = name.end_with?('_amount') ? name.sub(/_amount$/, '') : name
+        "#{radical}_currency"
       end
 
       def parse_money_args(accessor, options = {})

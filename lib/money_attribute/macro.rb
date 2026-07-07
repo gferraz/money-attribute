@@ -40,22 +40,21 @@ module MoneyAttribute
 
       def amount_extractor_for(column_name) = integer_column?(column_name) ? :subunits : :to_d
 
-      def money_constructor_for(amount_column) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+      def money_constructor_for(amount_column)
         default = MoneyAttribute.default_currency
         if integer_column?(amount_column)
-          lambda do |amount, currency|
-            next nil if amount.nil?
-
-            resolved = Mint::Currency.resolve(currency.presence || default) || 'XXX'
-            Mint::Money.from_subunits(amount, resolved)
-          end
+          build_money_constructor(:from_subunits, default)
         else
-          lambda do |amount, currency|
-            next nil if amount.nil?
+          build_money_constructor(:from, default)
+        end
+      end
 
-            resolved = Mint::Currency.resolve(currency.presence || default) || 'XXX'
-            Mint::Money.from(amount, resolved)
-          end
+      def build_money_constructor(method, default)
+        lambda do |amount, currency|
+          next nil if amount.nil?
+
+          resolved = Mint::Currency.resolve(currency.presence || default) || 'XXX'
+          Mint::Money.public_send(method, amount, resolved)
         end
       end
 

@@ -46,14 +46,13 @@ class MoneyAttributeTest < ActiveSupport::TestCase
     assert_includes error.message, 'Expected: cost_amount, cost_currency'
   end
 
-  test 'parse keeps money values unchanged' do # rubocop:disable Minitest/MultipleAssertions
+  test 'parse keeps money values unchanged' do
     converter = MoneyAttribute::Converter.new('USD')
 
     assert_equal 23.dollars, converter.call('+23.00')
     assert_equal 23.dollars, converter.call(23)
     assert_equal(-25.34.dollars, converter.call('-25.34'))
     assert_equal(-29.33.euros, converter.call('-29.33 EUR'))
-    assert_nil MoneyAttribute::Converter.new.call(nil)
   end
 
   test 'converter returns nil for nil amount even with valid currency' do

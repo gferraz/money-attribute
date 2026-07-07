@@ -2,7 +2,6 @@
 
 require 'test_helper'
 
-# rubocop:disable Metrics/ClassLength
 class MigrationExtensionsTest < ActiveSupport::TestCase
   def setup
     @connection = ActiveRecord::Base.connection
@@ -16,11 +15,14 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
 
   # --- Module inclusion ---
 
-  test 'includes instance methods on Migration and TableDefinition' do # rubocop:disable Minitest/MultipleAssertions
+  test 'includes instance methods on Migration' do
     assert_includes ActiveRecord::Migration.instance_methods, :add_money_attribute
     assert_includes ActiveRecord::Migration.instance_methods, :remove_money_attribute
     assert_includes ActiveRecord::Migration.instance_methods, :add_money_amount
     assert_includes ActiveRecord::Migration.instance_methods, :remove_money_amount
+  end
+
+  test 'includes instance methods on TableDefinition' do
     assert_includes ActiveRecord::ConnectionAdapters::TableDefinition.instance_methods, :money_attribute
     assert_includes ActiveRecord::ConnectionAdapters::TableDefinition.instance_methods, :remove_money_attribute
     assert_includes ActiveRecord::ConnectionAdapters::TableDefinition.instance_methods, :money_amount
@@ -465,4 +467,3 @@ class MigrationExtensionsTest < ActiveSupport::TestCase
     nil
   end
 end
-# rubocop:enable Metrics/ClassLength

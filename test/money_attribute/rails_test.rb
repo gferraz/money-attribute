@@ -2,7 +2,6 @@
 
 require 'test_helper'
 
-# rubocop:disable Metrics/ClassLength
 class RailsTest < ActiveSupport::TestCase
   setup do
     @original_locale_backend = Mint.locale_backend
@@ -167,7 +166,7 @@ class RailsTest < ActiveSupport::TestCase
     assert_equal 'USD', config.default_currency
   end
 
-  test 'added_currencies registers custom currencies' do # rubocop:disable Minitest/MultipleAssertions
+  test 'added_currencies registers custom currencies' do
     with_money_attribute_config(added_currencies: [
                                   { currency: 'CFGA', subunit: 2, symbol: 'A' },
                                   { currency: 'CFGB', subunit: 3, symbol: 'B' }
@@ -177,7 +176,14 @@ class RailsTest < ActiveSupport::TestCase
       assert_equal 'CFGA', c.code
       assert_equal 2, c.subunit
       assert_equal 'A', c.symbol
+    end
+  end
 
+  test 'added_currencies registers multiple custom currencies independently' do
+    with_money_attribute_config(added_currencies: [
+                                  { currency: 'CFGA', subunit: 2, symbol: 'A' },
+                                  { currency: 'CFGB', subunit: 3, symbol: 'B' }
+                                ]) do
       c = Mint::Currency.for_code('CFGB')
 
       assert_equal 'CFGB', c.code
@@ -234,4 +240,3 @@ class RailsTest < ActiveSupport::TestCase
     MoneyAttribute::Railtie.register_custom_currencies!
   end
 end
-# rubocop:enable Metrics/ClassLength

@@ -2,6 +2,7 @@
 
 require 'minting'
 require 'money_attribute/core_ext'
+require 'money_attribute/core_ext/string'
 require 'money_attribute/configuration'
 require 'money_attribute/macro'
 require 'money_attribute/money_amount'

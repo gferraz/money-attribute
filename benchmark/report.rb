@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Naming/MethodParameterName, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/BlockLength, Metrics/ParameterLists
-
 # Generate a consolidated markdown benchmark report.
 # Run: bundle exec ruby benchmark/report.rb
 
@@ -67,64 +65,87 @@ SECTION_HEADERS = {
   /Scaling/ => :scaling
 }.freeze
 
+def detect_section(line)
+  SECTION_HEADERS.each do |re, section|
+    return section if line.match?(re)
+  end
+  nil
+end
+
+def parse_benchmark_line(line, data, section)
+  m = line.match(BM_RE)
+  return unless m
+
+  label = m[1].strip
+  data[:bm][section] ||= {}
+  data[:bm][section][label] = {
+    user: m[2].to_f, system: m[3].to_f, total: m[4].to_f, real: m[5].to_f
+  }
+end
+
+def parse_scaling_mint_line(line, data)
+  m = line.match(SCALING_MINT_RE)
+  return unless m
+
+  size = m[1].to_i
+  data[:scaling][:insert] << { size:, int: m[2].to_f, dec: m[4].to_f }
+  data[:scaling][:update] << { size:, int: m[3].to_f, dec: m[5].to_f }
+end
+
+def parse_scaling_mr_line(line, data)
+  m = line.match(SCALING_MR_RE)
+  return unless m
+
+  size = m[1].to_i
+  data[:scaling][:insert] << { size:, mr: m[2].to_f }
+  data[:scaling][:update] << { size:, mr: m[3].to_f }
+end
+
+def parse_alloc_line(line, data)
+  m = line.match(ALLOC_RE)
+  return unless m
+
+  data[:alloc][m[1].strip] = m[2].to_i
+end
+
+def parse_identity_line(line, data)
+  m = line.match(IDENTITY_RE)
+  return unless m
+
+  data[:identity][m[1].strip] = m[2] == 'true'
+end
+
 def parse_output(text)
   data = { bm: {}, mass: {}, alloc: {}, identity: {}, scaling: { insert: [], update: [] } }
   current_section = nil
   in_scaling = false
 
   text.each_line do |line|
-    if SECTION_HEADERS.any? { |re, _| line.match?(re) }
-      SECTION_HEADERS.each do |re, section|
-        next unless line.match?(re)
-
-        current_section = section
-        in_scaling = (section == :scaling)
-        break
-      end
+    section = detect_section(line)
+    if section
+      current_section = section
+      in_scaling = (section == :scaling)
       next
     end
 
-    case line
-
-    when BM_RE
-      next if in_scaling
-
-      label = Regexp.last_match(1).strip
-      data[:bm][current_section] ||= {}
-      data[:bm][current_section][label] = {
-        user: Regexp.last_match(2).to_f,
-        system: Regexp.last_match(3).to_f,
-        total: Regexp.last_match(4).to_f,
-        real: Regexp.last_match(5).to_f
-      }
-
-    when SCALING_MINT_RE
-      size = Regexp.last_match(1).to_i
-      data[:scaling][:insert] << { size: size, int: Regexp.last_match(2).to_f, dec: Regexp.last_match(4).to_f }
-      data[:scaling][:update] << { size: size, int: Regexp.last_match(3).to_f, dec: Regexp.last_match(5).to_f }
-
-    when SCALING_MR_RE
-      next unless in_scaling
-
-      size = Regexp.last_match(1).to_i
-      data[:scaling][:insert] << { size: size, mr: Regexp.last_match(2).to_f }
-      data[:scaling][:update] << { size: size, mr: Regexp.last_match(3).to_f }
-
-    when ALLOC_RE
-      data[:alloc][Regexp.last_match(1).strip] = Regexp.last_match(2).to_i
-
-    when IDENTITY_RE
-      data[:identity][Regexp.last_match(1).strip] = Regexp.last_match(2) == 'true'
+    if in_scaling
+      parse_scaling_mint_line(line, data)
+      parse_scaling_mr_line(line, data)
+      next
     end
+
+    parse_benchmark_line(line, data, current_section)
+    parse_alloc_line(line, data)
+    parse_identity_line(line, data)
   end
 
   data
 end
 
-def ratio(a, b)
-  return nil if a.nil? || b.nil? || b.zero?
+def ratio(val_a, val_b)
+  return nil if val_a.nil? || val_b.nil? || val_b.zero?
 
-  a < b ? format('%.1f× faster', b / a) : format('%.1f× slower', a / b)
+  val_a < val_b ? format('%.1f× faster', val_b / val_a) : format('%.1f× slower', val_a / val_b)
 end
 
 def fmt(val)
@@ -139,16 +160,20 @@ def fmt2(val)
   format('%.4f', val)
 end
 
+INT  = 'money_attribute (integer column)'
+DEC  = 'money_attribute (decimal column)'
+MR   = 'money-rails (integer cents)'
+MRQ  = 'money-rails (integer cents, currency)'
+
 def bm_val(data, section, label)
   data.dig(:bm, section, label, :real)
 end
 
-def section_table(data_mint, data_mr, section, title, int_label, dec_label, mr_label)
-  m_i = bm_val(data_mint, section, int_label)
-  m_d = dec_label ? bm_val(data_mint, section, dec_label) : nil
-  r   = mr_label ? bm_val(data_mr, section, mr_label) : nil
+def section_table(data, section, title, dec_label: DEC, mr_label: MR)
+  m_i = bm_val(data[:mint], section, INT)
+  m_d = dec_label ? bm_val(data[:mint], section, dec_label) : nil
+  r   = mr_label ? bm_val(data[:mr], section, mr_label) : nil
   comp = ratio(m_i, r)
-  dec_label ? ratio(m_d, r) : nil
 
   report = +''
   report << "## #{title}\n\n"
@@ -176,28 +201,23 @@ report << "# Benchmark Report: money_attribute vs money-rails\n\n"
 report << "Run at: #{Time.zone.now.strftime('%Y-%m-%d %H:%M:%S')}\n"
 report << "Ruby #{RUBY_VERSION}, Rails #{Rails::VERSION::STRING}\n\n"
 
-INT  = 'money_attribute (integer column)'
-DEC  = 'money_attribute (decimal column)'
-MR   = 'money-rails (integer cents)'
-MRQ  = 'money-rails (integer cents, currency)'
-
 # 1. Instantiation
-report << section_table(minting, rails, :instantiation, 'Instantiation', INT, DEC, MR)
+report << section_table({ mint: minting, mr: rails }, :instantiation, 'Instantiation')
 
 # 2. Create + save
-report << section_table(minting, rails, :create_save, 'Create + save', INT, DEC, MR)
+report << section_table({ mint: minting, mr: rails }, :create_save, 'Create + save')
 
 # 3. Update existing
-report << section_table(minting, rails, :update_existing, 'Update existing record', INT, DEC, MR)
+report << section_table({ mint: minting, mr: rails }, :update_existing, 'Update existing record')
 
 # 4. Setter only
-report << section_table(minting, rails, :setter_only, 'Setter only (no DB write)', INT, DEC, MR)
+report << section_table({ mint: minting, mr: rails }, :setter_only, 'Setter only (no DB write)')
 
 # 5. Read cached
-report << section_table(minting, rails, :read, 'Read from cached record', INT, DEC, MR)
+report << section_table({ mint: minting, mr: rails }, :read, 'Read from cached record')
 
 # 6. Query raw columns
-report << section_table(minting, rails, :query_raw, 'Query by raw columns', INT, DEC, MRQ)
+report << section_table({ mint: minting, mr: rails }, :query_raw, 'Query by raw columns', mr_label: MRQ)
 
 # 7. Query Money object (money_attribute only)
 m_val_obj_i = bm_val(minting, :query_money_object, INT)
@@ -210,10 +230,10 @@ report << "| integer column | #{fmt(m_val_obj_i)} |\n"
 report << "| decimal column | #{fmt(m_val_obj_d)} |\n\n"
 
 # 8. SQL generation
-report << section_table(minting, rails, :sql_gen, 'SQL generation (.to_sql)', INT, DEC, MRQ)
+report << section_table({ mint: minting, mr: rails }, :sql_gen, 'SQL generation (.to_sql)', mr_label: MRQ)
 
 # 9. Multi-record query
-report << section_table(minting, rails, :multi_record, 'Multi-record query (100 records × 1000 iters)', INT, DEC, MR)
+report << section_table({ mint: minting, mr: rails }, :multi_record, 'Multi-record query (100 records × 1000 iters)')
 
 # 10. Arithmetic
 m_arith = bm_val(minting, :arithmetic, INT)
@@ -285,4 +305,3 @@ report << "- Minimal environment (no full Rails app boot)\n"
 report_path = File.join(RESULTS_DIR, 'benchmark_report.md')
 File.write(report_path, report)
 puts "Report written to #{report_path}"
-# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Naming/MethodParameterName, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/BlockLength, Metrics/ParameterLists

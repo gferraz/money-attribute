@@ -2,7 +2,6 @@
 
 require 'test_helper'
 
-# rubocop:disable Metrics/ClassLength
 class CompositeMoneyAttributeTest < ActiveSupport::TestCase
   test 'Money attribute is enabled' do
     assert Offer.attribute :price
@@ -125,7 +124,7 @@ class CompositeMoneyAttributeTest < ActiveSupport::TestCase
 
   test 'unknown currency returns XXX fallback' do
     offer = Offer.create!(price: 10.dollars)
-    offer.update_columns(price_currency: 'XYZ') # rubocop:disable Rails/SkipsModelValidations
+    offer.update_columns(price_currency: 'XYZ')
     offer.reload
 
     assert_equal 'XXX', offer.price.currency_code
@@ -134,7 +133,7 @@ class CompositeMoneyAttributeTest < ActiveSupport::TestCase
 
   test 'empty string currency falls back to default' do
     offer = Offer.create!(price: 10.dollars)
-    offer.update_columns(price_currency: '') # rubocop:disable Rails/SkipsModelValidations
+    offer.update_columns(price_currency: '')
     offer.reload
 
     assert_equal MoneyAttribute.default_currency, offer.price.currency
@@ -143,7 +142,7 @@ class CompositeMoneyAttributeTest < ActiveSupport::TestCase
 
   test 'nil amount with valid currency returns nil' do
     offer = Offer.create!(price: 10.dollars)
-    offer.update_columns(price_amount: nil, price_currency: 'USD') # rubocop:disable Rails/SkipsModelValidations
+    offer.update_columns(price_amount: nil, price_currency: 'USD')
     offer.reload
 
     assert_nil offer.price
@@ -151,7 +150,7 @@ class CompositeMoneyAttributeTest < ActiveSupport::TestCase
 
   test 'integer column with bad currency returns XXX' do
     ft = FinancialTransaction.create!(amount: nil)
-    ft.update_columns(amount: 4500, currency: 'XYZ') # rubocop:disable Rails/SkipsModelValidations
+    ft.update_columns(amount: 4500, currency: 'XYZ')
     ft.reload
 
     assert_equal 'XXX', ft.amount.currency_code
@@ -169,11 +168,10 @@ class CompositeMoneyAttributeTest < ActiveSupport::TestCase
 
   test 'large decimal amount round-trips correctly' do
     offer = Offer.create!(price: nil)
-    offer.update_columns(price_amount: BigDecimal('99999999999999.9999'), price_currency: 'USD') # rubocop:disable Rails/SkipsModelValidations
+    offer.update_columns(price_amount: BigDecimal('99999999999999.9999'), price_currency: 'USD')
     offer.reload
 
     assert_equal 'USD', offer.price.currency_code
     assert_in_delta BigDecimal('99999999999999.9999'), offer.price.amount
   end
 end
-# rubocop:enable Metrics/ClassLength

@@ -5,7 +5,7 @@ module MoneyAttribute
   module FormBuilderExtension
     def money_field(method, options = {})
       money = object.public_send(method)
-      value = money&.to_fs(:currency)
+      value = money&.to_s
 
       @template.text_field_tag(field_name(method), value,
                                { id: field_id(method) }.merge(options))

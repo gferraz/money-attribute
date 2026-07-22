@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0] (2026-07-22)
+
+### Improvements
+- **minting 2.0.0 compatibility** — `to_fs(:currency)` replaced with `to_fs` in form builder helpers and tests; minting 2.0's default format (`%<symbol>s%<amount>f`) produces identical output.
+- **Benchmark isolation** — money-rails comparison now runs in a separate process with its own `Gemfile.benchmark`, avoiding the `Mint::Currency` namespace collision between the `minting` and `money` gems.
+- **Benchmark expanded** — New test scenarios: update existing record, setter-only, SQL generation, multi-record deserialization stress test, and scaling tests (mass insert + bulk update at 100/500/1000/2000 records).
+- **Benchmark report updated** — money_attribute wins all 8 core cells and all scaling tests against money-rails.
+
 ## [1.0.0] (2026-07-06)
 
 ### Stable release

@@ -12,6 +12,7 @@ AllCops:
   Exclude:
     - "test/dummy/**/*"
     - "benchmark/**/*"
+    - "vendor/**/*"
   NewCops: enable
   TargetRubyVersion: 3.3
 

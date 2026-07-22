@@ -15,7 +15,7 @@ Rake::TestTask.new(:test_run) do |t|
 end
 
 desc 'Migrate test database'
-task :test_db_migrate do
+task :test_db_migrate do # rubocop:disable Rails/RakeEnvironment
   sh({ 'RAILS_ENV' => 'test' }, 'bin/rails', 'db:migrate', chdir: 'test/dummy')
 end
 
@@ -41,6 +41,6 @@ task bench: :test_db_migrate do
 end
 
 desc 'Generate consolidated benchmark report (markdown)'
-task 'bench:report' do
+task 'bench:report' do # rubocop:disable Rails/RakeEnvironment
   ruby 'benchmark/report.rb'
 end

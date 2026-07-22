@@ -12,7 +12,7 @@ bundle exec rake test      # migrate test DB + run tests
 bundle exec rake test_run  # run tests only (same as default)
 bundle exec rake test_db_migrate  # migrate test DB only
 bundle exec rake bench     # money_attribute vs money-rails benchmark (money-rails side uses Gemfile.benchmark to avoid gem conflict)
-bundle exec rubocop        # lint (runs in CI; 0 offenses as of 1.0.0)
+bundle exec rubocop        # lint (runs in CI; 0 offenses as of 1.1.0)
 ```
 
 Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.rb`
@@ -72,7 +72,7 @@ money_attribute's main advantages: **zero-allocation caching** (34-38× reader s
 - **Framework:** Minitest via `ActiveSupport::TestCase` (no RSpec), fixtures loaded automatically
 - Dummy Rails app at `test/dummy/` — migrate before running (`rake test` does this); SQLite3 DB at `test/dummy/storage/test.sqlite3`
 - **7** test files in `test/money_attribute/`
-- **106** tests, **364** assertions, all passing
+- **130** tests, **381** assertions, all passing
 - Dummy app initializer sets `default_currency = 'BRL'` — test expectations assume BRL, not USD
 - Config-mutating tests: use `with_money_attribute_config` (in `rails_test.rb:215`), which saves/restores config and re-registers currencies
 - RuboCop enforces `Minitest/MultipleAssertions: max 4` — warns on 5+ assertions; runs in CI
@@ -83,7 +83,7 @@ money_attribute's main advantages: **zero-allocation caching** (34-38× reader s
 1. **No AR type key registered.** `money_amount` passes a `MoneyAttribute::Type` instance directly to `attribute()` — no global `:mint_money` registration. The old `:money` key was dropped during rebranding due to PostgreSQL adapter conflicts.
 2. **Converter plays two roles.** `MoneyAttribute::Converter` is passed as `:converter` to `composed_of` (composite path) and as the normalizer block to `normalizes` (single-column path).
 3. **Schema has mixed column types.** `financial_transactions.amount` is integer (subunits), `price_amount`/`total_amount` are decimal (unit value). Query expectations differ.
-4. **Form builder helpers render unbound `<input>` tags** (not form-builder-bound fields). `money_field` → text with `to_fs(:currency)`; `money_amount_field` → number with raw decimal.
+4. **Form builder helpers render unbound `<input>` tags** (not form-builder-bound fields). `money_field` → text with `to_fs`; `money_amount_field` → number with raw decimal.
 
 ## Architecture
 

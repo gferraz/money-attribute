@@ -11,15 +11,43 @@
 ENV['RAILS_ENV'] = 'test'
 
 require 'bundler/setup'
-require_relative '../test/dummy/config/environment'
 require 'benchmark'
 
 BENCH_SIDE = ENV.fetch('BENCH_SIDE', 'minting')
 
 case BENCH_SIDE
 when 'minting'
-  # Money_attribute uses the minting gem — no money-rails loaded here.
+  require 'rails'
+  require 'active_record'
+  require 'sqlite3'
+  require 'money_attribute'
+
+  db_path = File.expand_path('../test/dummy/storage/test.sqlite3', __dir__)
+  ActiveRecord::Base.establish_connection(
+    adapter: 'sqlite3',
+    database: db_path
+  )
+
+  # :nodoc:
+  class ApplicationRecord < ActiveRecord::Base
+    primary_abstract_class
+  end
 when 'money_rails'
+  require 'rails'
+  require 'active_record'
+  require 'sqlite3'
+
+  db_path = File.expand_path('../test/dummy/storage/test.sqlite3', __dir__)
+  ActiveRecord::Base.establish_connection(
+    adapter: 'sqlite3',
+    database: db_path
+  )
+
+  # :nodoc:
+  class ApplicationRecord < ActiveRecord::Base
+    primary_abstract_class
+  end
+
   require 'money-rails'
   MoneyRails::Hooks.init
 else
@@ -38,346 +66,398 @@ ITERATIONS = 5_000
 TABLES =
   case BENCH_SIDE
   when 'minting'
-    %i[minting_single minting_composite
-       minting_single_decimal minting_composite_decimal].freeze
+    %i[minting_composite minting_composite_decimal].freeze
   when 'money_rails'
-    %i[money_rails_single money_rails_composite].freeze
+    %i[money_rails_composite].freeze
   end
 
-begin
+# ── Schema setup ───────────────────────────────────────────
+
+def setup_schema
   ActiveRecord::Schema.define do
     case BENCH_SIDE
     when 'minting'
-      create_table :minting_single, force: true do |t|
-        t.integer :price
-      end
       create_table :minting_composite, force: true do |t|
         t.integer :price_amount
         t.string  :price_currency
-      end
-      create_table :minting_single_decimal, force: true do |t|
-        t.decimal :price
       end
       create_table :minting_composite_decimal, force: true do |t|
         t.decimal :price_amount
         t.string  :price_currency
       end
     when 'money_rails'
-      create_table :money_rails_single, force: true do |t|
-        t.integer :price_cents
-        t.string  :price_currency
-      end
       create_table :money_rails_composite, force: true do |t|
         t.integer :price_cents
         t.string  :price_currency
       end
     end
   end
+end
 
-  # ── Models ───────────────────────────────────────────────────────
+# ── Model definitions ───────────────────────────────────────
 
+def define_models
   case BENCH_SIDE
   when 'minting'
-    MintingSingle = Class.new(ApplicationRecord) do
-      self.table_name = 'minting_single'
-      money_attribute :price, currency: CURRENCY_CODE
-    end
-    MintingComposite = Class.new(ApplicationRecord) do
+    Object.const_set(:MintingComposite, Class.new(ApplicationRecord) do
       self.table_name = 'minting_composite'
       money_attribute :price
-    end
-    MintingSingleDecimal = Class.new(ApplicationRecord) do
-      self.table_name = 'minting_single_decimal'
-      money_attribute :price, currency: CURRENCY_CODE
-    end
-    MintingCompositeDecimal = Class.new(ApplicationRecord) do
+    end)
+    Object.const_set(:MintingCompositeDecimal, Class.new(ApplicationRecord) do
       self.table_name = 'minting_composite_decimal'
       money_attribute :price
-    end
+    end)
 
-    MONEY = Mint::Money.from(AMOUNT, CURRENCY_CODE)
-
-    MODELS = {
-      'money_attribute  (single integer):' => MintingSingle,
-      'money_attribute  (single decimal):' => MintingSingleDecimal,
-      'money_attribute  (comp integer):' => MintingComposite,
-      'money_attribute  (comp decimal):' => MintingCompositeDecimal
+    $money = Mint::Money.from(AMOUNT, CURRENCY_CODE)
+    $models = {
+      'money_attribute (integer column):' => MintingComposite,
+      'money_attribute (decimal column):' => MintingCompositeDecimal
     }.freeze
 
   when 'money_rails'
-    MoneyRailsSingle = Class.new(ApplicationRecord) do
-      self.table_name = 'money_rails_single'
-      monetize :price_cents, with_currency: ->(record) { record.price_currency }
-    end
-    MoneyRailsComposite = Class.new(ApplicationRecord) do
+    Object.const_set(:MoneyRailsComposite, Class.new(ApplicationRecord) do
       self.table_name = 'money_rails_composite'
       monetize :price_cents, with_currency: :price_currency
-    end
+    end)
 
-    MONEY = Money.from_amount(AMOUNT, CURRENCY_CODE)
-
-    MODELS = {
-      'money-rails   (single integer):' => MoneyRailsSingle,
-      'money-rails   (comp integer):' => MoneyRailsComposite
+    $money = Money.from_amount(AMOUNT, CURRENCY_CODE)
+    $models = {
+      'money-rails (integer cents):' => MoneyRailsComposite
     }.freeze
   end
+end
 
-  # NOTE: money-rails is not benchmarked with decimal columns because it
-  # natively stores amounts as cents (integer). It has no built-in support
-  # for decimal amount columns.
-
-  HEADER = "Benchmark: #{BENCH_SIDE == 'minting' ? 'money_attribute' : 'money-rails'}"
+def print_header
+  header = "Benchmark: #{BENCH_SIDE == 'minting' ? 'money_attribute' : 'money-rails'}"
 
   puts '=' * 80
-  puts HEADER
-  puts "Ruby #{RUBY_VERSION}, Rails #{Rails.version}, SQLite3"
+  puts header
+  puts "Ruby #{RUBY_VERSION}, Rails #{Gem.loaded_specs['rails']&.version || '?'}, SQLite3"
   puts "#{ITERATIONS} iterations per test, #{NUM_RECORDS} records for mass insert"
   puts '=' * 80
   puts
+end
 
-  # Build model groups for section-specific iteration
-  MODELS.select { |k, _| k.include?('single integer') }
-  MODELS.select { |k, _| k.include?('comp integer') }
-  MODELS.select { |k, _| k.include?('single decimal') }
-  MODELS.select { |k, _| k.include?('comp decimal') }
+# ── Benchmark methods ──────────────────────────────────────
 
-  # ── 1. Instantiation ──────────────────────────────────────────
-
+def benchmark_instantiation
   puts '-' * 60
   puts 'Instantiation (passing Money object to setter)'
   puts '-' * 60
   Benchmark.bm(40) do |x|
-    MODELS.each do |label, model|
+    $models.each do |label, model|
       x.report(label) do
-        ITERATIONS.times { model.new(price: MONEY) }
+        ITERATIONS.times { model.new(price: $money) }
       end
     end
   end
+end
 
-  # ── 2. Create + persist ───────────────────────────────────────
-
+def benchmark_create_save
   puts '-' * 60
   puts 'Create + save individual (Money through setter)'
   puts '-' * 60
-
   Benchmark.bm(40) do |x|
-    MODELS.each do |label, model|
+    $models.each do |label, model|
       x.report(label) do
-        ITERATIONS.times { model.create!(price: MONEY) }
+        ITERATIONS.times { model.create!(price: $money) }
         model.delete_all
       end
     end
   end
+end
 
-  # ── 3. Read after reload ──────────────────────────────────────
+def benchmark_update_existing
+  puts '-' * 60
+  puts 'Update existing record (write path without record creation overhead)'
+  puts '-' * 60
 
+  update_records = {}
+  $models.each { |label, model| update_records[label] = model.create!(price: $money) }
+
+  Benchmark.bm(40) do |x|
+    $models.each do |label, model|
+      record = model.find(update_records[label].id)
+      money_b = BENCH_SIDE == 'minting' ? Mint::Money.from(AMOUNT + 1, CURRENCY_CODE) : Money.from_amount(AMOUNT + 1, CURRENCY_CODE)
+
+      x.report(label) do
+        ITERATIONS.times { |i| record.update!(price: i.even? ? $money : money_b) }
+      end
+    end
+  end
+end
+
+def benchmark_setter_only
+  puts '-' * 60
+  puts 'Setter only (record.price = $money — isolates conversion cost)'
+  puts '-' * 60
+
+  setter_records = {}
+  $models.each { |label, model| setter_records[label] = model.create!(price: $money) }
+
+  Benchmark.bm(40) do |x|
+    $models.each do |label, model|
+      record = model.find(setter_records[label].id)
+      x.report(label) { ITERATIONS.times { record.price = $money } }
+    end
+  end
+end
+
+def benchmark_read_cached
   puts '-' * 60
   puts 'Read Money attribute from persisted record'
   puts '-' * 60
 
   records = {}
-  MODELS.each do |label, model|
-    records[label] = model.create!(price: MONEY)
-  end
+  $models.each { |label, model| records[label] = model.create!(price: $money) }
 
   Benchmark.bm(40) do |x|
-    MODELS.each do |label, model|
+    $models.each do |label, model|
       record = model.find(records[label].id)
-      x.report(label) do
-        ITERATIONS.times { record.price }
-      end
+      x.report(label) { ITERATIONS.times { record.price } }
     end
   end
+end
 
-  # ── 4. Query ──────────────────────────────────────────────────
-
+def benchmark_query_raw_columns
   puts '-' * 60
-  puts 'Query (raw column values — both query the same way)'
+  puts 'Query by raw columns (fair — both sides use column values)'
   puts '-' * 60
 
   Benchmark.bm(40) do |x|
     case BENCH_SIDE
     when 'minting'
-      MintingSingle.create!(price: MONEY)
-      MintingSingleDecimal.create!(price: MONEY)
-      MintingComposite.create!(price: MONEY)
-      MintingCompositeDecimal.create!(price: MONEY)
-
-      x.report('money_attribute  (single integer):') do
-        ITERATIONS.times { MintingSingle.find_by(price: MONEY) }
+      x.report('money_attribute (integer column):') do
+        ITERATIONS.times { MintingComposite.find_by(price_amount: $money.subunits, price_currency: $money.currency_code) }
       end
-      x.report('money_attribute  (single decimal):') do
-        ITERATIONS.times { MintingSingleDecimal.find_by(price: MONEY) }
-      end
-      x.report('money_attribute  (comp integer):') do
-        ITERATIONS.times { MintingComposite.find_by(price: MONEY) }
-      end
-      x.report('money_attribute  (comp decimal):') do
-        ITERATIONS.times { MintingCompositeDecimal.find_by(price: MONEY) }
+      x.report('money_attribute (decimal column):') do
+        ITERATIONS.times { MintingCompositeDecimal.find_by(price_amount: $money.amount, price_currency: $money.currency_code) }
       end
     when 'money_rails'
-      MoneyRailsSingle.create!(price: MONEY)
-      MoneyRailsComposite.create!(price: MONEY)
-
-      x.report('money-rails   (single integer):') do
-        ITERATIONS.times { MoneyRailsSingle.find_by(price_cents: MONEY) }
-      end
-      x.report('money-rails   (comp integer):') do
-        ITERATIONS.times do
-          MoneyRailsComposite.find_by(price_cents: MONEY,
-                                      price_currency: MONEY.currency)
-        end
+      x.report('money-rails (integer cents, currency):') do
+        ITERATIONS.times { MoneyRailsComposite.find_by(price_cents: $money.cents, price_currency: $money.currency.to_s) }
       end
     end
   end
+end
 
-  # ── 5. Arithmetic ─────────────────────────────────────────────
+def benchmark_query_money_object
+  return unless BENCH_SIDE == 'minting'
 
-  if BENCH_SIDE == 'minting'
-    puts '-' * 60
-    puts 'Arithmetic (add two money attributes)'
-    puts '-' * 60
+  puts '-' * 60
+  puts 'Query by Money object (money_attribute only — composed_of decomposition)'
+  puts 'money-rails cannot decompose Money in WHERE — uses raw columns above'
+  puts '-' * 60
 
-    ms1 = MintingSingle.create!(price: MONEY)
-    ms2 = MintingSingle.create!(price: MONEY)
+  Benchmark.bm(40) do |x|
+    x.report('money_attribute (integer column):') { ITERATIONS.times { MintingComposite.find_by(price: $money) } }
+    x.report('money_attribute (decimal column):') { ITERATIONS.times { MintingCompositeDecimal.find_by(price: $money) } }
+  end
+end
 
-    Benchmark.bm(40) do |x|
-      x.report('money_attribute  (single integer):') do
-        ITERATIONS.times { (ms1.price / 3) + (ms2.price * 2) }
+def benchmark_sql_generation
+  puts '-' * 60
+  puts 'SQL generation (.to_sql)'
+  puts '-' * 60
+
+  Benchmark.bm(40) do |x|
+    case BENCH_SIDE
+    when 'minting'
+      x.report('money_attribute (integer column):') do
+        ITERATIONS.times { MintingComposite.where(price_amount: $money.subunits, price_currency: $money.currency_code).to_sql }
+      end
+      x.report('money_attribute (decimal column):') do
+        ITERATIONS.times { MintingCompositeDecimal.where(price_amount: $money.amount, price_currency: $money.currency_code).to_sql }
+      end
+    when 'money_rails'
+      x.report('money-rails (integer cents, currency):') do
+        ITERATIONS.times { MoneyRailsComposite.where(price_cents: $money.cents, price_currency: $money.currency.to_s).to_sql }
       end
     end
   end
+end
 
-  # ── 6. Caching ──────────────────────────────────────────────────
-
-  if BENCH_SIDE == 'minting'
-    puts '-' * 60
-    puts 'Repeated access ×1000 (caching demonstration)'
-    puts '-' * 60
-    puts 'composed_of used by Mint returns zero-allocation cached objects.'
-    puts
-
-    mcc   = MintingComposite.create!(price: MONEY)
-    mcc_d = MintingCompositeDecimal.create!(price: MONEY)
-
-    first = mcc.price
-    second = mcc.price
-    puts "money_attribute composite int same object? #{first.equal?(second)}"
-    first_d = mcc_d.price
-    second_d = mcc_d.price
-    puts "money_attribute composite dec same object? #{first_d.equal?(second_d)}"
-    puts
-
-    Benchmark.bm(40) do |x|
-      x.report('money_attribute  (comp integer):')  { ITERATIONS.times { mcc.price } }
-      x.report('money_attribute  (comp decimal):')  { ITERATIONS.times { mcc_d.price } }
-    end
-
-    alloc_before = GC.stat(:total_allocated_objects)
-    ITERATIONS.times { mcc.price }
-    minting_int_alloc = GC.stat(:total_allocated_objects) - alloc_before
-
-    alloc_before = GC.stat(:total_allocated_objects)
-    ITERATIONS.times { mcc_d.price }
-    minting_dec_alloc = GC.stat(:total_allocated_objects) - alloc_before
-
-    puts
-    puts format('%-40s %10s', 'money_attribute (comp integer) allocated:', minting_int_alloc.to_s)
-    puts format('%-40s %10s', 'money_attribute (comp decimal) allocated:', minting_dec_alloc.to_s)
-    puts
-
-  else # money_rails
-    puts '-' * 60
-    puts 'Repeated access ×1000 (caching demonstration)'
-    puts '-' * 60
-    puts 'Money-rails re-runs currency lookups and comparisons on every read.'
-    puts
-
-    mrcc = MoneyRailsComposite.create!(price: MONEY)
-
-    first_mr = mrcc.price
-    second_mr = mrcc.price
-    puts "money-rails   composite int same object? #{first_mr.equal?(second_mr)}"
-    puts
-
-    Benchmark.bm(40) do |x|
-      x.report('money-rails   (comp integer):') { ITERATIONS.times { mrcc.price } }
-    end
-
-    alloc_before = GC.stat(:total_allocated_objects)
-    ITERATIONS.times { mrcc.price }
-    money_alloc = GC.stat(:total_allocated_objects) - alloc_before
-
-    puts
-    puts format('%-40s %10s', 'money-rails (comp integer) allocated:', money_alloc.to_s)
-    puts
-  end
-
-  # ── Mass insert ─────────────────────────────────────────────────
-
-  puts
-  puts '─' * 60
-  puts "Mass insert (#{NUM_RECORDS} records in transaction, Money through setter)"
-  puts '─' * 60
+def benchmark_multi_record
+  puts '-' * 60
+  puts 'Query multi-record (load 100 records × 1000 iters — deserialization stress test)'
+  puts '-' * 60
 
   case BENCH_SIDE
   when 'minting'
-    mass_minting_single = Benchmark.measure do
-      MintingSingle.transaction { NUM_RECORDS.times { MintingSingle.create!(price: MONEY) } }
-    end
-    mass_minting_single_decimal = Benchmark.measure do
-      MintingSingleDecimal.transaction do
-        NUM_RECORDS.times { MintingSingleDecimal.create!(price: MONEY) }
+    ids_int = Array.new(100) { MintingComposite.create!(price: $money).id }
+    Benchmark.bm(40) do |x|
+      x.report('money_attribute (integer column):') do
+        1000.times { MintingComposite.where(price_amount: $money.subunits, price_currency: $money.currency_code).to_a.each(&:price) }
       end
     end
-    mass_minting_composite = Benchmark.measure do
-      MintingComposite.transaction do
-        NUM_RECORDS.times { MintingComposite.create!(price: MONEY) }
-      end
-    end
-    mass_minting_composite_decimal = Benchmark.measure do
-      MintingCompositeDecimal.transaction do
-        NUM_RECORDS.times { MintingCompositeDecimal.create!(price: MONEY) }
-      end
-    end
+    MintingComposite.where(id: ids_int).delete_all
 
-    puts format('%-40s %10s', 'money_attribute (single integer):',
-                "#{mass_minting_single.real.round(4)}s")
-    puts format('%-40s %10s', 'money_attribute (single decimal):',
-                "#{mass_minting_single_decimal.real.round(4)}s")
-    puts format('%-40s %10s', 'money_attribute (comp integer):',
-                "#{mass_minting_composite.real.round(4)}s")
-    puts format('%-40s %10s', 'money_attribute (comp decimal):',
-                "#{mass_minting_composite_decimal.real.round(4)}s")
+    ids_dec = Array.new(100) { MintingCompositeDecimal.create!(price: $money).id }
+    Benchmark.bm(40) do |x|
+      x.report('money_attribute (decimal column):') do
+        1000.times { MintingCompositeDecimal.where(price_amount: $money.amount, price_currency: $money.currency_code).to_a.each(&:price) }
+      end
+    end
+    MintingCompositeDecimal.where(id: ids_dec).delete_all
 
   when 'money_rails'
-    mass_money_rails_single = Benchmark.measure do
-      MoneyRailsSingle.transaction do
-        NUM_RECORDS.times { MoneyRailsSingle.create!(price: MONEY) }
+    ids_mr = Array.new(100) { MoneyRailsComposite.create!(price: $money).id }
+    Benchmark.bm(40) do |x|
+      x.report('money-rails (integer cents):') do
+        1000.times { MoneyRailsComposite.where(price_cents: $money.cents, price_currency: $money.currency.to_s).to_a.each(&:price) }
       end
     end
-    mass_money_rails_composite = Benchmark.measure do
-      MoneyRailsComposite.transaction do
-        NUM_RECORDS.times { MoneyRailsComposite.create!(price: MONEY) }
-      end
-    end
-
-    puts format('%-40s %10s', 'money-rails  (single integer):',
-                "#{mass_money_rails_single.real.round(4)}s")
-    puts format('%-40s %10s', 'money-rails  (comp integer):',
-                "#{mass_money_rails_composite.real.round(4)}s")
+    MoneyRailsComposite.where(id: ids_mr).delete_all
   end
+end
 
-# ── Cleanup ─────────────────────────────────────────────────────
+def benchmark_arithmetic
+  return unless BENCH_SIDE == 'minting'
+
+  puts '-' * 60
+  puts 'Arithmetic (add two money attributes)'
+  puts '-' * 60
+
+  mc1 = MintingComposite.create!(price: $money)
+  mc2 = MintingComposite.create!(price: $money)
+
+  Benchmark.bm(40) do |x|
+    x.report('money_attribute (integer column):') { ITERATIONS.times { (mc1.price / 3) + (mc2.price * 2) } }
+  end
+end
+
+def benchmark_caching
+  puts '-' * 60
+  puts 'Repeated access ×1000 (caching demonstration)'
+  puts '-' * 60
+
+  if BENCH_SIDE == 'minting'
+    puts 'composed_of used by Mint returns zero-allocation cached objects.'
+    puts
+
+    mcc = MintingComposite.create!(price: $money)
+    mcc_d = MintingCompositeDecimal.create!(price: $money)
+
+    puts "money_attribute composite int same object? #{mcc.price.equal?(mcc.price)}"
+    puts "money_attribute composite dec same object? #{mcc_d.price.equal?(mcc_d.price)}"
+    puts
+
+    Benchmark.bm(40) do |x|
+      x.report('money_attribute (integer column):') { ITERATIONS.times { mcc.price } }
+      x.report('money_attribute (decimal column):') { ITERATIONS.times { mcc_d.price } }
+    end
+
+    int_alloc = GC.stat(:total_allocated_objects)
+    ITERATIONS.times { mcc.price }
+    int_alloc = GC.stat(:total_allocated_objects) - int_alloc
+
+    dec_alloc = GC.stat(:total_allocated_objects)
+    ITERATIONS.times { mcc_d.price }
+    dec_alloc = GC.stat(:total_allocated_objects) - dec_alloc
+
+    puts
+    puts format('%-40<label>s %<value>10s', label: 'money_attribute (integer column) allocated:', value: int_alloc.to_s)
+    puts format('%-40<label>s %<value>10s', label: 'money_attribute (decimal column) allocated:', value: dec_alloc.to_s)
+  else
+    puts 'Money-rails re-runs currency lookups and comparisons on every read.'
+    puts
+
+    mrcc = MoneyRailsComposite.create!(price: $money)
+    puts "money-rails composite int same object? #{mrcc.price.equal?(mrcc.price)}"
+    puts
+
+    Benchmark.bm(40) { |x| x.report('money-rails (integer cents):') { ITERATIONS.times { mrcc.price } } }
+
+    mr_alloc = GC.stat(:total_allocated_objects)
+    ITERATIONS.times { mrcc.price }
+    mr_alloc = GC.stat(:total_allocated_objects) - mr_alloc
+
+    puts
+    puts format('%-40<label>s %<value>10s', label: 'money-rails (integer cents) allocated:', value: mr_alloc.to_s)
+  end
+  puts
+end
+
+def benchmark_scaling
+  puts
+  puts '─' * 60
+  puts 'Scaling: mass insert and bulk update at various batch sizes'
+  puts '─' * 60
+
+  if BENCH_SIDE == 'minting'
+    puts
+    puts 'size     int insert         int update         dec insert         dec update        '
+
+    [100, 500, 1000, 2000].each do |n|
+      records_i = Array.new(n) { MintingComposite.new(price: $money) }
+      t_ins_i = Benchmark.measure { MintingComposite.transaction { records_i.each(&:save!) } }
+
+      ids_i = records_i.map(&:id)
+      bu_b = Mint::Money.from(AMOUNT + 1, CURRENCY_CODE)
+      t_up_i = Benchmark.measure { MintingComposite.update(ids_i, ids_i.each_with_index.map { |_id, i| { price: i.even? ? $money : bu_b } }) }
+      MintingComposite.delete_all
+
+      records_d = Array.new(n) { MintingCompositeDecimal.new(price: $money) }
+      t_ins_d = Benchmark.measure { MintingCompositeDecimal.transaction { records_d.each(&:save!) } }
+
+      ids_d = records_d.map(&:id)
+      t_up_d = Benchmark.measure { MintingCompositeDecimal.update(ids_d, ids_d.each_with_index.map { |_id, i| { price: i.even? ? $money : bu_b } }) }
+      MintingCompositeDecimal.delete_all
+
+      puts format('%-8<size>s %-18<int_ins>s %-18<int_up>s %-18<dec_ins>s %-18<dec_up>s',
+                  size: "#{n}:", int_ins: "#{t_ins_i.real.round(4)}s", int_up: "#{t_up_i.real.round(4)}s",
+                  dec_ins: "#{t_ins_d.real.round(4)}s", dec_up: "#{t_up_d.real.round(4)}s")
+    end
+
+  else
+    puts
+    puts 'size     mr insert          mr update         '
+
+    [100, 500, 1000, 2000].each do |n|
+      records = Array.new(n) { MoneyRailsComposite.new(price: $money) }
+      t_ins = Benchmark.measure { MoneyRailsComposite.transaction { records.each(&:save!) } }
+
+      ids = records.map(&:id)
+      bu_b = Money.from_amount(AMOUNT + 1, CURRENCY_CODE)
+      t_up = Benchmark.measure { MoneyRailsComposite.update(ids, ids.each_with_index.map { |_id, i| { price: i.even? ? $money : bu_b } }) }
+      MoneyRailsComposite.delete_all
+
+      puts format('%-8<size>s %-18<ins>s %-18<up>s', size: "#{n}:", ins: "#{t_ins.real.round(4)}s", up: "#{t_up.real.round(4)}s")
+    end
+  end
+end
+
+def cleanup_tables
+  ActiveRecord::Schema.define do
+    TABLES.each { |t| drop_table t, force: true }
+  end
+  puts
+  puts 'Done. Temporary tables dropped.'
+end
+
+# ── Execution ─────────────────────────────────────────────────────
+
+setup_schema
+define_models
+print_header
+
+begin
+  benchmark_instantiation
+  benchmark_create_save
+  benchmark_update_existing
+  benchmark_setter_only
+  benchmark_read_cached
+  benchmark_query_raw_columns
+  benchmark_query_money_object
+  benchmark_sql_generation
+  benchmark_multi_record
+  benchmark_arithmetic
+  benchmark_caching
+  benchmark_scaling
 rescue StandardError => e
   puts "\nError: #{e.class}: #{e.message}"
   puts e.backtrace.first(5).join("\n")
   raise
 ensure
-  ActiveRecord::Schema.define do
-    TABLES.each { |t| drop_table t, force: true }
-  end
-
-  puts
-  puts 'Done. Temporary tables dropped.'
+  cleanup_tables
 end

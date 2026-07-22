@@ -50,6 +50,11 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     assert_equal 10.euros, transaction.discount
     assert_equal 'USD', transaction.currency
     assert_equal 'EUR', transaction.discount_currency
+  end
+
+  test 'discount is different object from amount' do
+    transaction = FinancialTransaction.new(amount: 45.34.dollars, discount: 10.euros)
+
     assert_not_equal transaction.amount, transaction.discount
   end
 
@@ -98,6 +103,15 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     assert_equal 10.euros, transaction.discount
     assert_equal 200.to_money, transaction.tax
     assert_equal 'USD', transaction.currency
+  end
+
+  test 'tax has separate currency from discount' do
+    transaction = FinancialTransaction.new(
+      amount: 45.34.dollars,
+      discount: 10.euros,
+      tax: 200
+    )
+
     assert_equal 'EUR', transaction.discount_currency
   end
 
@@ -127,7 +141,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     reversed = Class.new(ApplicationRecord) do
       self.table_name = 'financial_transactions'
 
-      money_attribute :tax
+      money_amount :tax
       money_attribute :discount
       money_attribute :amount
     end
@@ -138,6 +152,19 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     assert_equal 'USD', record.currency
     assert_equal 10.euros, record.discount
     assert_equal 'EUR', record.discount_currency
+  end
+
+  test 'column inference preserves tax attribute value' do
+    reversed = Class.new(ApplicationRecord) do
+      self.table_name = 'financial_transactions'
+
+      money_amount :tax
+      money_attribute :discount
+      money_attribute :amount
+    end
+
+    record = reversed.new(amount: 45.34.dollars, discount: 10.euros, tax: 200)
+
     assert_equal 200.to_money, record.tax
   end
 
@@ -184,18 +211,60 @@ class FinancialTransactionTest < ActiveSupport::TestCase
     assert_equal 20.euros, transaction.discount
     assert_equal 15.50.dollars, transaction.price
     assert_equal 500.to_money, transaction.tax
+  end
+
+  test 'total and currencies set correctly' do
+    transaction = FinancialTransaction.new(
+      amount: 100.dollars,
+      discount: 20.euros,
+      price: 15.50.dollars,
+      tax: 500,
+      total: 99.99.euros
+    )
+
     assert_equal 99.99.euros, transaction.total
     assert_equal 'USD', transaction.currency
     assert_equal 'EUR', transaction.discount_currency
+  end
+
+  test 'price and total currencies set correctly' do
+    transaction = FinancialTransaction.new(
+      amount: 100.dollars,
+      discount: 20.euros,
+      price: 15.50.dollars,
+      tax: 500,
+      total: 99.99.euros
+    )
+
     assert_equal 'USD', transaction.price_currency
     assert_equal 'EUR', transaction.currency_code
+  end
 
-    transaction.save!
+  test 'amount, discount, and price persist correctly' do
+    transaction = FinancialTransaction.create!(
+      amount: 100.dollars,
+      discount: 20.euros,
+      price: 15.50.dollars,
+      tax: 500,
+      total: 99.99.euros
+    )
     reloaded = FinancialTransaction.find(transaction.id)
 
     assert_equal 100.dollars, reloaded.amount
     assert_equal 20.euros, reloaded.discount
     assert_equal 15.50.dollars, reloaded.price
+  end
+
+  test 'tax and total persist correctly' do
+    transaction = FinancialTransaction.create!(
+      amount: 100.dollars,
+      discount: 20.euros,
+      price: 15.50.dollars,
+      tax: 500,
+      total: 99.99.euros
+    )
+    reloaded = FinancialTransaction.find(transaction.id)
+
     assert_equal 500.to_money, reloaded.tax
     assert_equal 99.99.euros, reloaded.total
   end

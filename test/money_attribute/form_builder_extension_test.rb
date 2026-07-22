@@ -15,7 +15,7 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test 'new form renders all money fields' do
+  test 'new form renders money fields' do
     get new_financial_transaction_url
 
     assert_response :success
@@ -23,7 +23,19 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
     assert_select 'input[name="financial_transaction[amount]"]'
     assert_select 'input[name="financial_transaction[discount]"]'
     assert_select 'input[name="financial_transaction[price]"]'
+  end
+
+  test 'new form renders total field' do
+    get new_financial_transaction_url
+
+    assert_response :success
     assert_select 'input[name="financial_transaction[total]"]'
+  end
+
+  test 'new form renders tax field' do
+    get new_financial_transaction_url
+
+    assert_response :success
     assert_select 'input[name="financial_transaction[tax]"]'
   end
 
@@ -57,7 +69,19 @@ class FormBuilderExtensionTest < ActionDispatch::IntegrationTest
     assert_select 'input#financial_transaction_amount'
     assert_select 'input#financial_transaction_discount'
     assert_select 'input#financial_transaction_price'
+  end
+
+  test 'money fields have correct dom id for total' do
+    get edit_financial_transaction_url(@transaction)
+
+    assert_response :success
     assert_select 'input#financial_transaction_total'
+  end
+
+  test 'money fields have correct dom id for tax' do
+    get edit_financial_transaction_url(@transaction)
+
+    assert_response :success
     assert_select 'input#financial_transaction_tax'
   end
 

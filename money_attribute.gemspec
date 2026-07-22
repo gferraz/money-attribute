@@ -21,12 +21,10 @@ Gem::Specification.new do |spec|
   spec.metadata['bug_tracker_uri'] = "#{spec.homepage}/issues"
   spec.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    Dir['{app,config,db,lib}/**/*', 'MIT-LICENSE', 'Rakefile', 'README.md']
-  end
+  spec.files = Dir.glob('{app,config,db,lib}/**/*', base: __dir__) + %w[MIT-LICENSE Rakefile README.md]
 
   spec.required_ruby_version = '>= 3.3'
 
-  spec.add_dependency 'minting', '>= 1.9.0'
-  spec.add_dependency 'rails', '>= 7.1.3.2'
+  spec.add_dependency 'minting', '>= 2.0'
+  spec.add_dependency 'rails', '>= 7.1'
 end

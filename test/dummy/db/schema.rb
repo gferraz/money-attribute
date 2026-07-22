@@ -44,4 +44,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_000003) do
     t.string "product"
     t.datetime "updated_at", null: false
   end
+
+  create_table "test_composite", force: :cascade do |t|
+    t.integer "price_cents"
+    t.string "price_currency"
+  end
 end

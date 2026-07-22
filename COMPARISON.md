@@ -9,7 +9,7 @@ For a quick overview, see the [At a glance table](README.md#at-a-glance--vs-mone
 ```ruby
 # MoneyAttribute
 class Product < ApplicationRecord
-  money_attribute :price, currency: 'USD'          # single column, fixed currency
+  money_amount   :price                             # single column, fixed currency (default)
   money_attribute :total                           # two columns (total_amount + total_currency), multi-currency
 end
 
@@ -76,7 +76,7 @@ Product.order(:price_cents)
 ```ruby
 # MoneyAttribute — works with decimal columns out of the box
 # migration: t.decimal :price
-money_attribute :price, currency: 'USD'
+money_amount :price
 
 product.price = 12.34
 product.price           # => [USD 12.34]
@@ -115,7 +115,7 @@ offer.price_currency    # => "EUR"
 
 ```ruby
 # MoneyAttribute — same declaration works with any column type
-money_attribute :price, currency: 'USD'
+money_amount :price
 
 # t.decimal :price   → stores human-readable value (12.34)
 # t.integer :price   → stores cents (1234)

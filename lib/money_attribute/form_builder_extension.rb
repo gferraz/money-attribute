@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
+  # :nodoc:
   module FormBuilderExtension
     def money_field(method, options = {})
       money = object.public_send(method)

@@ -10,19 +10,18 @@ module MoneyAttribute
     end
   end
 
-  # Class-level caches — written during Rails boot (single-threaded),
-  # read-only during request handling. Safe without synchronization.
-  def self.config
-    @config ||= Configuration.new
+  cfg = Configuration.new
+  cached_default = nil
+
+  define_singleton_method(:config) { cfg }
+
+  define_singleton_method(:configure) do |&block|
+    block&.call(cfg)
+    cached_default = nil
+    cfg
   end
 
-  def self.configure
-    yield config if block_given?
-    @default_currency = nil
-    config
-  end
-
-  def self.default_currency
-    @default_currency ||= ::Mint::Currency.resolve!(config.default_currency)
+  define_singleton_method(:default_currency) do
+    cached_default ||= ::Mint::Currency.resolve!(cfg.default_currency)
   end
 end

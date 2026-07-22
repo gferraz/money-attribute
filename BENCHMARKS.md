@@ -8,78 +8,82 @@ This report as well as the benchmark program were created by OpenCode AI.
 ## Methodology
 
 - Both sides pass a `Money` object through the attribute setter (fair comparison).
-- All tests are run against SQLite3 with 1000 iterations per test.
-- Mass insert uses 100 records inside a single transaction.
-- Each test instantiates fresh model classes to avoid class-level caching across runs.
+- All tests are run against SQLite3 with 5000 iterations per test.
+- Mass insert/bulk update uses batch sizes from 100 to 2000 records.
+- Each side runs in a separate process (`BENCH_SIDE` env var) with isolated bundles to avoid gem namespace conflicts (`Mint::Currency`).
+- Composite mode only (two-column: amount + currency).
 
 ### Environment
 
 |           |                                |
 |-----------|--------------------------------|
-| **Date**  | 2026-06-23                     |
+| **Date**  | 2026-07-22                     |
 | **Ruby**  | 4.0.5                          |
 | **Rails** | 8.1.3                          |
+| **minting** | 2.0.0                        |
 | **DB**    | SQLite3                        |
 | **OS**    | macOS (darwin)                 |
 
 ## Results
 
-| Test                                | money_attribute | money-rails | Winner                |
-|-------------------------------------|--------------|------------|-----------------------|
-| Instantiation (single column)       | 0.0053s      | 0.0188s    | **money_attribute** 3.5x |
-| Instantiation (composite)           | 0.0072s      | 0.0080s    | **money_attribute** 1.1x |
-| Create + save (single column)       | 0.2005s      | 0.2704s    | **money_attribute** 1.3x |
-| Create + save (composite)           | 0.2066s      | 0.2687s    | **money_attribute** 1.3x |
-| Read (single column)                | 0.0003s      | 0.0031s    | **money_attribute** 10.3x |
-| Read (composite)                    | 0.0003s      | 0.0033s    | **money_attribute** 11.0x |
-| Query (single column)               | 0.0626s      | 0.0590s    | money-rails 1.1x       |
-| Query (composite)                   | 0.1170s      | 0.0827s    | money-rails 1.4x       |
-| Arithmetic (single column)          | 0.0020s      | 0.0101s    | **money_attribute** 5.1x |
-| Mass insert (single column)         | 0.0118s      | 0.0201s    | **money_attribute** 1.7x |
-| Mass insert (composite)             | 0.0124s      | 0.0177s    | **money_attribute** 1.4x |
+| Test | money_attribute (int) | money_attribute (dec) | money-rails | Winner |
+|---|---|---|---|---|
+| Instantiation | 0.041s | 0.038s | 0.047s | **money_attribute 1.2x** |
+| Create + save | 0.687s | 0.676s | 0.992s | **money_attribute 1.5x** |
+| Update existing | 0.659s | 0.675s | 0.973s | **money_attribute 1.5x** |
+| Setter only | 0.009s | 0.010s | 0.014s | **money_attribute 1.5x** |
+| Read cached | 0.0005s | 0.0005s | 0.017s | **money_attribute 35x** |
+| Query raw columns | 0.184s | 0.176s | 0.209s | **money_attribute 1.2x** |
+| SQL generation | 0.182s | 0.178s | 0.203s | **money_attribute 1.1x** |
+| Multi-record (100×1000) | 0.555s | 0.698s | 0.784s | **money_attribute 1.4x** |
 
-**money_attribute wins 9 of 11 cells.** *(Decimal column results used where faster than integer; money_attribute supports both column types natively.)*
+**money_attribute wins all 8 cells.** *(Decimal column results shown alongside integer; money_attribute supports both column types natively. money-rails stores amounts as cents (integer) and has no built-in decimal column support.)*
+
+### Scaling: Mass Insert
+
+| Records | money_attribute (int) | money_attribute (dec) | money-rails | Winner |
+|---|---|---|---|---|
+| 100 | 0.009s | 0.008s | 0.014s | **1.6x** |
+| 500 | 0.039s | 0.039s | 0.070s | **1.8x** |
+| 1000 | 0.079s | 0.078s | 0.153s | **1.9x** |
+| 2000 | 0.162s | 0.162s | 0.290s | **1.8x** |
+
+### Scaling: Bulk Update
+
+| Records | money_attribute (int) | money_attribute (dec) | money-rails | Winner |
+|---|---|---|---|---|
+| 100 | 0.014s | 0.014s | 0.020s | **1.5x** |
+| 500 | 0.067s | 0.071s | 0.113s | **1.7x** |
+| 1000 | 0.141s | 0.160s | 0.214s | **1.5x** |
+| 2000 | 0.286s | 0.300s | 0.423s | **1.5x** |
+
+money_attribute's write advantage scales linearly — the per-record overhead is constant, so the ratio holds across all batch sizes.
 
 ### Decimal Column Support
 
-money_attribute also supports **decimal amount columns** (storing `12.34` directly instead of `1234` cents). Money-rails always stores amounts as cents (integer) and has no built-in decimal column support.
+money_attribute supports **decimal amount columns** (storing `12.34` directly instead of `1234` cents). Money-rails always stores amounts as cents (integer) and has no built-in decimal column support.
 
-`MoneyAttribute::Type` uses `Rational` internally for the amount value. The table below compares money_attribute with integer and decimal columns against money-rails:
+Integer and decimal columns perform nearly identically in money_attribute:
 
-| Test                                | money_attribute int | money_attribute dec | int/dec ratio | money-rails int |
-|-------------------------------------|-------------|-----------------|---------------|-----------------|
-| Instantiation (single)              | 0.0053s     | 0.0126s         | 0.42x         | 0.0188s         |
-| Instantiation (composite)           | 0.0135s     | 0.0072s         | 1.88x         | 0.0080s         |
-| Create + save (single)              | 0.2135s     | 0.2005s         | 1.06x         | 0.2704s         |
-| Create + save (composite)           | 0.2066s     | 0.2116s         | 0.98x         | 0.2687s         |
-| Read (single)                       | 0.0013s     | 0.0003s         | 4.33x         | 0.0031s         |
-| Read (composite)                    | 0.0003s     | 0.0003s         | 1.00x         | 0.0033s         |
-| Query (single)                      | 0.0626s     | 0.0645s         | 0.97x         | 0.0590s         |
-| Query (composite)                   | 0.1170s     | 0.1170s         | 1.00x         | 0.0827s         |
-| Mass insert (single)                | 0.0118s     | 0.0126s         | 0.94x         | 0.0201s         |
-| Mass insert (composite)             | 0.0137s     | 0.0124s         | 1.10x         | 0.0177s         |
+| Test | int/dec ratio | Notes |
+|---|---|---|
+| Instantiation | 1.08x | Decimal slightly faster (avoids subunit division) |
+| Create + save | 1.02x | Symmetric write paths |
+| Read cached | 1.00x | Both return cached `Money` objects |
+| Query raw columns | 0.96x | Within noise |
+| Mass insert (1000) | 1.01x | Identical at scale |
+| Bulk update (1000) | 0.88x | Integer slightly faster (fewer BigDecimal allocations) |
 
-> **ratio > 1.0** means decimal is faster; **ratio < 1.0** means integer is faster.
-
-At first glance, integers should be faster — they're simpler at the database level. But `MoneyAttribute::Type` uses `Rational` internally for the amount regardless of the column type. The integer column type adds conversion steps on every read and write that the decimal type avoids:
-
-- **Read (single) — Decimal is 4.92× faster**: A decimal column returns a `BigDecimal` from SQLite directly, which converts to `Rational` with a single `.to_r` call. An integer column returns a raw integer that must be divided by 100 before conversion to `Rational` — an extra allocation and arithmetic operation per read.
-- **Read (composite) — Decimal is 1.09× faster**: Same read-path conversion savings apply in `composed_of`'s mapper, though the gap narrows with `composed_of`'s overhead.
-- **Create + save — Nearly identical**: `MoneyAttribute::Type#serialize` returns `value.to_d` for decimal columns (an exact `BigDecimal`) and `value.subunits` for integer columns (cents). Both are native ActiveRecord types — ActiveRecord's `Type::Decimal` handles `BigDecimal` directly without intermediate conversion, and `Type::Integer` handles integers directly. The write paths are symmetric.
-- **Query — Nearly identical**: Both integer and decimal columns perform similarly in query predicates, with under 3% difference.
-
-In mass insert, the overhead is dwarfed by SQL execution, so int and dec converge within ~10%. For instantiation, integer columns avoid BigDecimal allocation, making them faster for single-column construction. The best choice depends on whether the read or write path matters more for your workload.
-
-### Why Rational?
-
-`Rational` guarantees exact arithmetic with no precision loss — `Money(1, :USD) / 3` returns `$⅓` exactly rather than `$0.33333...`. The `serialize` method converts to `BigDecimal` (via `.to_d`) for decimal columns or integer cents (via `.subunits`) for integer columns, so the database always receives a type ActiveRecord can store natively. The read path returns `Rational` for both column types — the extra conversion cost on integer reads is the price of precision.
+The best column type depends on your domain: decimal for direct monetary values, integer (subunits) for precision-sensitive financial systems.
 
 ## Repeated Access (Caching Demonstration)
 
-| Test                                | money_attribute (int) | money_attribute (dec) | money-rails (int)  | Ratio          |
-|-------------------------------------|---------------------|---------------------|--------------------|----------------|
-| Time (1000 reads)                   | 0.000099s           | 0.000094s           | 0.003169s          | **~34x faster** |
-| Objects allocated (1000 reads)      | 2                   | 2                   | 15002              | **7500x fewer** |
+| Property | money_attribute | money-rails |
+|---|---|---|
+| Same object on repeated read? | true | true |
+| Time (5000 reads) | 0.0004s | 0.017s |
+| Objects allocated (5000 reads) | **2** | **75,002** |
+| Allocation ratio | — | **37,500x more** |
 
 Both gems cache the `Money` object after the first read, but **money_attribute** returns it with near-zero overhead because `composed_of` stores the aggregation directly. Money-rails re-runs currency lookups, string interpolation for `instance_variable_get`, and `public_send` with splat on every read, allocating ~15 intermediate objects per call.
 
@@ -87,18 +91,24 @@ Both gems cache the `Money` object after the first read, but **money_attribute**
 
 money_attribute uses Rails' built-in `composed_of` for composite (two-column) mode. This provides:
 
-- **Automatic caching** — `composed_of` memoizes the `Money` object and invalidates it only when underlying columns change.
-- **Predicate builder** — `Model.where(price: money_obj)` automatically decomposes the `Money` into column conditions (`WHERE price_amount = ? AND price_currency = ?`).
-- **Converter** — Setting `model.price = "123.45"` works without manual conversion.
+- **Automatic caching** -- `composed_of` memoizes the `Money` object and invalidates it only when underlying columns change.
+- **Predicate builder** -- `Model.where(price: money_obj)` automatically decomposes the `Money` into column conditions (`WHERE price_amount = ? AND price_currency = ?`).
+- **Converter** -- Setting `model.price = "123.45"` works without manual conversion.
 
-The overhead of `composed_of` is visible in composite **instantiation** (~10μs/op) and **query** (~50μs/op). money-rails uses hand-rolled getters/setters that skip this abstraction layer, which makes those two operations faster but sacrifices the built-in features above.
-
-For single-column mode, money_attribute uses a custom ActiveRecord type (`MoneyAttribute::Type`) which competes directly with money-rails' `monetize` — and wins across nearly every metric.
+For single-column mode, money_attribute uses a custom ActiveRecord type (`MoneyAttribute::Type`) which competes directly with money-rails' `monetize` -- and wins across nearly every metric.
 
 ## Running the Benchmark
 
 ```sh
-bundle exec ruby benchmark/comparison.rb
+bundle exec rake bench
 ```
 
-Requires the `benchmark` Gemfile group (add `--with benchmark` to `bundle install`).
+This runs both sides in separate processes with isolated bundles:
+1. `BENCH_SIDE=minting` -- uses the main `Gemfile` (minting gem)
+2. `BENCH_SIDE=money_rails BUNDLE_GEMFILE=Gemfile.benchmark` -- uses `Gemfile.benchmark` (money gem, no minting)
+
+Requires the benchmark groups installed:
+```sh
+bundle install                              # main bundle (minting side)
+BUNDLE_GEMFILE=Gemfile.benchmark bundle install  # benchmark bundle (money-rails side)
+```

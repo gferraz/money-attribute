@@ -128,21 +128,68 @@ monetize :price         # column must be price — no support for other types
 
 ## Performance
 
-See [BENCHMARKS.md](BENCHMARKS.md) for detailed results across instantiation, persistence, reads, queries, arithmetic, and mass inserts. MoneyAttribute wins 9 of 11 benchmark cells, with the largest advantages in reads (up to 13× faster), arithmetic (3.7×), and mass inserts (1.5×).
+See [BENCHMARKS.md](BENCHMARKS.md) for detailed results. MoneyAttribute wins **all 8 core benchmarks** and all scaling tests:
+
+- **1.2×** faster instantiation
+- **1.5×** faster create/update
+- **35×** faster cached reads (2 objects vs 75,002 allocated)
+- **1.9×** faster mass inserts (1000 records)
+- **1.5×** faster bulk updates (1000 records)
+
+## What money_attribute has (and money-rails doesn't)
+
+MoneyAttribute provides several features that money-rails lacks:
+
+| Feature | MoneyAttribute | money-rails |
+|---|---|---|
+| **Decimal column support** | Native — stores `12.34` directly | Not supported — must convert to cents |
+| **Crypto decimal columns** | `decimal(36,18)` for high-precision amounts | Not available |
+| **Money-object queries** | `Model.where(price: money_obj)` — auto-decomposes via `composed_of` | Must query raw columns (`price_cents`) |
+| **Zero-allocation caching** | 35× faster reads, 2 objects vs 75,002 allocated | Re-runs lookups on every read |
+| **Auto-detection** | Same declaration works with `integer`, `bigint`, or `decimal` | Must match column name exactly |
+| **No monkey-patches** | Uses `ActiveRecord::Type` + `composed_of` (standard Rails) | Overrides reader/writer methods |
+| **Built-in nil handling** | `allow_nil: true` by default (no opt-in needed) | Requires explicit opt-in |
 
 ## What money-rails has (and money_attribute doesn't)
 
-MoneyAttribute is intentionally minimal — it focuses on storing and reading money attributes with Rails primitives. Money-rails is a more mature gem (12+ years, 1.9k stars) with a broader feature set that MoneyAttribute does not currently provide:
+MoneyAttribute is intentionally minimal — it focuses on storing and reading money attributes with Rails primitives. Money-rails is a more mature gem (12+ years, 1.9k stars) with a broader feature set:
 
 | Feature | money-rails | MoneyAttribute |
 |---|---|---|
 | **Mongoid support** | Yes | ActiveRecord only |
-| **View helpers** | `humanized_money`, `money_without_cents`, etc. | None |
-| **Currency exchange** | `default_bank`, `add_rate`, EuCentralBank | None |
-| **Validation integration** | `validates_numericality_of` auto-added | Must add manually |
+| **View helpers** | `humanized_money`, `money_without_cents`, `humanized_money_with_symbol` | None |
+| **Currency exchange** | `default_bank`, `add_rate`, EuCentralBank integration | None |
+| **Validation integration** | Auto-adds `validates_numericality_of` | Must add manually |
 | **Per-request currency** | Lambda-based for multi-tenant apps | Static default only |
-| **Allow nil** | `monetize :x, allow_nil: true` | Always allowed (no opt-in needed) |
-| **Parse error control** | `raise_error_on_money_parsing` option | Always raises |
-| **Community** | 1.9k stars, 386 forks, 897 commits | New gem, 1.0 soon |
+| **Parse error control** | `raise_error_on_money_parsing` option | Always raises on parse errors |
+| **Community maturity** | 12+ years, 1.9k stars, 386 forks | New gem, 1.0 just released |
 
-If you need any of these features today, money-rails may be a better fit. MoneyAttribute fills a specific niche: a lightweight, performant money-in-Rails solution built on standard Rails primitives.
+## Feature parity
+
+These features work identically in both gems:
+
+| Feature | MoneyAttribute | money-rails |
+|---|---|---|
+| **Single-currency** | `money_amount :price` | `monetize :price_cents` |
+| **Multi-currency** | `money_attribute :price` | `monetize :price_cents, with_currency: :price_currency` |
+| **Custom columns** | `mapping: { amount: :a, currency: :c }` | `with_currency: :custom_currency` |
+| **String parsing** | `product.price = "$12.34"` | `product.price = "$12.34"` |
+| **I18n formatting** | Locale-aware via Minting backend | Locale-aware via Money backend |
+| **Nil handling** | Always allowed | Opt-in with `allow_nil: true` |
+
+## Summary
+
+**Choose money_attribute if you need:**
+- Decimal column support (direct monetary values)
+- High-performance reads (35× faster, zero allocations)
+- Money-object queries (no raw column math)
+- Crypto precision (`decimal(36,18)`)
+- Minimal footprint (no monkey-patches)
+
+**Choose money-rails if you need:**
+- View helpers (`humanized_money`, etc.)
+- Currency exchange rates
+- Mongoid support
+- Battle-tested community (12+ years)
+
+Both gems are production-ready. MoneyAttribute fills a specific niche: lightweight, performant money-in-Rails built on standard Rails primitives.

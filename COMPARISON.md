@@ -146,6 +146,7 @@ MoneyAttribute provides several features that money-rails lacks:
 | **Crypto decimal columns** | `decimal(36,18)` for high-precision amounts | Not available |
 | **Money-object queries** | `Model.where(price: money_obj)` — auto-decomposes via `composed_of` | Must query raw columns (`price_cents`) |
 | **Zero-allocation caching** | 35× faster reads, 2 objects vs 75,002 allocated | Re-runs lookups on every read |
+| **Per-request currency** | `CurrentAttributes`-based, thread-safe, auto-reset | Lambda-based |
 | **Auto-detection** | Same declaration works with `integer`, `bigint`, or `decimal` | Must match column name exactly |
 | **No monkey-patches** | Uses `ActiveRecord::Type` + `composed_of` (standard Rails) | Overrides reader/writer methods |
 | **Built-in nil handling** | `allow_nil: true` by default (no opt-in needed) | Requires explicit opt-in |
@@ -160,7 +161,6 @@ MoneyAttribute is intentionally minimal — it focuses on storing and reading mo
 | **View helpers** | `humanized_money`, `money_without_cents`, `humanized_money_with_symbol` | None |
 | **Currency exchange** | `default_bank`, `add_rate`, EuCentralBank integration | None |
 | **Validation integration** | Auto-adds `validates_numericality_of` | Must add manually |
-| **Per-request currency** | Lambda-based for multi-tenant apps | Static default only |
 | **Parse error control** | `raise_error_on_money_parsing` option | Always raises on parse errors |
 | **Community maturity** | 12+ years, 1.9k stars, 386 forks | New gem, 1.0 just released |
 
@@ -184,6 +184,7 @@ These features work identically in both gems:
 - High-performance reads (35× faster, zero allocations)
 - Money-object queries (no raw column math)
 - Crypto precision (`decimal(36,18)`)
+- Per-request currency via `CurrentAttributes` (multi-tenant)
 - Minimal footprint (no monkey-patches)
 
 **Choose money-rails if you need:**

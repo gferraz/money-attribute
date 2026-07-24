@@ -19,12 +19,13 @@ class RailsTest < ActiveSupport::TestCase
     assert_equal 'BRL', MoneyAttribute.default_currency.code
   end
 
-  test 'configure resets cached default currency' do
-    MoneyAttribute.default_currency
+  test 'Current.currency overrides config.default_currency' do
+    original = MoneyAttribute::Current.currency
+    MoneyAttribute::Current.currency = 'USD'
 
-    with_money_attribute_config(default_currency: 'USD') do
-      assert_equal 'USD', MoneyAttribute.default_currency.code
-    end
+    assert_equal 'USD', MoneyAttribute.default_currency.code
+  ensure
+    MoneyAttribute::Current.currency = original
   end
 
   test 'locale backend is configured and returns defaults' do # rubocop:disable Minitest/MultipleAssertions
@@ -159,11 +160,9 @@ class RailsTest < ActiveSupport::TestCase
     assert_equal '[$0.00]',    Mint.money(0, 'USD').to_s
   end
 
-  test 'configuration has defaults without Active Support configurable' do
-    config = MoneyAttribute::Configuration.new
-
-    assert_empty config.added_currencies
-    assert_equal 'USD', config.default_currency
+  test 'configuration has defaults' do
+    assert_empty MoneyAttribute.config.added_currencies
+    assert_equal 'USD', MoneyAttribute.config.default_currency
   end
 
   test 'added_currencies registers custom currencies' do
@@ -211,19 +210,17 @@ class RailsTest < ActiveSupport::TestCase
   end
 
   test 'configuration cannot be modified after freeze' do
-    config = MoneyAttribute::Configuration.new
-    config.freeze
+    config_copy = MoneyAttribute.config.dup
+    config_copy.freeze
 
-    assert_raises(FrozenError) { config.default_currency = 'EUR' }
+    assert_raises(FrozenError) { config_copy.default_currency = 'EUR' }
   end
 
   private
 
   def with_money_attribute_config(overrides)
-    original = {
-      added_currencies: MoneyAttribute.config.added_currencies,
-      default_currency: MoneyAttribute.config.default_currency
-    }
+    original_added = MoneyAttribute.config.added_currencies
+    original_currency = MoneyAttribute.config.default_currency
 
     MoneyAttribute.configure do |config|
       overrides.each { |key, value| config.public_send("#{key}=", value) }
@@ -234,7 +231,8 @@ class RailsTest < ActiveSupport::TestCase
     yield
   ensure
     MoneyAttribute.configure do |config|
-      original.each { |key, value| config.public_send("#{key}=", value) }
+      config.added_currencies = original_added
+      config.default_currency = original_currency
     end
 
     MoneyAttribute::Railtie.register_custom_currencies!

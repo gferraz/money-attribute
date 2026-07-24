@@ -41,19 +41,19 @@ module MoneyAttribute
       def amount_extractor_for(column_name) = integer_column?(column_name) ? :subunits : :to_d
 
       def money_constructor_for(amount_column)
-        default = MoneyAttribute.default_currency
         if integer_column?(amount_column)
-          build_money_constructor(:from_subunits, default)
+          build_money_constructor(:from_subunits)
         else
-          build_money_constructor(:from, default)
+          build_money_constructor(:from)
         end
       end
 
-      def build_money_constructor(method, default)
+      def build_money_constructor(method)
         lambda do |amount, currency|
           next nil if amount.nil?
 
-          resolved = Mint::Currency.resolve(currency.presence || default) || 'XXX'
+          dynamic_default = MoneyAttribute.default_currency
+          resolved = Mint::Currency.resolve(currency.presence || dynamic_default) || 'XXX'
           Mint::Money.public_send(method, amount, resolved)
         end
       end
@@ -63,14 +63,14 @@ module MoneyAttribute
         %i[integer bigint].include?(col&.type)
       end
 
-      def define_composite_money_attribute(name, mapping, currency)
+      def define_composite_money_attribute(name, mapping, _currency)
         aggregated = resolve_composite_for(name, mapping:)
 
         composed_of(name.to_sym, {
                       allow_nil: true,
                       class_name: 'Mint::Money',
                       constructor: money_constructor_for(aggregated[:amount]),
-                      converter: Converter.new(currency),
+                      converter: Converter.new,
                       mapping: {
                         aggregated[:amount] => amount_extractor_for(aggregated[:amount]),
                         aggregated[:currency] => :currency_code

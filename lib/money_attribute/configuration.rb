@@ -1,27 +1,18 @@
 # frozen_string_literal: true
 
+require 'active_support/configurable'
+
 module MoneyAttribute
-  class Configuration
-    attr_accessor :added_currencies, :default_currency
+  include ActiveSupport::Configurable
 
-    def initialize
-      @added_currencies = []
-      @default_currency = 'USD'
+  config_accessor :default_currency, default: 'USD'
+  config_accessor :added_currencies, default: []
+
+  def self.default_currency
+    if defined?(MoneyAttribute::Current) && MoneyAttribute::Current.currency.present?
+      ::Mint::Currency.resolve!(MoneyAttribute::Current.currency)
+    else
+      ::Mint::Currency.resolve!(config.default_currency)
     end
-  end
-
-  cfg = Configuration.new
-  cached_default = nil
-
-  define_singleton_method(:config) { cfg }
-
-  define_singleton_method(:configure) do |&block|
-    block&.call(cfg)
-    cached_default = nil
-    cfg
-  end
-
-  define_singleton_method(:default_currency) do
-    cached_default ||= ::Mint::Currency.resolve!(cfg.default_currency)
   end
 end

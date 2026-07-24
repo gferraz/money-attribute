@@ -11,10 +11,9 @@ module MoneyAttribute
 
         assert_column_exists!(name)
 
-        currency = ::Mint::Currency.resolve!(MoneyAttribute.default_currency)
         column_type = detect_column_type(name)
 
-        attribute(name.to_sym, MoneyAttribute::Type.new(currency:, column_type:))
+        attribute(name.to_sym, MoneyAttribute::Type.new(column_type:))
         normalizes(name.to_sym, with: Converter.new)
       end
 

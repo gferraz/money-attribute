@@ -3,15 +3,15 @@
 module MoneyAttribute
   # Type
   class Type < ActiveRecord::Type::Value
-    def initialize(currency:, column_type: ActiveRecord::Type::Decimal.new)
-      @currency = currency
+    def initialize(currency: nil, column_type: ActiveRecord::Type::Decimal.new)
+      @static_currency = currency
       @column_type = column_type
       super()
     end
 
     def cast(value)
       if value.is_a?(String)
-        Mint::Money.parse(value, @currency)
+        Mint::Money.parse(value, currency)
       else
         super
       end
@@ -21,9 +21,9 @@ module MoneyAttribute
       case value
       when NilClass, Numeric, String then return
       when Mint::Money
-        return if value.currency == @currency
+        return if value.currency == currency
 
-        message = "'#{value.inspect}' has different currency. Only #{@currency.code} allowed."
+        message = "'#{value.inspect}' has different currency. Only #{currency.code} allowed."
       else
         message = "'#{value.inspect}' is not a valid type for the attribute."
       end
@@ -34,9 +34,9 @@ module MoneyAttribute
       return nil unless value
 
       if @column_type.is_a?(ActiveRecord::Type::Integer)
-        Mint::Money.from_subunits(value, @currency)
+        Mint::Money.from_subunits(value, currency)
       else
-        Mint::Money.from(value, @currency)
+        Mint::Money.from(value, currency)
       end
     end
 
@@ -48,6 +48,12 @@ module MoneyAttribute
       else
         value.to_d
       end
+    end
+
+    private
+
+    def currency
+      @static_currency || MoneyAttribute.default_currency
     end
   end
 end

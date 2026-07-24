@@ -20,6 +20,10 @@ module MoneyAttribute
       register_custom_currencies!
     end
 
+    initializer 'money_attribute.middleware' do |app|
+      app.middleware.use MoneyAttribute::Middleware
+    end
+
     def self.setup_locale_backend!
       ::Mint.locale_backend = method(:build_locale_format).to_proc
     end

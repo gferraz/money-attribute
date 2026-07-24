@@ -5,10 +5,16 @@ require 'test_helper'
 class RailsTest < ActiveSupport::TestCase
   setup do
     @original_locale_backend = Mint.locale_backend
+    @original_default_currency = MoneyAttribute.config.default_currency
+    @original_added_currencies = MoneyAttribute.config.added_currencies.dup
   end
 
   teardown do
     Mint.locale_backend = @original_locale_backend
+    MoneyAttribute.configure do |config|
+      config.default_currency = @original_default_currency
+      config.added_currencies = @original_added_currencies
+    end
   end
 
   test 'it has a version number' do
@@ -160,9 +166,11 @@ class RailsTest < ActiveSupport::TestCase
     assert_equal '[$0.00]',    Mint.money(0, 'USD').to_s
   end
 
-  test 'configuration has defaults' do
-    assert_empty MoneyAttribute.config.added_currencies
-    assert_equal 'USD', MoneyAttribute.config.default_currency
+  test 'fresh Config has defaults' do
+    config = MoneyAttribute::Config.new
+
+    assert_empty config.added_currencies
+    assert_equal 'USD', config.default_currency
   end
 
   test 'added_currencies registers custom currencies' do
@@ -219,7 +227,7 @@ class RailsTest < ActiveSupport::TestCase
   private
 
   def with_money_attribute_config(overrides)
-    original_added = MoneyAttribute.config.added_currencies
+    original_added = MoneyAttribute.config.added_currencies.dup
     original_currency = MoneyAttribute.config.default_currency
 
     MoneyAttribute.configure do |config|

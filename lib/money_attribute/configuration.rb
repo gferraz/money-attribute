@@ -1,18 +1,32 @@
 # frozen_string_literal: true
 
-require 'active_support/configurable'
-
 module MoneyAttribute
-  include ActiveSupport::Configurable
+  CONFIG_MUTEX = Mutex.new
 
-  config_accessor :default_currency, default: 'USD'
-  config_accessor :added_currencies, default: []
+  class << self
+    def config
+      CONFIG_MUTEX.synchronize { @config ||= Config.new }
+    end
 
-  def self.default_currency
-    if defined?(MoneyAttribute::Current) && MoneyAttribute::Current.currency.present?
-      ::Mint::Currency.resolve!(MoneyAttribute::Current.currency)
-    else
-      ::Mint::Currency.resolve!(config.default_currency)
+    def configure
+      yield config
+    end
+
+    def default_currency
+      if defined?(MoneyAttribute::Current) && MoneyAttribute::Current.currency.present?
+        ::Mint::Currency.resolve!(MoneyAttribute::Current.currency)
+      else
+        ::Mint::Currency.resolve!(config.default_currency)
+      end
+    end
+  end
+
+  class Config
+    attr_accessor :default_currency, :added_currencies
+
+    def initialize
+      @default_currency = 'USD'
+      @added_currencies = []
     end
   end
 end

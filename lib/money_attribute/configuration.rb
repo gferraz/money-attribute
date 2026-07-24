@@ -8,16 +8,11 @@ module MoneyAttribute
       CONFIG_MUTEX.synchronize { @config ||= Config.new }
     end
 
-    def configure
-      yield config
-    end
+    def configure = yield config
 
     def default_currency
-      if defined?(MoneyAttribute::Current) && MoneyAttribute::Current.currency.present?
-        ::Mint::Currency.resolve!(MoneyAttribute::Current.currency)
-      else
-        ::Mint::Currency.resolve!(config.default_currency)
-      end
+      currency = MoneyAttribute::Current.currency.presence || config.default_currency
+      Money::Currency.resolve!(currency)
     end
   end
 

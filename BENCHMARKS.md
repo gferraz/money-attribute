@@ -10,7 +10,7 @@ This report as well as the benchmark program were created by OpenCode AI.
 - Both sides pass a `Money` object through the attribute setter (fair comparison).
 - All tests are run against SQLite3 with 5000 iterations per test.
 - Mass insert/bulk update uses batch sizes from 100 to 2000 records.
-- Each side runs in a separate process (`BENCH_SIDE` env var) with isolated bundles to avoid gem namespace conflicts (`Mint::Currency`).
+- Each side runs in a separate process (`BENCH_SIDE` env var) with isolated bundles to avoid gem namespace conflicts (`Money::Currency`).
 - Composite mode only (two-column: amount + currency).
 
 ### Environment

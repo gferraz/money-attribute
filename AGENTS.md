@@ -2,7 +2,7 @@
 
 ## Identity
 
-Rebranded from `minting-rails` → `money_attribute`. All repo code uses `MoneyAttribute::` namespace; the `minting` gem remains a runtime dependency providing `::Mint::Money` and `::Mint::Currency`.
+Rebranded from `minting-rails` → `money_attribute`. All repo code uses `MoneyAttribute::` namespace; the `minting` gem remains a runtime dependency providing `::Mint::Money` and `::Money::Currency`.
 
 ## Commands
 
@@ -71,8 +71,8 @@ money_attribute's main advantages: **zero-allocation caching** (34-38× reader s
 
 - **Framework:** Minitest via `ActiveSupport::TestCase` (no RSpec), fixtures loaded automatically
 - Dummy Rails app at `test/dummy/` — migrate before running (`rake test` does this); SQLite3 DB at `test/dummy/storage/test.sqlite3`
-- **7** test files in `test/money_attribute/`
-- **130** tests, **381** assertions, all passing
+- **8** test files in `test/money_attribute/`
+- **149** tests, **417** assertions, all passing
 - Dummy app initializer sets `default_currency = 'BRL'` — test expectations assume BRL, not USD
 - Config-mutating tests: use `with_money_attribute_config` (in `rails_test.rb:215`), which saves/restores config and re-registers currencies
 - RuboCop enforces `Minitest/MultipleAssertions: max 4` — warns on 5+ assertions; runs in CI
@@ -88,6 +88,8 @@ money_attribute's main advantages: **zero-allocation caching** (34-38× reader s
 ## Architecture
 
 - **Entry point:** `lib/money_attribute.rb` requires all components in dependency order
+- **Per-request currency:** `MoneyAttribute::Current` (ActiveSupport::CurrentAttributes). Set `Current.currency` in `before_action`; Rails' Executor auto-resets after request. Falls back to `config.default_currency`.
+- **Configuration:** Plain `Config` class with `Mutex` for thread safety. No `ActiveSupport::Configurable` (deprecated Rails 8.1, removed 8.2).
 - **Two explicit helpers** (no auto-detect — the method name declares the mode):
   1. `money_amount :price` — **single-column fixed-currency.** Stores amount in one column (`price`). Uses application default currency. Uses `ActiveRecord::Type` subclass `MoneyAttribute::Type` + `normalizes`. Currency never changes per row.
   2. `money_attribute :price` — **composite amount+currency.** Two DB columns (`price_amount` + `price_currency` or custom via `mapping:`). Per-row currency via `composed_of` + `Converter`. Integer/bigint → subunits, decimal → unit value.
@@ -96,7 +98,6 @@ money_attribute's main advantages: **zero-allocation caching** (34-38× reader s
   2. `name == 'amount'` AND `currency` column exists → composite (`amount` + `currency`)
   3. Otherwise → convention (`name_amount` + `name_currency`); raises `ArgumentError` if missing
 - Using `money_attribute` when only a single column exists raises with a hint to use `money_amount`
-- `money_attribute` never uses `type:` top-level option — use `amount: { type: }` instead
 - `money_attribute` never uses `type:` top-level option — use `amount: { type: }` instead
 - Custom currency registration: `MoneyAttribute::Railtie.register_custom_currencies!`
 
@@ -137,7 +138,7 @@ Two separate helpers — one per storage mode:
 - `Layout/LineLength: 120`, `Metrics/MethodLength: 30`, `Style/FrozenStringLiteralComment: always`
 - `test/dummy/` and `benchmark/` excluded from RuboCop
 - All source files have `# frozen_string_literal: true`
-- RuboCop runs in CI; 0 offenses as of 1.0.0
+- RuboCop runs in CI; 0 offenses as of 1.2.0
 
 ## Dependencies
 

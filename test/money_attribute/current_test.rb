@@ -97,7 +97,7 @@ class CurrentTest < ActiveSupport::TestCase
   end
 
   test 'Type uses static currency when provided' do
-    currency = Mint::Currency.resolve!('NZD')
+    currency = Money::Currency.resolve!('NZD')
     type = MoneyAttribute::Type.new(currency: currency, column_type: ActiveRecord::Type::Decimal.new)
     money = type.cast('100')
 

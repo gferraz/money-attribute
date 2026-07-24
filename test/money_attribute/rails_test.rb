@@ -178,7 +178,7 @@ class RailsTest < ActiveSupport::TestCase
                                   { currency: 'CFGA', subunit: 2, symbol: 'A' },
                                   { currency: 'CFGB', subunit: 3, symbol: 'B' }
                                 ]) do
-      c = Mint::Currency.for_code('CFGA')
+      c = Money::Currency.for_code('CFGA')
 
       assert_equal 'CFGA', c.code
       assert_equal 2, c.subunit
@@ -191,7 +191,7 @@ class RailsTest < ActiveSupport::TestCase
                                   { currency: 'CFGA', subunit: 2, symbol: 'A' },
                                   { currency: 'CFGB', subunit: 3, symbol: 'B' }
                                 ]) do
-      c = Mint::Currency.for_code('CFGB')
+      c = Money::Currency.for_code('CFGB')
 
       assert_equal 'CFGB', c.code
       assert_equal 3, c.subunit
@@ -211,10 +211,10 @@ class RailsTest < ActiveSupport::TestCase
   end
 
   test 'currencies registered via dummy initializer are available' do
-    assert Mint::Currency.for_code('CRCA')
-    assert Mint::Currency.for_code('NGNA')
-    assert_equal 2, Mint::Currency.for_code('CRCA').subunit
-    assert_equal 3, Mint::Currency.for_code('NGNA').subunit
+    assert Money::Currency.for_code('CRCA')
+    assert Money::Currency.for_code('NGNA')
+    assert_equal 2, Money::Currency.for_code('CRCA').subunit
+    assert_equal 3, Money::Currency.for_code('NGNA').subunit
   end
 
   test 'configuration cannot be modified after freeze' do

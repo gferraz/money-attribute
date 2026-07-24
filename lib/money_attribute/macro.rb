@@ -53,7 +53,7 @@ module MoneyAttribute
           next nil if amount.nil?
 
           dynamic_default = MoneyAttribute.default_currency
-          resolved = Mint::Currency.resolve(currency.presence || dynamic_default) || 'XXX'
+          resolved = Money::Currency.resolve(currency.presence || dynamic_default) || 'XXX'
           Mint::Money.public_send(method, amount, resolved)
         end
       end
@@ -82,7 +82,7 @@ module MoneyAttribute
     class_methods do
       def money_attribute(name, currency: MoneyAttribute.default_currency, mapping: nil)
         name = name.to_s
-        currency = ::Mint::Currency.resolve!(currency)
+        currency = Money::Currency.resolve!(currency)
         resolved_mapping = mapping || resolve_composite_mapping(name)
 
         if resolved_mapping.nil? && attribute_names.include?(name)

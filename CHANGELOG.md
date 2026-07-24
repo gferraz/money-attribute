@@ -1,10 +1,19 @@
 # Changelog
 
+## [1.1.1] (2026-07-24)
+
+### New features
+- **Per-request currency** — `MoneyAttribute::Current` (ActiveSupport::CurrentAttributes) overrides `default_currency` at runtime. Set `MoneyAttribute::Current.currency` in a `before_action`; falls back to `config.default_currency` when not set. Rails' built-in Executor middleware auto-resets after each request.
+
+### Improvements
+- **Configuration simplified** — Replaced deprecated `ActiveSupport::Configurable` with plain `Config` class + `Mutex` (thread-safe, no framework dependency). Compatible with Rails 8.1+ (Configurable deprecated) and Rails 8.2+ (removal).
+- **`default_currency` simplified** — Removed unnecessary `defined?` guard; uses `presence` for concise fallback.
+
 ## [1.1.0] (2026-07-22)
 
 ### Improvements
 - **minting 2.0.0 compatibility** — `to_fs(:currency)` replaced with `to_fs` in form builder helpers and tests; minting 2.0's default format (`%<symbol>s%<amount>f`) produces identical output.
-- **Benchmark isolation** — money-rails comparison now runs in a separate process with its own `Gemfile.benchmark`, avoiding the `Mint::Currency` namespace collision between the `minting` and `money` gems.
+- **Benchmark isolation** — money-rails comparison now runs in a separate process with its own `Gemfile.benchmark`, avoiding the `Money::Currency` namespace collision between the `minting` and `money` gems.
 - **Benchmark expanded** — New test scenarios: update existing record, setter-only, SQL generation, multi-record deserialization stress test, and scaling tests (mass insert + bulk update at 100/500/1000/2000 records).
 - **Benchmark report updated** — money_attribute wins all 8 core cells and all scaling tests against money-rails.
 
@@ -26,7 +35,7 @@ When the currency column contains a value that is not a registered ISO currency 
 Offer.where(price_currency: 'XXX') # find and fix corrupted records
 ```
 
-This uses `Mint::Currency.resolve` (non-bang) with a `||` chain to XXX — no `rescue` needed.
+This uses `Money::Currency.resolve` (non-bang) with a `||` chain to XXX — no `rescue` needed.
 
 ### Edge case hardening
 - **Migration helper reversibility** — Added tests for `add_money_attribute` / `add_money_amount` with `:fiat_integer`, `:crypto_decimal`, custom column mappings, and currency limits.

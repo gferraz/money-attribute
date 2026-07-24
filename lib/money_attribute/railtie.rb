@@ -20,10 +20,6 @@ module MoneyAttribute
       register_custom_currencies!
     end
 
-    initializer 'money_attribute.middleware' do |app|
-      app.middleware.use MoneyAttribute::Middleware
-    end
-
     def self.setup_locale_backend!
       ::Mint.locale_backend = method(:build_locale_format).to_proc
     end
@@ -62,7 +58,7 @@ module MoneyAttribute
         else
           code, subunit, symbol = *currency_data
         end
-        ::Mint::Currency.register(code:, subunit:, symbol:)
+          Money::Currency.register(code:, subunit:, symbol:)
       rescue KeyError => e
         unless e.message.include?('already registered')
           raise ArgumentError,

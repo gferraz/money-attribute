@@ -6,17 +6,14 @@ MoneyAttribute.configure do |config|
   #
   # Example:
   #   config.added_currencies = [
-  #     {currency: 'CRC', subunit: 2, symbol: '₡'},
-  #    {currency: 'NGN', subunit: 3, symbol: '₦'}
+  #     {currency: 'ZCRC', subunit: 2, symbol: '₡'},
+  #    {currency: 'ZNGN', subunit: 3, symbol: '₦'}
   #   ]
-  config.added_currencies = [
-    { currency: 'XCRC', subunit: 2, symbol: '₡' },
-    { currency: 'XNGN', subunit: 3, symbol: '₦' }
-  ]
+  config.added_currencies = []
 
   # To set the default currency
   #
   # It must be a registered currency
   #
-  config.default_currency = 'BRL'
+  config.default_currency = 'USD'
 end

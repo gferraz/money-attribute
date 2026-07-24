@@ -28,8 +28,7 @@ module MoneyAttribute
 
         config = AMOUNT_CONFIG[options[:type] || :fiat_decimal]
         unless config
-          raise ArgumentError,
-                "Invalid money amount type #{options[:type]}. Use :crypto_decimal, :fiat_decimal or :fiat_integer"
+          raise ArgumentError, "Invalid type #{options[:type]}. Use :crypto_decimal, :fiat_decimal or :fiat_integer"
         end
 
         options = { null: options[:null], default: options[:default] }.compact

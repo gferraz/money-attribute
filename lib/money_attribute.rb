@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'minting'
-require 'money_attribute/core_ext'
+require 'money_attribute/core_ext/numeric'
 require 'money_attribute/core_ext/string'
 require 'money_attribute/configuration'
 require 'money_attribute/current'

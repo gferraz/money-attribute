@@ -58,7 +58,7 @@ module MoneyAttribute
         else
           code, subunit, symbol = *currency_data
         end
-          Money::Currency.register(code:, subunit:, symbol:)
+        Money::Currency.register(code:, subunit:, symbol:)
       rescue KeyError => e
         unless e.message.include?('already registered')
           raise ArgumentError,

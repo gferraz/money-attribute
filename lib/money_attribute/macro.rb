@@ -10,9 +10,9 @@ module MoneyAttribute
       def resolve_composite_mapping(name)
         columns = attribute_names
         if columns.include?("#{name}_currency")
-          return { amount: name, currency: :"#{name}_currency" } if columns.include?(name)
+          return nil unless columns.include?(name)
 
-          nil
+          { amount: name, currency: :"#{name}_currency" }
         elsif name == 'amount' && columns.include?('currency')
           { amount: name, currency: :currency }
         end

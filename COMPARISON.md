@@ -160,8 +160,8 @@ MoneyAttribute is intentionally minimal — it focuses on storing and reading mo
 | **Mongoid support** | Yes | ActiveRecord only |
 | **View helpers** | `humanized_money`, `money_without_cents`, `humanized_money_with_symbol` | None |
 | **Currency exchange** | `default_bank`, `add_rate`, EuCentralBank integration | None |
-| **Validation integration** | Auto-adds `validates_numericality_of` | Must add manually |
-| **Parse error control** | `raise_error_on_money_parsing` option | Always raises on parse errors |
+| **Validation integration** | Auto-adds `validates_numericality_of` | No planned. Use Rails |
+| **Parse error control** | `raise_error_on_money_parsing` option (default: off) | Invalid strings → nil via Minting; type/currency errors raise `ArgumentError` |
 | **Community maturity** | 12+ years, 1.9k stars, 386 forks | New gem, 1.0 just released |
 
 ## Feature parity

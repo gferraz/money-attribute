@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] (Unreleased)
+
+### Documentation
+- **Comparison updated** — Corrected "Parse error control" row: Minting returns nil on invalid strings, `ArgumentError` only for type/currency violations.
+
 ## [1.1.1] (2026-07-24)
 
 ### New features

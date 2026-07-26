@@ -52,8 +52,7 @@ module MoneyAttribute
         lambda do |amount, currency|
           next nil if amount.nil?
 
-          dynamic_default = MoneyAttribute.default_currency
-          resolved = Money::Currency.resolve(currency.presence || dynamic_default) || 'XXX'
+          resolved = Money::Currency.resolve(currency.presence || MoneyAttribute.default_currency) || 'XXX'
           Mint::Money.public_send(method, amount, resolved)
         end
       end
@@ -63,7 +62,7 @@ module MoneyAttribute
         %i[integer bigint].include?(col&.type)
       end
 
-      def define_composite_money_attribute(name, mapping, _currency)
+      def define_composite_money_attribute(name, mapping)
         aggregated = resolve_composite_for(name, mapping:)
 
         composed_of(name.to_sym, {
@@ -80,9 +79,8 @@ module MoneyAttribute
     end
 
     class_methods do
-      def money_attribute(name, currency: MoneyAttribute.default_currency, mapping: nil)
+      def money_attribute(name, mapping: nil)
         name = name.to_s
-        currency = Money::Currency.resolve!(currency)
         resolved_mapping = mapping || resolve_composite_mapping(name)
 
         if resolved_mapping.nil? && attribute_names.include?(name)
@@ -92,7 +90,7 @@ module MoneyAttribute
                 'instead of `money_attribute`.'
         end
 
-        define_composite_money_attribute(name, resolved_mapping || {}, currency)
+        define_composite_money_attribute(name, resolved_mapping || {})
       end
     end
 

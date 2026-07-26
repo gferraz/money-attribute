@@ -4,10 +4,10 @@ require 'test_helper'
 
 class SumAmountTest < ActiveSupport::TestCase
   test 'sum_amount returns Array when multiple currencies exist' do
-    Offer.create!(price: 10.euros)
-    Offer.create!(price: 20.euros)
     Offer.create!(price: 30.dollars)
     Offer.create!(price: 40.dollars)
+    Offer.create!(price: 10.euros)
+    Offer.create!(price: 20.euros)
 
     assert_equal [30.euros, 70.dollars], Offer.sum_amount(:price)
   end
@@ -43,12 +43,10 @@ class SumAmountTest < ActiveSupport::TestCase
     assert_equal [30.00.dollars], FinancialTransaction.sum_amount(:amount)
   end
 
-  test 'sum_amount with multiple attributes returns Hash of Arrays' do
-    FinancialTransaction.delete_all
-    FinancialTransaction.create!(price_amount: 10, price_currency: 'EUR',
-                                 discount: 5, discount_currency: 'EUR')
-
-    assert_equal({ price: [10.euros], discount: [5.euros] }, FinancialTransaction.sum_amount(:price, :discount))
+  test 'sum_amount rejects multiple attributes' do
+    assert_raises(ArgumentError) do
+      FinancialTransaction.sum_amount(:price, :discount)
+    end
   end
 
   test 'sum_amount returns Array with zero Money for empty result' do

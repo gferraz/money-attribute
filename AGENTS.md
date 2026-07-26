@@ -100,7 +100,7 @@ money_attribute's main advantages: **zero-allocation caching** (34-38× reader s
 - Using `money_attribute` when only a single column exists raises with a hint to use `money_amount`
 - `money_attribute` never uses `type:` top-level option — use `amount: { type: }` instead
 - Custom currency registration: `MoneyAttribute::Railtie.register_custom_currencies!`
-- **Query helpers:** `MoneyAttribute::Query` module, included in `ActiveRecord::Base` (class methods) and `ActiveRecord::Relation` (scope methods). Provides `where_money`, `where_currency`, `where_amount`, `order_by_amount`, and `sum_amount`. All use keyword hash syntax. Composite attributes decompose to backing columns; single-column delegates to native AR. `sum_amount` accepts attribute names only (no currency parameter); composite attributes use SQL `GROUP BY` on the currency column, returning `Hash{String => Mint::Money}` when multiple currencies exist, single `Mint::Money` when one. Single-column attributes always return `Mint::Money`. Query logic split across `query/*.rb` sub-modules.
+- **Query helpers:** `MoneyAttribute::Query` module, included in `ActiveRecord::Base` (class methods) and `ActiveRecord::Relation` (scope methods). Provides `where_currency`, `where_amount`, `order_by_amount`, `pluck_amount`, `pick_amount`, and `sum_amount`. All use keyword hash syntax. Composite attributes decompose to backing columns; single-column delegates to native AR. `sum_amount` accepts attribute names only (no currency parameter); composite attributes use SQL `GROUP BY` on the currency column, returning `Hash{String => Mint::Money}` when multiple currencies exist, single `Mint::Money` when one. Single-column attributes always return `Mint::Money`. Query logic split across `query/*.rb` sub-modules.
 
 ## Migration helpers
 
@@ -120,7 +120,7 @@ Two separate helpers — one per storage mode:
 | `:amount` | `amount` | `currency` | Special case |
 | `:price, amount: { column: :a }, currency: { column: :c }` | `a` | `c` | Explicit mapping |
 
-`money_amount` naming: column name = accessor (no currency column).
+`money_amount` naming: column name = accessor (no currency column, no custom mapping).
 
 - Amount column type selected via `type:` option — three values:
   - `:fiat_decimal` (default) → `decimal(20,4)` — up to ~10 quadrillion units

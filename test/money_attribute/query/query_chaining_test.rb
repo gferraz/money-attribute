@@ -4,19 +4,6 @@
 require 'test_helper'
 
 class QueryChainingTest < ActiveSupport::TestCase
-  test 'where_money chains with order_by_amount' do
-    Offer.create!(price: 10.euros)
-    Offer.create!(price: 50.euros)
-    Offer.create!(price: 100.euros)
-    Offer.create!(price: 30.dollars)
-
-    amounts = Offer.where_money(price: 10.euros..100.euros)
-                   .order_by_amount(price: :desc)
-                   .pluck(:price_amount)
-
-    assert_equal [100, 50, 10], amounts
-  end
-
   test 'where_currency chains with order_by_amount' do
     eur1 = Offer.create!(price: 10.euros)
     eur2 = Offer.create!(price: 50.euros)

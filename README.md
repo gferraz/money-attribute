@@ -388,6 +388,8 @@ MoneyAttribute adds `money_field` and `money_amount_field` to Rails form builder
 
 `money_amount` wraps a numeric column as `Mint::Money` using the application's default currency. No per-row currency. A lighter alternative when you don't need multi-currency support.
 
+The accessor name must match the column name. `money_amount` does not support custom column mapping.
+
 #### Migration helpers
 
 | Method | Action |

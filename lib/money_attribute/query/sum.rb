@@ -3,7 +3,8 @@
 module MoneyAttribute
   # Sums amount columns and returns `Array<Mint::Money>`.
   #
-  # Composite attributes use SQL GROUP BY on the currency column:
+  # Composite attributes use SQL GROUP BY on the currency column and sort by
+  # currency code for deterministic results:
   #
   #   Offer.sum_amount(:price)
   #   # => [Mint::Money(30.0, 'EUR'), Mint::Money(50.0, 'USD')]
@@ -16,23 +17,10 @@ module MoneyAttribute
   #   SimpleOffer.sum_amount(:price)
   #   # => [Mint::Money(60.0, 'BRL')]
   #
-  # Multiple attributes return a hash of arrays:
-  #
-  #   Offer.sum_amount(:price, :discount)
-  #   # => { price: [Mint::Money(30.0, 'EUR')], discount: [Mint::Money(15.0, 'BRL')] }
-  #
   module SumAmount
-    def sum_amount(*attrs)
-      attrs = attrs.flatten
-      raise ArgumentError, 'No attributes specified' if attrs.empty?
+    def sum_amount(attr)
+      raise ArgumentError, 'No attribute specified' if attr.nil?
 
-      results = attrs.index_with { |attr| resolve_sum(attr) }
-      results.size == 1 ? results.values.first : results
-    end
-
-    private
-
-    def resolve_sum(attr)
       reflection = klass.reflect_on_aggregation(attr)
 
       if reflection
@@ -44,6 +32,8 @@ module MoneyAttribute
       end
     end
 
+    private
+
     def resolve_composite_sum(reflection)
       amount_col, currency_col = reflection.mapping.keys
 
@@ -51,7 +41,8 @@ module MoneyAttribute
       grouped.delete(nil)
       return wrap_empty(amount_col) if grouped.empty?
 
-      grouped.map { |currency, raw| wrap_money(raw, currency, amount_col) }
+      grouped.sort_by { |currency, _raw| currency.to_s }
+             .map { |currency, raw| wrap_money(raw, currency, amount_col) }
     end
 
     def resolve_single_sum(attr)

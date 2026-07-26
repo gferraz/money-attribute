@@ -2,25 +2,15 @@
 
 module MoneyAttribute
   AttributeSpec = Struct.new(:name, :kind, :amount_col, :currency_col, :amount_type, keyword_init: true) do
-    def composite?
-      kind == :composite
-    end
+    def composite? = kind == :composite
 
-    def single?
-      kind == :single
-    end
+    def single? = kind == :single
 
-    def columns
-      composite? ? [amount_col, currency_col] : [amount_col]
-    end
+    def columns = composite? ? [amount_col, currency_col] : [amount_col]
 
-    def integer_amount?
-      amount_type == :integer
-    end
+    def integer_amount? = amount_type == :integer
 
-    def amount_extractor
-      integer_amount? ? :subunits : :to_d
-    end
+    def amount_extractor = integer_amount? ? :subunits : :to_d
 
     def composed_of_mapping
       { amount_col => amount_extractor, currency_col => :currency_code }

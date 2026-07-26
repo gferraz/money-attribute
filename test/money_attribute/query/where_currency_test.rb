@@ -10,11 +10,11 @@ class WhereCurrencyTest < ActiveSupport::TestCase
     assert_equal [eur], Offer.where_currency(price: 'EUR')
   end
 
-  test 'where_currency works with Money object' do
+  test 'where_currency works with Currency object' do
     eur = Offer.create!(price: 10.euros)
     Offer.create!(price: 10.dollars)
 
-    assert_equal [eur], Offer.where_currency(price: 50.euros)
+    assert_equal [eur], Offer.where_currency(price: 10.euros.currency)
   end
 
   test 'where_currency returns all records for any currency' do

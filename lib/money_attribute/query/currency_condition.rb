@@ -6,13 +6,12 @@ module MoneyAttribute
     def resolve_currency_condition(attr, currency)
       spec = money_attribute_spec!(attr)
 
-      if spec.kind == :composite
-        code = currency.is_a?(Mint::Money) ? currency.currency_code : currency.to_s
-        where(spec.currency_col => code)
-      else
-        raise ArgumentError,
-              "#{klass.name}.#{attr} is a single-column attribute (money_amount) with no currency column"
+      unless spec.composite?
+        raise ArgumentError, "#{klass.name}.#{attr} is a single-column attribute with no currency column"
       end
+
+      code = currency.is_a?(Mint::Currency) ? currency.code : currency.to_s
+      where(spec.currency_col => code)
     end
   end
 end

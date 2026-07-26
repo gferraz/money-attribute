@@ -6,7 +6,7 @@ module MoneyAttribute
     def resolve_amount_order(attr, direction)
       spec = money_attribute_spec!(attr)
 
-      if spec.kind == :composite
+      if spec.composite?
         order(spec.currency_col => :asc, spec.amount_col => direction)
       else
         order(attr => direction)

@@ -5,9 +5,9 @@ module MoneyAttribute
   module QueryHelpers
     def money_attribute_spec!(attr)
       spec = klass.money_attribute_spec(attr)
-      return spec if spec
+      raise ArgumentError, "#{attr} is not a money attribute on #{klass.name}" unless spec
 
-      raise ArgumentError, "#{attr} is not a money attribute on #{klass.name}"
+      spec
     end
   end
 end

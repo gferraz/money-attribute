@@ -3,28 +3,42 @@
 module MoneyAttribute
   # Plucks amount values from money-aware attributes.
   module PluckAmount
-    def pluck_amount(attr)
-      raise ArgumentError, 'No attribute specified' if attr.nil?
+    def pluck_amount(*attrs)
+      raise ArgumentError, 'No attribute specified' if attrs.empty?
 
-      reflection = klass.reflect_on_aggregation(attr)
+      specs = attrs.map { |attr| money_attribute_spec!(attr) }
+      return pluck_single_amount(specs.first) if specs.length == 1
 
-      if reflection
-        resolve_composite_pluck(reflection)
-      elsif money_amount_attribute?(attr)
-        pluck(attr)
-      else
-        raise ArgumentError, "#{attr} is not a money attribute on #{klass.name}"
+      pluck(*specs.flat_map(&:columns)).map do |row|
+        extract_money_row(row, specs)
       end
     end
 
     private
 
-    def resolve_composite_pluck(reflection)
-      amount_col, currency_col = reflection.mapping.keys
+    def pluck_single_amount(spec)
+      return pluck(spec.amount_col) if spec.single?
 
-      pluck(amount_col, currency_col).map do |amount, currency|
-        build_money_value(amount, currency, amount_col)
+      pluck(spec.amount_col, spec.currency_col).map do |amount, currency|
+        build_money_value(amount, currency, spec.amount_col)
       end
+    end
+
+    def extract_money_row(row, specs)
+      values = []
+      cursor = 0
+
+      specs.each do |spec|
+        if spec.single?
+          values << row[cursor]
+          cursor += 1
+        else
+          values << build_money_value(row[cursor], row[cursor + 1], spec.amount_col)
+          cursor += 2
+        end
+      end
+
+      values
     end
   end
 end

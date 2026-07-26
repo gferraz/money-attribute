@@ -23,6 +23,20 @@ class PluckAmountTest < ActiveSupport::TestCase
     assert_equal [10.reais, 50.reais, 100.reais], amounts
   end
 
+  test 'pluck_amount returns arrays for multiple attributes' do
+    transaction = FinancialTransaction.create!(
+      amount: 100.dollars,
+      discount: 20.euros,
+      tax: 50,
+      price: 15.50.dollars,
+      total: 99.99.euros
+    )
+
+    rows = FinancialTransaction.where(id: transaction.id).pluck_amount(:amount, :discount, :tax)
+
+    assert_equal [[100.dollars, 20.euros, 50.to_money]], rows
+  end
+
   test 'pluck_amount returns an empty array when there are no records' do
     assert_equal [], Offer.pluck_amount(:price)
   end

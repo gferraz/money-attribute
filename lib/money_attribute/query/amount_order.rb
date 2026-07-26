@@ -4,16 +4,12 @@ module MoneyAttribute
   # Resolves `order_by_amount` to ordered queries (currency ASC, amount direction).
   module AmountOrder
     def resolve_amount_order(attr, direction)
-      reflection = klass.reflect_on_aggregation(attr)
+      spec = money_attribute_spec!(attr)
 
-      if reflection
-        currency_col = reflection.mapping.keys.last
-        amount_col = reflection.mapping.keys.first
-        order(currency_col => :asc, amount_col => direction)
-      elsif money_amount_attribute?(attr)
-        order(attr => direction)
+      if spec.kind == :composite
+        order(spec.currency_col => :asc, spec.amount_col => direction)
       else
-        raise ArgumentError, "#{attr} is not a money attribute on #{klass.name}"
+        order(attr => direction)
       end
     end
   end

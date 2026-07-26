@@ -358,6 +358,17 @@ Offer.where('price_amount > ? AND price_currency = ?', 10, 'EUR')
 
 For fixed-currency (`money_amount`) attributes, see the [single-column section](#single-column-mode--money_amount).
 
+Money-aware query helpers are also available:
+
+```ruby
+Offer.pluck_amount(:price)                  # => [EUR 10.00, USD 20.00]
+Offer.pluck_amount(:amount, :discount)      # => [[USD 100.00, EUR 20.00], ...]
+Offer.pick_amount(:price)                   # => EUR 10.00
+Offer.pick_amount(:amount, :discount)       # => [USD 100.00, EUR 20.00]
+```
+
+`pluck_amount` and `pick_amount` follow Rails' `pluck` / `pick` arity: one attribute returns a single column result, multiple attributes return row arrays.
+
 ## Convenience methods
 
 MoneyAttribute adds small helpers on `Numeric` and `String`:

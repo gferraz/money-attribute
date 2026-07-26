@@ -1,21 +1,25 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  # Sums amount columns and returns `Mint::Money` objects.
+  # Sums amount columns and returns `Array<Mint::Money>`.
   #
-  # Composite attributes use SQL GROUP BY on the currency column,
-  # returning a Hash when multiple currencies exist:
+  # Composite attributes use SQL GROUP BY on the currency column:
   #
   #   Offer.sum_amount(:price)
-  #   # => { 'EUR' => Mint::Money, 'USD' => Mint::Money }
+  #   # => [Mint::Money(30.0, 'EUR'), Mint::Money(50.0, 'USD')]
   #
   #   Offer.where_currency(price: 'EUR').sum_amount(:price)
-  #   # => Mint::Money(30.0, 'EUR')
+  #   # => [Mint::Money(30.0, 'EUR')]
   #
-  # Single-column attributes always return a single Mint::Money:
+  # Single-column attributes wrap with default currency:
   #
   #   SimpleOffer.sum_amount(:price)
-  #   # => Mint::Money(60.0, 'BRL')
+  #   # => [Mint::Money(60.0, 'BRL')]
+  #
+  # Multiple attributes return a hash of arrays:
+  #
+  #   Offer.sum_amount(:price, :discount)
+  #   # => { price: [Mint::Money(30.0, 'EUR')], discount: [Mint::Money(15.0, 'BRL')] }
   #
   module SumAmount
     def sum_amount(*attrs)
@@ -45,19 +49,19 @@ module MoneyAttribute
 
       grouped = group(currency_col).sum(amount_col)
       grouped.delete(nil)
-      return MoneyAttribute.default_currency.zero if grouped.empty?
+      return wrap_empty(amount_col) if grouped.empty?
 
-      wrap_grouped(grouped, amount_col)
-    end
-
-    def wrap_grouped(grouped, amount_col)
-      wrapped = grouped.to_h { |currency, raw| [currency, wrap_money(raw, currency, amount_col)] }
-      wrapped.size == 1 ? wrapped.values.first : wrapped
+      grouped.map { |currency, raw| wrap_money(raw, currency, amount_col) }
     end
 
     def resolve_single_sum(attr)
       raw_sum = sum(attr)
-      wrap_money(raw_sum, MoneyAttribute.default_currency, attr)
+      currency = MoneyAttribute.default_currency.code
+      [wrap_money(raw_sum, currency, attr)]
+    end
+
+    def wrap_empty(column)
+      [wrap_money(nil, nil, column)]
     end
 
     def wrap_money(raw_sum, currency, column)

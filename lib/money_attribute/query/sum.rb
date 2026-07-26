@@ -21,34 +21,30 @@ module MoneyAttribute
     def sum_amount(attr)
       raise ArgumentError, 'No attribute specified' if attr.nil?
 
-      reflection = klass.reflect_on_aggregation(attr)
+      spec = money_attribute_spec!(attr)
 
-      if reflection
-        resolve_composite_sum(reflection)
-      elsif money_amount_attribute?(attr)
-        resolve_single_sum(attr)
+      if spec.composite?
+        resolve_composite_sum(spec)
       else
-        raise ArgumentError, "#{attr} is not a money attribute on #{klass.name}"
+        resolve_single_sum(spec)
       end
     end
 
     private
 
-    def resolve_composite_sum(reflection)
-      amount_col, currency_col = reflection.mapping.keys
-
-      grouped = group(currency_col).sum(amount_col)
+    def resolve_composite_sum(spec)
+      grouped = group(spec.currency_col).sum(spec.amount_col)
       grouped.delete(nil)
-      return wrap_empty(amount_col) if grouped.empty?
+      return wrap_empty(spec.amount_col) if grouped.empty?
 
       grouped.sort_by { |currency, _raw| currency.to_s }
-             .map { |currency, raw| wrap_money(raw, currency, amount_col) }
+             .map { |currency, raw| wrap_money(raw, currency, spec.amount_col) }
     end
 
-    def resolve_single_sum(attr)
-      raw_sum = sum(attr)
+    def resolve_single_sum(spec)
+      raw_sum = sum(spec.amount_col)
       currency = MoneyAttribute.default_currency.code
-      [wrap_money(raw_sum, currency, attr)]
+      [wrap_money(raw_sum, currency, spec.amount_col)]
     end
 
     def wrap_empty(column)

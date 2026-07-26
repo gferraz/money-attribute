@@ -15,6 +15,7 @@ module MoneyAttribute
 
         attribute(name.to_sym, MoneyAttribute::Type.new(column_type:))
         normalizes(name.to_sym, with: Converter.new)
+        register_money_attribute_spec(name, kind: :single, amount_col: name)
       end
 
       private

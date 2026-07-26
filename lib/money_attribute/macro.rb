@@ -64,6 +64,8 @@ module MoneyAttribute
 
       def define_composite_money_attribute(name, mapping)
         aggregated = resolve_composite_for(name, mapping:)
+        register_money_attribute_spec(name, kind: :composite, amount_col: aggregated[:amount],
+                                            currency_col: aggregated[:currency])
 
         composed_of(name.to_sym, {
                       allow_nil: true,

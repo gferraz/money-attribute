@@ -61,6 +61,7 @@ module MoneyAttribute
 end
 
 ActiveSupport.on_load(:active_record) do
+  include MoneyAttribute::AttributeSpecRegistry
   include MoneyAttribute::Query
   ActiveRecord::Relation.include(MoneyAttribute::QueryMethods)
 end

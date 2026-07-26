@@ -5,7 +5,7 @@ module MoneyAttribute
   class Type < ActiveRecord::Type::Value
     def initialize(currency: nil, column_type: ActiveRecord::Type::Decimal.new)
       @static_currency = currency
-      @column_type = column_type
+      @integer_column = column_type.is_a?(ActiveRecord::Type::Integer)
       super()
     end
 
@@ -33,7 +33,7 @@ module MoneyAttribute
     def deserialize(value)
       return nil unless value
 
-      if @column_type.is_a?(ActiveRecord::Type::Integer)
+      if @integer_column
         Mint::Money.from_subunits(value, currency)
       else
         Mint::Money.from(value, currency)
@@ -43,11 +43,7 @@ module MoneyAttribute
     def serialize(value)
       return nil unless value
 
-      if @column_type.is_a?(ActiveRecord::Type::Integer)
-        value.subunits
-      else
-        value.to_d
-      end
+      @integer_column ? value.subunits : value.to_d
     end
 
     private

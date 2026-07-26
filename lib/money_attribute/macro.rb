@@ -7,39 +7,45 @@ module MoneyAttribute
 
     # :nodoc:
     module CompositeClassMethods
-      def resolve_composite_mapping(name)
-        columns = attribute_names
-        if columns.include?("#{name}_currency")
-          return nil unless columns.include?(name)
+      def resolve_mapping(name, mapping_override)
+        override = mapping_override.compact
+        override.slice!(:amount, :currency)
+        override.transform_values!(&:to_s)
 
-          { amount: name, currency: :"#{name}_currency" }
+        mapping = default_mapping(name).merge(override)
+
+        assert_columns_exist!(name, mapping)
+        mapping
+      end
+
+      def default_mapping(name)
+        columns = attribute_names
+
+        if columns.include?("#{name}_currency") && columns.include?(name)
+          { amount: name, currency: "#{name}_currency" }
         elsif name == 'amount' && columns.include?('currency')
-          { amount: name, currency: :currency }
+          { amount: name, currency: 'currency' }
+        else
+          { amount: "#{name}_amount", currency: "#{name}_currency" }
         end
       end
 
-      def resolve_composite_spec(name, mapping:)
-        composite = { amount: "#{name}_amount", currency: "#{name}_currency" }
-
-        composite[:amount]   = mapping[:amount].to_s if mapping&.key?(:amount)
-        composite[:currency] = mapping[:currency].to_s if mapping&.key?(:currency)
-
-        assert_columns_exist!(name, composite)
+      def register_composite_spec(name, mapping)
         register_money_attribute_spec(
           name,
           kind: :composite,
-          amount_col: composite[:amount],
-          currency_col: composite[:currency]
+          amount_col: mapping[:amount],
+          currency_col: mapping[:currency]
         )
       end
 
-      def assert_columns_exist!(name, composite)
-        missing = composite.values - attribute_names
+      def assert_columns_exist!(name, mapping)
+        missing = mapping.values - attribute_names
         return if missing.empty?
 
         raise ArgumentError,
               "Could not find columns for :#{name} money attribute. " \
-              "Expected: #{composite.values.join(', ')}, " \
+              "Expected: #{mapping.values.join(', ')}, " \
               "Found: #{attribute_names.join(', ')}"
       end
 
@@ -66,9 +72,13 @@ module MoneyAttribute
         col = columns.find { |c| c.name == column_name }
         %i[integer bigint].include?(col&.type)
       end
+    end
 
-      def define_composite_money_attribute(name, mapping)
-        spec = resolve_composite_spec(name, mapping:)
+    class_methods do
+      def money_attribute(name, mapping: {})
+        name = name.to_s
+        mapping = resolve_mapping(name, mapping)
+        spec = register_composite_spec(name, mapping)
 
         composed_of(name.to_sym, {
                       allow_nil: true,
@@ -80,22 +90,6 @@ module MoneyAttribute
                         spec.currency_col => :currency_code
                       }
                     })
-      end
-    end
-
-    class_methods do
-      def money_attribute(name, mapping: nil)
-        name = name.to_s
-        resolved_mapping = mapping || resolve_composite_mapping(name)
-
-        if resolved_mapping.nil? && attribute_names.include?(name)
-          raise ArgumentError,
-                "Column '#{name}' exists but no '#{name}_currency' column was found. " \
-                'For single-column fixed-currency attributes, use `money_amount` ' \
-                'instead of `money_attribute`.'
-        end
-
-        define_composite_money_attribute(name, resolved_mapping || {})
       end
     end
 

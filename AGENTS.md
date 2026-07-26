@@ -72,7 +72,7 @@ money_attribute's main advantages: **zero-allocation caching** (34-38× reader s
 - **Framework:** Minitest via `ActiveSupport::TestCase` (no RSpec), fixtures loaded automatically
 - Dummy Rails app at `test/dummy/` — migrate before running (`rake test` does this); SQLite3 DB at `test/dummy/storage/test.sqlite3`
 - **8** test files in `test/money_attribute/`
-- **149** tests, **417** assertions, all passing
+- **198** tests, **585** assertions, all passing
 - Dummy app initializer sets `default_currency = 'BRL'` — test expectations assume BRL, not USD
 - Config-mutating tests: use `with_money_attribute_config` (in `rails_test.rb:215`), which saves/restores config and re-registers currencies
 - RuboCop enforces `Minitest/MultipleAssertions: max 4` — warns on 5+ assertions; runs in CI
@@ -100,6 +100,7 @@ money_attribute's main advantages: **zero-allocation caching** (34-38× reader s
 - Using `money_attribute` when only a single column exists raises with a hint to use `money_amount`
 - `money_attribute` never uses `type:` top-level option — use `amount: { type: }` instead
 - Custom currency registration: `MoneyAttribute::Railtie.register_custom_currencies!`
+- **Query helpers:** `MoneyAttribute::Query` module, included in `ActiveRecord::Base` (class methods) and `ActiveRecord::Relation` (scope methods). Provides `where_money`, `where_currency`, `where_amount`, `order_by_amount`, and `sum_amount`. All use keyword hash syntax. Composite attributes decompose to backing columns; single-column delegates to native AR. `sum_amount` accepts attribute names only (no currency parameter); composite attributes use SQL `GROUP BY` on the currency column, returning `Hash{String => Mint::Money}` when multiple currencies exist, single `Mint::Money` when one. Single-column attributes always return `Mint::Money`. Query logic split across `query/*.rb` sub-modules.
 
 ## Migration helpers
 

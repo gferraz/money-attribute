@@ -18,14 +18,19 @@ module MoneyAttribute
         end
       end
 
-      def resolve_composite_for(name, mapping:)
+      def resolve_composite_spec(name, mapping:)
         composite = { amount: "#{name}_amount", currency: "#{name}_currency" }
 
         composite[:amount]   = mapping[:amount].to_s if mapping&.key?(:amount)
         composite[:currency] = mapping[:currency].to_s if mapping&.key?(:currency)
 
         assert_columns_exist!(name, composite)
-        composite
+        register_money_attribute_spec(
+          name,
+          kind: :composite,
+          amount_col: composite[:amount],
+          currency_col: composite[:currency]
+        )
       end
 
       def assert_columns_exist!(name, composite)
@@ -63,18 +68,16 @@ module MoneyAttribute
       end
 
       def define_composite_money_attribute(name, mapping)
-        aggregated = resolve_composite_for(name, mapping:)
-        register_money_attribute_spec(name, kind: :composite, amount_col: aggregated[:amount],
-                                            currency_col: aggregated[:currency])
+        spec = resolve_composite_spec(name, mapping:)
 
         composed_of(name.to_sym, {
                       allow_nil: true,
                       class_name: 'Mint::Money',
-                      constructor: money_constructor_for(aggregated[:amount]),
+                      constructor: money_constructor_for(spec.amount_col),
                       converter: Converter.new,
                       mapping: {
-                        aggregated[:amount] => amount_extractor_for(aggregated[:amount]),
-                        aggregated[:currency] => :currency_code
+                        spec.amount_col => amount_extractor_for(spec.amount_col),
+                        spec.currency_col => :currency_code
                       }
                     })
       end

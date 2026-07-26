@@ -1,22 +1,13 @@
 # frozen_string_literal: true
 
+require 'concurrent/map'
+
 module MoneyAttribute
   # Stores money attribute metadata on the model class.
   module AttributeSpecRegistry
     extend ActiveSupport::Concern
 
-    included do
-      @money_attribute_specs = {}
-      @money_attribute_specs_mutex = Mutex.new
-
-      class << self
-        def inherited(subclass)
-          super
-          subclass.instance_variable_set(:@money_attribute_specs, (@money_attribute_specs || {}).dup)
-          subclass.instance_variable_set(:@money_attribute_specs_mutex, Mutex.new)
-        end
-      end
-    end
+    REGISTRY = Concurrent::Map.new
 
     class_methods do
       def register_money_attribute_spec(name, kind:, amount_col:, currency_col: nil)
@@ -27,9 +18,7 @@ module MoneyAttribute
           currency_col: currency_col&.to_s
         )
 
-        money_attribute_specs_mutex.synchronize do
-          @money_attribute_specs = money_attribute_specs.merge(spec.name => spec)
-        end
+        money_attribute_specs[spec.name] = spec
         spec
       end
 
@@ -38,13 +27,7 @@ module MoneyAttribute
       end
 
       def money_attribute_specs
-        @money_attribute_specs ||= {}
-      end
-
-      private
-
-      def money_attribute_specs_mutex
-        @money_attribute_specs_mutex ||= Mutex.new
+        REGISTRY.fetch_or_store(self) { {} }
       end
     end
   end

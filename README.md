@@ -369,6 +369,8 @@ Offer.pick_amount(:amount, :discount)       # => [USD 100.00, EUR 20.00]
 
 `pluck_amount` and `pick_amount` follow Rails' `pluck` / `pick` arity: one attribute returns a single column result, multiple attributes return row arrays.
 
+Internally, money attribute metadata is registered per model class. The same attribute name can be used safely in different models, but subclasses do not automatically inherit a parent model's registered money attributes.
+
 ## Convenience methods
 
 MoneyAttribute adds small helpers on `Numeric` and `String`:

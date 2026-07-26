@@ -40,17 +40,11 @@ module MoneyAttribute
         scope
       end
 
-      def pluck_amount(attr)
-        all.pluck_amount(attr)
-      end
+      delegate :pluck_amount, to: :all
 
-      def pick_amount(attr)
-        all.pick_amount(attr)
-      end
+      delegate :pick_amount, to: :all
 
-      def sum_amount(attr)
-        all.sum_amount(attr)
-      end
+      delegate :sum_amount, to: :all
     end
   end
 

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Lint/AmbiguousRange
 require 'test_helper'
 
 class QueryChainingTest < ActiveSupport::TestCase
@@ -34,4 +33,3 @@ class QueryChainingTest < ActiveSupport::TestCase
     assert_equal [eur_low], results.to_a
   end
 end
-# rubocop:enable Lint/AmbiguousRange

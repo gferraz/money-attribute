@@ -31,11 +31,13 @@ module MoneyAttribute
       end
 
       def register_composite_spec(name, mapping)
+        amount_type = integer_column?(mapping[:amount]) ? :integer : :decimal
         register_money_attribute_spec(
           name,
           kind: :composite,
           amount_col: mapping[:amount],
-          currency_col: mapping[:currency]
+          currency_col: mapping[:currency],
+          amount_type: amount_type
         )
       end
 
@@ -47,25 +49,6 @@ module MoneyAttribute
               "Could not find columns for :#{name} money attribute. " \
               "Expected: #{mapping.values.join(', ')}, " \
               "Found: #{attribute_names.join(', ')}"
-      end
-
-      def amount_extractor_for(column_name) = integer_column?(column_name) ? :subunits : :to_d
-
-      def money_constructor_for(amount_column)
-        if integer_column?(amount_column)
-          build_money_constructor(:from_subunits)
-        else
-          build_money_constructor(:from)
-        end
-      end
-
-      def build_money_constructor(method)
-        lambda do |amount, currency|
-          next nil if amount.nil?
-
-          resolved = Money::Currency.resolve(currency.presence || MoneyAttribute.default_currency) || 'XXX'
-          Mint::Money.public_send(method, amount, resolved)
-        end
       end
 
       def integer_column?(column_name)
@@ -83,12 +66,9 @@ module MoneyAttribute
         composed_of(name.to_sym, {
                       allow_nil: true,
                       class_name: 'Mint::Money',
-                      constructor: money_constructor_for(spec.amount_col),
+                      constructor: spec.constructor,
                       converter: Converter.new,
-                      mapping: {
-                        spec.amount_col => amount_extractor_for(spec.amount_col),
-                        spec.currency_col => :currency_code
-                      }
+                      mapping: spec.composed_of_mapping
                     })
       end
     end

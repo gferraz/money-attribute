@@ -20,7 +20,7 @@ module MoneyAttribute
       return pluck(spec.amount_col) if spec.single?
 
       pluck(spec.amount_col, spec.currency_col).map do |amount, currency|
-        build_money_value(amount, currency, spec.amount_col)
+        spec.build_money(amount, currency)
       end
     end
 
@@ -33,7 +33,7 @@ module MoneyAttribute
           values << row[cursor]
           cursor += 1
         else
-          values << build_money_value(row[cursor], row[cursor + 1], spec.amount_col)
+          values << spec.build_money(row[cursor], row[cursor + 1])
           cursor += 2
         end
       end

@@ -35,32 +35,16 @@ module MoneyAttribute
     def resolve_composite_sum(spec)
       grouped = group(spec.currency_col).sum(spec.amount_col)
       grouped.delete(nil)
-      return wrap_empty(spec.amount_col) if grouped.empty?
+      return [spec.zero_money] if grouped.empty?
 
       grouped.sort_by { |currency, _raw| currency.to_s }
-             .map { |currency, raw| wrap_money(raw, currency, spec.amount_col) }
+             .map { |currency, raw| spec.money_or_zero(raw, currency) }
     end
 
     def resolve_single_sum(spec)
       raw_sum = sum(spec.amount_col)
       currency = MoneyAttribute.default_currency.code
-      [wrap_money(raw_sum, currency, spec.amount_col)]
-    end
-
-    def wrap_empty(column)
-      [wrap_money(nil, nil, column)]
-    end
-
-    def wrap_money(raw_sum, currency, column)
-      return raw_sum if raw_sum.is_a?(Mint::Money)
-      return MoneyAttribute.default_currency.zero if raw_sum.nil? || raw_sum.zero?
-
-      resolved = Money::Currency.resolve(currency)
-      if klass.integer_column?(column)
-        Mint::Money.from_subunits(raw_sum, resolved)
-      else
-        Mint::Money.from(raw_sum, resolved)
-      end
+      [spec.money_or_zero(raw_sum, currency)]
     end
   end
 end

@@ -27,7 +27,7 @@ module MoneyAttribute
 
       return raw if spec.single?
 
-      build_money_value(raw[0], raw[1], spec.amount_col)
+      spec.build_money(raw[0], raw[1])
     end
 
     def extract_pick_value(raw, spec, cursor)
@@ -35,7 +35,7 @@ module MoneyAttribute
 
       amount = raw[cursor]
       currency = raw[cursor + 1]
-      [build_money_value(amount, currency, spec.amount_col), cursor + 2]
+      [spec.build_money(amount, currency), cursor + 2]
     end
   end
 end

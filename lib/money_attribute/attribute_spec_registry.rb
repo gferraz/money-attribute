@@ -10,12 +10,13 @@ module MoneyAttribute
     REGISTRY = Concurrent::Map.new
 
     class_methods do
-      def register_money_attribute_spec(name, kind:, amount_col:, currency_col: nil)
+      def register_money_attribute_spec(name, kind:, amount_col:, currency_col: nil, amount_type: nil)
         spec = MoneyAttribute::AttributeSpec.new(
           name: name.to_s,
           kind: kind,
           amount_col: amount_col.to_s,
-          currency_col: currency_col&.to_s
+          currency_col: currency_col&.to_s,
+          amount_type: amount_type
         )
 
         money_attribute_specs[spec.name] = spec

@@ -3,15 +3,14 @@
 module MoneyAttribute
   # Type
   class Type < ActiveRecord::Type::Value
-    def initialize(currency: nil, column_type: ActiveRecord::Type::Decimal.new)
-      @static_currency = currency
+    def initialize(column_type: ActiveRecord::Type::Decimal.new)
       @integer_column = column_type.is_a?(ActiveRecord::Type::Integer)
       super()
     end
 
     def cast(value)
       if value.is_a?(String)
-        Mint::Money.parse(value, currency)
+        Mint::Money.parse(value, MoneyAttribute.default_currency)
       else
         super
       end
@@ -21,6 +20,7 @@ module MoneyAttribute
       case value
       when NilClass, Numeric, String then return
       when Mint::Money
+        currency = MoneyAttribute.default_currency
         return if value.currency == currency
 
         message = "'#{value.inspect}' has different currency. Only #{currency.code} allowed."
@@ -33,6 +33,8 @@ module MoneyAttribute
     def deserialize(value)
       return nil unless value
 
+      currency = MoneyAttribute.default_currency
+
       if @integer_column
         Mint::Money.from_subunits(value, currency)
       else
@@ -44,12 +46,6 @@ module MoneyAttribute
       return nil unless value
 
       @integer_column ? value.subunits : value.to_d
-    end
-
-    private
-
-    def currency
-      @static_currency || MoneyAttribute.default_currency
     end
   end
 end

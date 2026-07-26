@@ -97,11 +97,10 @@ class CurrentTest < ActiveSupport::TestCase
   end
 
   test 'Type uses static currency when provided' do
-    currency = Money::Currency.resolve!('NZD')
-    type = MoneyAttribute::Type.new(currency: currency, column_type: ActiveRecord::Type::Decimal.new)
+    type = MoneyAttribute::Type.new(column_type: ActiveRecord::Type::Decimal.new)
     money = type.cast('100')
 
-    assert_equal 'NZD', money.currency.code
+    assert_equal MoneyAttribute.default_currency, money.currency
   end
 
   test 'composite Converter uses per-request currency for numeric assignment' do

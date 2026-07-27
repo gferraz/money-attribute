@@ -35,7 +35,7 @@ module MoneyAttribute
     # Sums a composite attribute grouped by currency.
     def resolve_composite_sum(spec)
       totals = group(spec.currency_col).sum(spec.amount_col)
-      return [0] if totals.empty?
+      return [spec.build_money(0, MoneyAttribute.default_currency)] if totals.empty?
 
       totals.map { |code, amount| spec.build_money(amount, code) }
             .sort_by(&:currency_code)

@@ -10,9 +10,8 @@ module MoneyAttribute
       specs = attrs.map { |attr| money_attribute_spec!(attr) }
       return pluck_single_amount(specs.first) if specs.length == 1
 
-      pluck(*specs.flat_map(&:columns)).map do |row|
-        extract_money_row(row, specs)
-      end
+      raw = pluck(*specs.flat_map(&:columns))
+      raw.map { |row| extract_money_row(row, specs) }
     end
 
     private
@@ -28,20 +27,12 @@ module MoneyAttribute
 
     # Rebuilds a result row for multi-attribute plucks.
     def extract_money_row(row, specs)
-      values = []
       cursor = 0
 
-      specs.each do |spec|
-        if spec.single?
-          values << row[cursor]
-          cursor += 1
-        else
-          values << spec.build_money(row[cursor], row[cursor + 1])
-          cursor += 2
-        end
+      specs.map do |spec|
+        value, cursor = extract_pick_value(row, spec, cursor)
+        value
       end
-
-      values
     end
   end
 end

@@ -10,5 +10,12 @@ module MoneyAttribute
 
       spec
     end
+
+    # Extracts a single value from a flat row at the given cursor position.
+    def extract_pick_value(row, spec, cursor)
+      return [row[cursor], cursor + 1] if spec.single?
+
+      [spec.build_money(row[cursor], row[cursor + 1]), cursor + 2]
+    end
   end
 end

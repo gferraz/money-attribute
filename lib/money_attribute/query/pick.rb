@@ -30,14 +30,5 @@ module MoneyAttribute
 
       spec.build_money(raw[0], raw[1])
     end
-
-    # Rebuilds one value from a multi-attribute `pick` result.
-    def extract_pick_value(raw, spec, cursor)
-      return [raw[cursor], cursor + 1] if spec.single?
-
-      amount = raw[cursor]
-      currency = raw[cursor + 1]
-      [spec.build_money(amount, currency), cursor + 2]
-    end
   end
 end

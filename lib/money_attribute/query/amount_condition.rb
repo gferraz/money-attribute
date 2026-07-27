@@ -6,8 +6,15 @@ module MoneyAttribute
     # Builds an amount filter for the registered money attribute.
     def resolve_amount_condition(attr, value)
       spec = money_attribute_spec!(attr)
+      col = arel_table[spec.amount_col]
 
-      where(spec.amount_col => value)
+      condition = case value
+                  when Range then col.between(value)
+                  when Array then col.in(value)
+                  else col.eq(value)
+                  end
+
+      where(condition)
     end
   end
 end

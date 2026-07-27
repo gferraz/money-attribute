@@ -44,7 +44,7 @@ module MoneyAttribute
       return unless amount
       return amount if amount.is_a?(Mint::Money)
 
-      resolved = Money::Currency.resolve(currency)
+      resolved = Money::Currency.resolve(currency.presence || MoneyAttribute.default_currency) || 'XXX'
 
       if integer_amount?
         Mint::Money.from_subunits(amount, resolved)
@@ -52,6 +52,5 @@ module MoneyAttribute
         Mint::Money.from(amount, resolved)
       end
     end
-
   end
 end

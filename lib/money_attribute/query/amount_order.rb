@@ -10,7 +10,7 @@ module MoneyAttribute
       if spec.composite?
         order(spec.currency_col => :asc, spec.amount_col => direction)
       else
-        order(attr => direction)
+        order(spec.amount_col => direction)
       end
     end
   end

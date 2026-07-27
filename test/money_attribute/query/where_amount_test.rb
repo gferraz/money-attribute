@@ -78,7 +78,9 @@ class WhereAmountTest < ActiveSupport::TestCase
     FinancialTransaction.create!(amount: 20.euros)
     FinancialTransaction.create!(amount: 30.dollars)
 
-    results = FinancialTransaction.where_amount(amount: 1000)
+    results = FinancialTransaction.where_amount(amount: 10.dollars)
+
+    binding.irb
 
     assert_equal 1, results.count
     assert_equal 1000, results.first[:amount]

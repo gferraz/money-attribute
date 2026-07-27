@@ -188,13 +188,13 @@ MoneyAttribute integrates with Rails I18n to automatically format money amounts 
 
 With `I18n.locale` set to `:en`:
 ```ruby
-Mint.money(1234.56, 'USD').to_s  # => "$1,234.56"
+Money.from(1234.56, 'USD').to_s  # => "$1,234.56"
 ```
 
 Switch to `:'pt-BR'` and the separators change automatically (requires [`rails-i18n`](https://github.com/svenfuchs/rails-i18n) or your own locale file):
 ```ruby
 I18n.locale = :'pt-BR'
-Mint.money(1234.56, 'USD').to_s  # => "$1.234,56"
+Money.from(1234.56, 'USD').to_s  # => "$1.234,56"
 ```
 
 The locale backend reads `number.currency.format` from your I18n translations and maps Rails format syntax (`%n` for amount, `%u` for unit) to `Mint::Money#to_s`. If the translation key is missing (no locale file for that language), it falls back to hardcoded defaults (`.` decimal, `,` thousand, `%<symbol>s%<amount>f` format).
@@ -218,9 +218,9 @@ en:
 When any of `positive`, `negative`, or `zero` is present, a Hash format is built. Missing keys fall back to `format`:
 
 ```ruby
-Mint.money(1234.56, 'USD').to_s  # => "$1,234.56"
-Mint.money(-1234.56, 'USD').to_s # => "($1,234.56)"
-Mint.money(0, 'USD').to_s        # => "--"
+Money.from(1234.56, 'USD').to_s  # => "$1,234.56"
+Money.from(-1234.56, 'USD').to_s # => "($1,234.56)"
+Money.from(0, 'USD').to_s        # => "--"
 ```
 
 If none of those keys are set, `format` is used as a plain string (simple formatting).
@@ -381,7 +381,7 @@ MoneyAttribute adds small helpers on `Numeric` and `String`:
 12.euros              # => [EUR 12.00]
 ```
 
-> If you prefer not to extend core classes, use `Mint.money(12, 'USD')` instead.
+> If you prefer not to extend core classes, use `Money.from(12, 'USD')` instead.
 
 ## Form helpers
 

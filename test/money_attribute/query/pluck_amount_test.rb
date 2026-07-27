@@ -29,6 +29,40 @@ class PluckAmountTest < ActiveSupport::TestCase
     assert_equal [10.reais, 50.reais, 100.reais], amounts
   end
 
+  test 'pluck_amount works for multiple single-column attributes' do
+    SimpleOffer.create!(price: 10.reais, discount: 5.reais)
+    SimpleOffer.create!(price: 50.reais, discount: 25.reais)
+
+    rows = SimpleOffer.order_by_amount(price: :asc).pluck_amount(:price, :discount)
+
+    assert_equal [[10.reais, 5.reais], [50.reais, 25.reais]], rows
+  end
+
+  test 'pluck_amount returns empty array for single-column with no records' do
+    assert_equal [], SimpleOffer.pluck_amount(:price)
+  end
+
+  test 'pluck_amount handles nil amount on single-column attribute' do
+    SimpleOffer.create!(price: nil)
+
+    amounts = SimpleOffer.pluck_amount(:price)
+
+    assert_equal [nil], amounts
+  end
+
+  test 'pluck_amount works for integer (subunit) single-column attribute' do
+    FinancialTransaction.create!(tax: 1000)
+    FinancialTransaction.create!(tax: 2000)
+
+    amounts = FinancialTransaction.pluck_amount(:tax)
+
+    assert_equal [10.reais, 20.reais], amounts
+  end
+
+  test 'pluck_amount raises on no attributes' do
+    assert_raises(ArgumentError) { Offer.pluck_amount }
+  end
+
   test 'pluck_amount returns arrays for multiple attributes' do
     transaction = FinancialTransaction.create!(
       amount: 100.dollars,

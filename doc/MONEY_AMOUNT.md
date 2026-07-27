@@ -69,8 +69,8 @@ precision/scale intentionally rejected.
 | `where_amount` | Works normally, queries the amount column |
 | `where_currency` | **Raises** -- no currency column |
 | `order_by_amount` | Orders by amount column only |
-| `pluck_amount` | Returns raw column values (no Money reconstruction) |
-| `pick_amount` | Returns raw column values |
+| `pluck_amount` | Returns `Array<Mint::Money>` (via `Type#deserialize`) |
+| `pick_amount` | Returns `Mint::Money` or `nil` (via `Type#deserialize`) |
 | `sum_amount` | Sums directly, wraps with default currency |
 
 ## Key difference from composite `money_attribute`
@@ -89,6 +89,6 @@ serialization, queries, migration helpers, and form helpers.
 | **Migration helper** | `add_money_amount` / `t.money_amount` -- 1 column | `add_money_attribute` / `t.money_attribute` -- 2 columns |
 | **Form helper** | `money_amount_field` -- `<input type="number">` | `money_field` -- `<input type="text">` |
 | **Query: `where_currency`** | Raises -- no currency column | Filters by currency column |
-| **Query: `pluck_amount`** | Returns raw values | Reconstructs `Mint::Money` |
+| **Query: `pluck_amount`** | Returns `Array<Mint::Money>` | Returns `Array<Mint::Money>` |
 | **Query: `sum_amount`** | Sums directly, wraps with default currency | Groups by currency column |
 | **Per-request currency** | Works via `Current.currency` | Works via `Current.currency` |

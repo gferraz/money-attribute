@@ -3,6 +3,7 @@
 module MoneyAttribute
   # :nodoc:
   module FormBuilderExtension
+    # Renders a text input for a composed money attribute.
     def money_field(method, options = {})
       money = object.public_send(method)
       value = money&.to_fs
@@ -11,6 +12,7 @@ module MoneyAttribute
                                { id: field_id(method) }.merge(options))
     end
 
+    # Renders a number input for a single-column money attribute.
     def money_amount_field(method, options = {})
       money_from_column = object.public_send(method)
       value = money_from_column&.to_d

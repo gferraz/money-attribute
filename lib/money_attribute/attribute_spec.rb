@@ -2,20 +2,25 @@
 
 module MoneyAttribute
   AttributeSpec = Struct.new(:name, :kind, :amount_col, :currency_col, :amount_type, keyword_init: true) do
+    # Returns true when the spec describes a two-column money attribute.
     def composite? = kind == :composite
 
+    # Returns true when the spec describes a single-column money attribute.
     def single? = kind == :single
 
+    # Returns the backing database columns for the attribute.
     def columns = composite? ? [amount_col, currency_col] : [amount_col]
 
+    # Returns true when the amount column stores subunits.
     def integer_amount? = amount_type == :integer
 
+    # Returns the extractor used by `composed_of` for the amount column.
     def amount_extractor = integer_amount? ? :subunits : :to_d
 
-    def composed_of_mapping
-      { amount_col => amount_extractor, currency_col => :currency_code }
-    end
+    # Returns the `composed_of` mapping for amount and currency columns.
+    def composed_of_mapping = { amount_col => amount_extractor, currency_col => :currency_code }
 
+    # Builds the constructor used by `composed_of` to instantiate money values.
     def constructor
       method = integer_amount? ? :from_subunits : :from
 
@@ -27,6 +32,7 @@ module MoneyAttribute
       end
     end
 
+    # Converts a raw amount and currency into a `Mint::Money` value.
     def build_money(amount, currency)
       return unless amount
       return amount if amount.is_a?(Mint::Money)
@@ -40,14 +46,16 @@ module MoneyAttribute
       end
     end
 
-    def money_or_zero(raw_amount, currency)
-      return zero_money if raw_amount.nil? || raw_amount.zero?
-
-      build_money(raw_amount, currency)
-    end
-
+    # Returns the zero money value for the application default currency.
     def zero_money
       MoneyAttribute.default_currency.zero
+    end
+
+    # Returns the wrapped money value, or zero money when the amount is blank.
+    def money_or_zero(amount, currency)
+      return zero_money if amount.nil? || amount.zero?
+
+      build_money(amount, currency)
     end
   end
 end

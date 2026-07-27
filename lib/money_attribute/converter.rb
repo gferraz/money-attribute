@@ -3,10 +3,12 @@
 module MoneyAttribute
   # :nodoc:
   class Converter
+    # Initializes a converter with an optional fixed currency.
     def initialize(currency = nil)
       @static_currency = currency
     end
 
+    # Converts raw input into a `Money` value.
     def parse(amount)
       currency = @static_currency || MoneyAttribute.default_currency
       case amount

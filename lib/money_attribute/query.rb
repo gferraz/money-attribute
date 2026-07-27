@@ -22,29 +22,41 @@ module MoneyAttribute
     extend ActiveSupport::Concern
 
     class_methods do
+      # Filters by currency for one or more money attributes.
       def where_currency(conditions)
         scope = all
         conditions.each { |attr, value| scope = scope.resolve_currency_condition(attr, value) }
         scope
       end
 
+      # Filters by amount for one or more money attributes.
       def where_amount(conditions)
         scope = all
         conditions.each { |attr, value| scope = scope.resolve_amount_condition(attr, value) }
         scope
       end
 
+      # Orders by amount for one or more money attributes.
       def order_by_amount(conditions)
         scope = all
         conditions.each { |attr, dir| scope = scope.resolve_amount_order(attr, dir || :asc) }
         scope
       end
 
-      delegate :pluck_amount, to: :all
+      # Plucks money-aware amounts from the current relation.
+      def pluck_amount(*attrs)
+        all.pluck_amount(*attrs)
+      end
 
-      delegate :pick_amount, to: :all
+      # Picks money-aware amounts from the current relation.
+      def pick_amount(*attrs)
+        all.pick_amount(*attrs)
+      end
 
-      delegate :sum_amount, to: :all
+      # Sums money-aware amounts from the current relation.
+      def sum_amount(attr)
+        all.sum_amount(attr)
+      end
     end
   end
 

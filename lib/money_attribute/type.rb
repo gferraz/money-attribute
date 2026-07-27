@@ -3,11 +3,13 @@
 module MoneyAttribute
   # Type
   class Type < ActiveRecord::Type::Value
+    # Initializes the type with the backing column type.
     def initialize(column_type: ActiveRecord::Type::Decimal.new)
       @integer_column = column_type.is_a?(ActiveRecord::Type::Integer)
       super()
     end
 
+    # Casts string input into a `Money` value.
     def cast(value)
       if value.is_a?(String)
         Mint::Money.parse(value, MoneyAttribute.default_currency)
@@ -16,6 +18,7 @@ module MoneyAttribute
       end
     end
 
+    # Validates that the value is compatible with the fixed currency type.
     def assert_valid_value(value)
       case value
       when NilClass, Numeric, String then return
@@ -30,6 +33,7 @@ module MoneyAttribute
       raise ArgumentError, message
     end
 
+    # Deserializes the database value into a `Money` value.
     def deserialize(value)
       return nil unless value
 
@@ -42,6 +46,7 @@ module MoneyAttribute
       end
     end
 
+    # Serializes a `Money` value into the column representation.
     def serialize(value)
       return nil unless value
 

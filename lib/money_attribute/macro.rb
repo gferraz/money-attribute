@@ -7,6 +7,7 @@ module MoneyAttribute
 
     # :nodoc:
     module CompositeClassMethods
+      # Normalizes the requested mapping by applying conventions and overrides.
       def resolve_mapping(name, mapping_override)
         override = mapping_override.compact
         override.slice!(:amount, :currency)
@@ -18,6 +19,7 @@ module MoneyAttribute
         mapping
       end
 
+      # Returns the default amount/currency mapping for the attribute name.
       def default_mapping(name)
         columns = attribute_names
 
@@ -30,17 +32,18 @@ module MoneyAttribute
         end
       end
 
+      # Registers the composite money attribute spec for the model.
       def register_composite_spec(name, mapping)
-        amount_type = integer_column?(mapping[:amount]) ? :integer : :decimal
         register_money_attribute_spec(
           name,
           kind: :composite,
           amount_col: mapping[:amount],
           currency_col: mapping[:currency],
-          amount_type: amount_type
+          amount_type: amount_column_type(mapping[:amount])
         )
       end
 
+      # Raises when the resolved columns are not present on the model.
       def assert_columns_exist!(name, mapping)
         missing = mapping.values - attribute_names
         return if missing.empty?
@@ -51,13 +54,15 @@ module MoneyAttribute
               "Found: #{attribute_names.join(', ')}"
       end
 
-      def integer_column?(column_name)
-        col = columns.find { |c| c.name == column_name }
-        %i[integer bigint].include?(col&.type)
+      # Returns the storage type for the amount column.
+      def amount_column_type(column_name)
+        column = columns.find { |c| c.name == column_name }
+        %i[integer bigint].include?(column&.type) ? :integer : :decimal
       end
     end
 
     class_methods do
+      # Declares a composite money attribute on the model.
       def money_attribute(name, mapping: {})
         name = name.to_s
         mapping = resolve_mapping(name, mapping)

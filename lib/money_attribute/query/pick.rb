@@ -3,6 +3,7 @@
 module MoneyAttribute
   # Picks a single amount value from a money-aware attribute.
   module PickAmount
+    # Picks money-aware amounts for one or more attributes.
     def pick_amount(*attrs)
       raise ArgumentError, 'No attribute specified' if attrs.empty?
 
@@ -21,6 +22,7 @@ module MoneyAttribute
 
     private
 
+    # Picks a single money-aware attribute and returns a single value.
     def pick_single_amount(spec)
       raw = pick(*spec.columns)
       return unless raw
@@ -29,6 +31,7 @@ module MoneyAttribute
       spec.build_money(raw[0], raw[1])
     end
 
+    # Rebuilds one value from a multi-attribute `pick` result.
     def extract_pick_value(raw, spec, cursor)
       return [raw[cursor], cursor + 1] if spec.single?
 

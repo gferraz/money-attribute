@@ -6,6 +6,7 @@ module MoneyAttribute
     extend ActiveSupport::Concern
 
     class_methods do
+      # Declares a fixed-currency money attribute backed by a single column.
       def money_amount(name)
         name = name.to_s
 
@@ -21,6 +22,7 @@ module MoneyAttribute
 
       private
 
+      # Raises if the column does not exist on the model.
       def assert_column_exists!(name)
         return if attribute_names.include?(name)
 
@@ -29,10 +31,12 @@ module MoneyAttribute
               "Add a column named '#{name}' or use a different accessor name."
       end
 
+      # Returns the Active Record type object for the backing column.
       def detect_column_type(name)
         integer_column?(name) ? ActiveRecord::Type::Integer.new : ActiveRecord::Type::Decimal.new
       end
 
+      # Returns true when the column stores integer subunits.
       def integer_column?(column_name)
         col = columns.find { |c| c.name == column_name }
         %i[integer bigint].include?(col&.type)

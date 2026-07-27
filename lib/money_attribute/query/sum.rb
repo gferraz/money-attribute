@@ -18,6 +18,7 @@ module MoneyAttribute
   #   # => [Mint::Money(60.0, 'BRL')]
   #
   module SumAmount
+    # Sums money-aware amounts for a single attribute.
     def sum_amount(attr)
       raise ArgumentError, 'No attribute specified' if attr.nil?
 
@@ -31,6 +32,7 @@ module MoneyAttribute
 
     private
 
+    # Sums a composite attribute grouped by currency.
     def resolve_composite_sum(spec)
       totals = group(spec.currency_col).sum(spec.amount_col)
       return [0] if totals.empty?
@@ -39,6 +41,7 @@ module MoneyAttribute
             .sort_by(&:currency_code)
     end
 
+    # Sums a fixed-currency single-column attribute.
     def resolve_single_sum(spec)
       total = sum(spec.amount_col)
 

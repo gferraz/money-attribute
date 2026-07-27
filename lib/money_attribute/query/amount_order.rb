@@ -3,6 +3,7 @@
 module MoneyAttribute
   # Resolves `order_by_amount` to ordered queries (currency ASC, amount direction).
   module AmountOrder
+    # Builds an amount ordering for the registered money attribute.
     def resolve_amount_order(attr, direction)
       spec = money_attribute_spec!(attr)
 

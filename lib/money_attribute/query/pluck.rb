@@ -3,6 +3,7 @@
 module MoneyAttribute
   # Plucks amount values from money-aware attributes.
   module PluckAmount
+    # Plucks money-aware amounts for one or more attributes.
     def pluck_amount(*attrs)
       raise ArgumentError, 'No attribute specified' if attrs.empty?
 
@@ -16,6 +17,7 @@ module MoneyAttribute
 
     private
 
+    # Plucks a single money-aware attribute and returns money values.
     def pluck_single_amount(spec)
       return pluck(spec.amount_col) if spec.single?
 
@@ -24,6 +26,7 @@ module MoneyAttribute
       end
     end
 
+    # Rebuilds a result row for multi-attribute plucks.
     def extract_money_row(row, specs)
       values = []
       cursor = 0

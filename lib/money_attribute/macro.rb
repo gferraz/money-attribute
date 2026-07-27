@@ -72,7 +72,7 @@ module MoneyAttribute
                       allow_nil: true,
                       class_name: 'Mint::Money',
                       constructor: spec.constructor,
-                      converter: Converter.new,
+                      converter: Converter.default,
                       mapping: spec.composed_of_mapping
                     })
       end

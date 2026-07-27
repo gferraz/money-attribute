@@ -16,7 +16,7 @@ module MoneyAttribute
         amount_type = integer_column?(name) ? :integer : :decimal
 
         attribute(name.to_sym, MoneyAttribute::Type.new(column_type:))
-        normalizes(name.to_sym, with: Converter.new)
+        normalizes(name.to_sym, with: Converter.default)
         register_money_attribute_spec(name, kind: :single, amount_col: name, amount_type: amount_type)
       end
 

@@ -22,7 +22,6 @@ module MoneyAttribute
       raise ArgumentError, 'No attribute specified' if attr.nil?
 
       spec = money_attribute_spec!(attr)
-
       if spec.composite?
         resolve_composite_sum(spec)
       else
@@ -33,18 +32,17 @@ module MoneyAttribute
     private
 
     def resolve_composite_sum(spec)
-      grouped = group(spec.currency_col).sum(spec.amount_col)
-      grouped.delete(nil)
-      return [spec.zero_money] if grouped.empty?
+      totals = group(spec.currency_col).sum(spec.amount_col)
+      return [0] if totals.empty?
 
-      grouped.sort_by { |currency, _raw| currency.to_s }
-             .map { |currency, raw| spec.money_or_zero(raw, currency) }
+      totals.map { |code, amount| spec.build_money(amount, code) }
+            .sort_by(&:currency_code)
     end
 
     def resolve_single_sum(spec)
-      raw_sum = sum(spec.amount_col)
-      currency = MoneyAttribute.default_currency.code
-      [spec.money_or_zero(raw_sum, currency)]
+      total = sum(spec.amount_col)
+
+      [spec.build_money(total, MoneyAttribute.default_currency)]
     end
   end
 end

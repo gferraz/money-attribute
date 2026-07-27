@@ -7,7 +7,7 @@ module MoneyAttribute
       spec = money_attribute_spec!(attr)
 
       unless spec.composite?
-        raise ArgumentError, "#{klass.name}.#{attr} is a single-column attribute with no currency column"
+        raise ArgumentError, "#{klass.name}.#{attr} is a money_amount attribute with no currency column"
       end
 
       code = currency.is_a?(Mint::Currency) ? currency.code : currency.to_s

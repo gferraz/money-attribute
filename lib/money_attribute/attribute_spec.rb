@@ -27,16 +27,16 @@ module MoneyAttribute
       end
     end
 
-    def build_money(raw_amount, currency)
-      return raw_amount if raw_amount.is_a?(Mint::Money)
-      return nil if raw_amount.nil?
+    def build_money(amount, currency)
+      return unless amount
+      return amount if amount.is_a?(Mint::Money)
 
       resolved = Money::Currency.resolve(currency)
 
       if integer_amount?
-        Mint::Money.from_subunits(raw_amount, resolved)
+        Mint::Money.from_subunits(amount, resolved)
       else
-        Mint::Money.from(raw_amount, resolved)
+        Mint::Money.from(amount, resolved)
       end
     end
 

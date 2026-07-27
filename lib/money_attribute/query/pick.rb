@@ -10,7 +10,7 @@ module MoneyAttribute
       return pick_single_amount(specs.first) if specs.length == 1
 
       raw = pick(*specs.flat_map(&:columns))
-      return raw if raw.nil?
+      return unless raw
 
       cursor = 0
       specs.map do |spec|
@@ -23,8 +23,7 @@ module MoneyAttribute
 
     def pick_single_amount(spec)
       raw = pick(*spec.columns)
-      return raw if raw.nil?
-
+      return unless raw
       return raw if spec.single?
 
       spec.build_money(raw[0], raw[1])

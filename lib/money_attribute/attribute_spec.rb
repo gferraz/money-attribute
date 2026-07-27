@@ -23,7 +23,9 @@ module MoneyAttribute
     def single? = kind == :single
 
     # Returns the backing database columns for the attribute.
-    def columns = composite? ? [amount_col, currency_col] : [amount_col]
+    def columns
+      @columns ||= (composite? ? [amount_col, currency_col] : [amount_col]).freeze
+    end
 
     # Returns true when the amount column stores subunits.
     def integer_amount? = amount_type == :integer
@@ -44,13 +46,7 @@ module MoneyAttribute
       return unless amount
       return amount if amount.is_a?(Mint::Money)
 
-      resolved = Money::Currency.resolve(currency.presence || MoneyAttribute.default_currency) || 'XXX'
-
-      if integer_amount?
-        Mint::Money.from_subunits(amount, resolved)
-      else
-        Mint::Money.from(amount, resolved)
-      end
+      constructor.call(amount, currency)
     end
 
     # Normalizes a query value to the column's storage format.

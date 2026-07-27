@@ -1,5 +1,13 @@
 # frozen_string_literal: true
 
+require 'simplecov'
+SimpleCov.start do
+  skip '/test/'
+  skip '/benchmark/'
+  skip '/test/dummy/'
+  cover 'lib/**/*.rb'
+end
+
 # Configure Rails Environment
 ENV['RAILS_ENV'] = 'test'
 

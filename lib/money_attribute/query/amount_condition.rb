@@ -28,8 +28,15 @@ module MoneyAttribute
       end
     end
 
-    # Normalizes a scalar value to the column's storage format.
+    # Normalizes a scalar value for Arel comparison.
+    #
+    # Composite attributes: the amount column is a plain column with no custom Type,
+    # so we must pre-normalize Money to the raw storage value (subunits or decimal).
+    # Single-column attributes: the column has a registered Type that handles
+    # serialization, so we pass Money objects through directly to avoid double conversion.
     def normalize_amount_value(spec, value)
+      return value unless spec.composite?
+
       spec.normalize_query_value(value)
     end
   end

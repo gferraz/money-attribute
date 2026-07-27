@@ -51,8 +51,8 @@ class PluckAmountTest < ActiveSupport::TestCase
   end
 
   test 'pluck_amount works for integer (subunit) single-column attribute' do
-    FinancialTransaction.create!(tax: 1000)
-    FinancialTransaction.create!(tax: 2000)
+    FinancialTransaction.create!(tax: 10.reais)
+    FinancialTransaction.create!(tax: 20.reais)
 
     amounts = FinancialTransaction.pluck_amount(:tax)
 

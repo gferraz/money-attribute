@@ -60,7 +60,7 @@ class WhereAmountTest < ActiveSupport::TestCase
     mid = SimpleOffer.create!(price: 50.reais)
     high = SimpleOffer.create!(price: 100.reais)
 
-    assert_equal [low, mid, high], SimpleOffer.where_amount(price: 10.reais..100.reais)
+    assert_equal [low, mid, high], SimpleOffer.where_amount(price: (10.reais)..(100.reais))
   end
 
   test 'where_amount raises on non-money attribute' do

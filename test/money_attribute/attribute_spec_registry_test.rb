@@ -25,4 +25,31 @@ class AttributeSpecRegistryTest < ActiveSupport::TestCase
     assert_nil subclass.money_attribute_spec(:tax)
     assert_nil subclass.money_attribute_spec(:total)
   end
+
+  test 'build_money falls back to default currency for nil currency' do
+    spec = FinancialTransaction.money_attribute_spec(:total)
+    money = spec.build_money(10, nil)
+
+    assert_equal MoneyAttribute.default_currency.code, money.currency_code
+  end
+
+  test 'build_money falls back to XXX for invalid currency' do
+    spec = FinancialTransaction.money_attribute_spec(:total)
+    money = spec.build_money(10, 'INVALID')
+
+    assert_equal 'XXX', money.currency_code
+  end
+
+  test 'build_money returns nil for nil amount' do
+    spec = FinancialTransaction.money_attribute_spec(:total)
+
+    assert_nil spec.build_money(nil, 'USD')
+  end
+
+  test 'build_money returns Money object unchanged' do
+    spec = FinancialTransaction.money_attribute_spec(:total)
+    original = 10.dollars
+
+    assert_same original, spec.build_money(original, 'USD')
+  end
 end

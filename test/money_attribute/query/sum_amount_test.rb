@@ -3,6 +3,12 @@
 require 'test_helper'
 
 class SumAmountTest < ActiveSupport::TestCase
+  setup do
+    Offer.delete_all
+    SimpleOffer.delete_all
+    FinancialTransaction.delete_all
+  end
+
   test 'sum_amount returns Array when multiple currencies exist' do
     Offer.create!(price: 30.dollars)
     Offer.create!(price: 40.dollars)
@@ -36,7 +42,6 @@ class SumAmountTest < ActiveSupport::TestCase
   end
 
   test 'sum_amount handles integer (subunits) column' do
-    FinancialTransaction.delete_all
     FinancialTransaction.create!(amount: Mint::Money.from_subunits(1000, 'USD'), currency: 'USD')
     FinancialTransaction.create!(amount: Mint::Money.from_subunits(2000, 'USD'), currency: 'USD')
 
@@ -50,7 +55,9 @@ class SumAmountTest < ActiveSupport::TestCase
   end
 
   test 'sum_amount returns Array with zero Money for empty result' do
-    assert_equal [0], Offer.sum_amount(:price)
+    result = Offer.sum_amount(:price)
+
+    assert_equal [Mint::Money.from(0, MoneyAttribute.default_currency)], result
   end
 
   test 'sum_amount raises on non-money attribute' do

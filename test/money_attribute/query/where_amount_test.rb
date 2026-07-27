@@ -3,6 +3,12 @@
 require 'test_helper'
 
 class WhereAmountTest < ActiveSupport::TestCase
+  setup do
+    Offer.delete_all
+    SimpleOffer.delete_all
+    FinancialTransaction.delete_all
+  end
+
   test 'where_amount filters by amount regardless of currency' do
     eur = Offer.create!(price: 10.euros)
     usd = Offer.create!(price: 10.dollars)
@@ -65,5 +71,36 @@ class WhereAmountTest < ActiveSupport::TestCase
     sql = Offer.where_amount(price: 10..100).to_sql
 
     assert_includes sql, '"offers"."price_amount" BETWEEN 10.0 AND 100.0'
+  end
+
+  test 'where_amount with raw value on integer (subunit) composite column' do
+    FinancialTransaction.create!(amount: 10.dollars)
+    FinancialTransaction.create!(amount: 20.euros)
+    FinancialTransaction.create!(amount: 30.dollars)
+
+    results = FinancialTransaction.where_amount(amount: 1000)
+
+    assert_equal 1, results.count
+    assert_equal 1000, results.first[:amount]
+  end
+
+  test 'where_amount with range on integer (subunit) composite column' do
+    FinancialTransaction.create!(amount: 10.dollars)
+    FinancialTransaction.create!(amount: 20.euros)
+    FinancialTransaction.create!(amount: 30.dollars)
+
+    results = FinancialTransaction.where_amount(amount: 1000..2000)
+
+    assert_equal 2, results.count
+  end
+
+  test 'where_amount with array on integer (subunit) composite column' do
+    FinancialTransaction.create!(amount: 10.dollars)
+    FinancialTransaction.create!(amount: 20.euros)
+    FinancialTransaction.create!(amount: 30.dollars)
+
+    results = FinancialTransaction.where_amount(amount: [1000, 3000])
+
+    assert_equal 2, results.count
   end
 end

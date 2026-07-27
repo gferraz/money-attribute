@@ -54,9 +54,7 @@ module MoneyAttribute
       end
 
       # Sums money-aware amounts from the current relation.
-      def sum_amount(attr)
-        all.sum_amount(attr)
-      end
+      delegate :sum_amount, to: :all
     end
   end
 

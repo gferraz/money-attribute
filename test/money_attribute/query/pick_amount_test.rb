@@ -3,6 +3,12 @@
 require 'test_helper'
 
 class PickAmountTest < ActiveSupport::TestCase
+  setup do
+    Offer.delete_all
+    SimpleOffer.delete_all
+    FinancialTransaction.delete_all
+  end
+
   test 'pick_amount returns first money value for composite attributes' do
     Offer.create!(price: 30.dollars)
     Offer.create!(price: 10.euros)
@@ -41,7 +47,17 @@ class PickAmountTest < ActiveSupport::TestCase
     assert_nil Offer.pick_amount(:price)
   end
 
+  test 'pick_amount returns nil for multi-attribute when no records' do
+    assert_nil FinancialTransaction.pick_amount(:amount, :discount)
+  end
+
   test 'pick_amount raises on non-money attribute' do
     assert_raises(ArgumentError) { Offer.pick_amount(:product) }
+  end
+
+  test 'pick_amount handles nil amount value' do
+    Offer.create!(price: nil)
+
+    assert_nil Offer.pick_amount(:price)
   end
 end

@@ -3,6 +3,12 @@
 require 'test_helper'
 
 class WhereCurrencyTest < ActiveSupport::TestCase
+  setup do
+    Offer.delete_all
+    SimpleOffer.delete_all
+    FinancialTransaction.delete_all
+  end
+
   test 'where_currency filters by currency code' do
     eur = Offer.create!(price: 10.euros)
     Offer.create!(price: 10.dollars)

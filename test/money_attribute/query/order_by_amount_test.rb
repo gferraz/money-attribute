@@ -3,6 +3,12 @@
 require 'test_helper'
 
 class OrderByAmountTest < ActiveSupport::TestCase
+  setup do
+    Offer.delete_all
+    SimpleOffer.delete_all
+    FinancialTransaction.delete_all
+  end
+
   test 'order_by_amount orders by currency then amount ascending' do
     eur1 = Offer.create!(price: 100.euros)
     eur2 = Offer.create!(price: 10.euros)

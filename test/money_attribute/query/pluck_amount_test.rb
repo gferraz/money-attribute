@@ -3,6 +3,12 @@
 require 'test_helper'
 
 class PluckAmountTest < ActiveSupport::TestCase
+  setup do
+    Offer.delete_all
+    SimpleOffer.delete_all
+    FinancialTransaction.delete_all
+  end
+
   test 'pluck_amount returns money objects for composite attributes' do
     Offer.create!(price: 30.dollars)
     Offer.create!(price: 10.euros)
@@ -43,5 +49,13 @@ class PluckAmountTest < ActiveSupport::TestCase
 
   test 'pluck_amount raises on non-money attribute' do
     assert_raises(ArgumentError) { Offer.pluck_amount(:product) }
+  end
+
+  test 'pluck_amount handles nil amount values' do
+    Offer.create!(price: nil)
+
+    amounts = Offer.pluck_amount(:price)
+
+    assert_equal [nil], amounts
   end
 end

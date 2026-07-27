@@ -3,6 +3,12 @@
 require 'test_helper'
 
 class QueryChainingTest < ActiveSupport::TestCase
+  setup do
+    Offer.delete_all
+    SimpleOffer.delete_all
+    FinancialTransaction.delete_all
+  end
+
   test 'where_currency chains with order_by_amount' do
     eur1 = Offer.create!(price: 10.euros)
     eur2 = Offer.create!(price: 50.euros)

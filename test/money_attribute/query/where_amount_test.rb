@@ -81,9 +81,9 @@ class WhereAmountTest < ActiveSupport::TestCase
     FinancialTransaction.create!(amount: 20.euros)
     FinancialTransaction.create!(amount: 30.dollars)
 
-    results = FinancialTransaction.where_amount(amount: [10.dollars, yens])
+    amounts = FinancialTransaction.where_amount(amount: [10.dollars, yens]).map(&:amount)
 
-    assert_equal [yens, 10.dollars], results.map(&:amount)
+    assert_equal [yens, 10.dollars], amounts
   end
 
   test 'where_amount with range on integer (subunit) composite column' do
@@ -91,9 +91,9 @@ class WhereAmountTest < ActiveSupport::TestCase
     FinancialTransaction.create!(amount: 20.dollars)
     FinancialTransaction.create!(amount: 30.dollars)
 
-    results = FinancialTransaction.where_amount(amount: (10.dollars)..(20.dollars))
+    amounts = FinancialTransaction.where_amount(amount: (10.dollars)..(20.dollars)).map(&:amount)
 
-    assert_equal 2, results.count
+    assert_equal [10.dollars, 20.dollars], amounts
   end
 
   test 'where_amount with array on integer (subunit) composite column' do
@@ -101,8 +101,8 @@ class WhereAmountTest < ActiveSupport::TestCase
     FinancialTransaction.create!(amount: 20.euros)
     FinancialTransaction.create!(amount: 30.dollars)
 
-    results = FinancialTransaction.where_amount(amount: [10.dollars, 30.dollars])
+    amounts = FinancialTransaction.where_amount(amount: [10.dollars, 30.dollars]).map(&:amount)
 
-    assert_equal 2, results.count
+    assert_equal [10.dollars, 30.dollars], amounts
   end
 end

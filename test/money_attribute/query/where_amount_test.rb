@@ -74,22 +74,24 @@ class WhereAmountTest < ActiveSupport::TestCase
     assert_includes sql, '"offers"."price_amount" <= 100.0'
   end
 
-  test 'where_amount with raw value on integer (subunit) composite column' do
-    FinancialTransaction.create!(amount: 10.to_money('JPY'))
+  test 'where_amount with Money on integer (subunit) composite column' do
+    yens = 10.to_money('JPY')
+    FinancialTransaction.create!(amount: yens)
     FinancialTransaction.create!(amount: 10.dollars)
     FinancialTransaction.create!(amount: 20.euros)
     FinancialTransaction.create!(amount: 30.dollars)
 
-    results = FinancialTransaction.where_amount(amount: 10)
-    assert_equal [10.to_money('JPY'), 10.dollars, results.map(&:amount)
+    results = FinancialTransaction.where_amount(amount: [10.dollars, yens])
+
+    assert_equal [yens, 10.dollars], results.map(&:amount)
   end
 
   test 'where_amount with range on integer (subunit) composite column' do
     FinancialTransaction.create!(amount: 10.dollars)
-    FinancialTransaction.create!(amount: 20.euros)
+    FinancialTransaction.create!(amount: 20.dollars)
     FinancialTransaction.create!(amount: 30.dollars)
 
-    results = FinancialTransaction.where_amount(amount: 10..20)
+    results = FinancialTransaction.where_amount(amount: (10.dollars)..(20.dollars))
 
     assert_equal 2, results.count
   end
@@ -99,7 +101,7 @@ class WhereAmountTest < ActiveSupport::TestCase
     FinancialTransaction.create!(amount: 20.euros)
     FinancialTransaction.create!(amount: 30.dollars)
 
-    results = FinancialTransaction.where_amount(amount: [10, 30])
+    results = FinancialTransaction.where_amount(amount: [10.dollars, 30.dollars])
 
     assert_equal 2, results.count
   end

@@ -56,7 +56,7 @@ module MoneyAttribute
     # Normalizes a query value to the column's storage format.
     def normalize_query_value(value)
       return value unless integer_amount?
-      return value * 100 if value.is_a?(Numeric) && !value.is_a?(Mint::Money)
+      return value.subunits if value.is_a?(Mint::Money)
 
       value
     end

@@ -16,7 +16,7 @@ end
 
 desc 'Migrate test database'
 task :test_db_migrate do # rubocop:disable Rails/RakeEnvironment
-  sh({ 'RAILS_ENV' => 'test' }, 'bin/rails', 'db:migrate', chdir: 'test/dummy')
+  sh({ 'RAILS_ENV' => 'test' }, 'bin/rails', 'db:migrate', chdir: 'test/dummy', %i[out err] => File::NULL)
 end
 
 desc 'Run tests (migrates test DB first)'

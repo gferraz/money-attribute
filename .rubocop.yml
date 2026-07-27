@@ -38,6 +38,9 @@ Style/Documentation:
 Style/FrozenStringLiteralComment:
   EnforcedStyle: always
 
+Rails/Delegate:
+  Enabled: false
+
 Rails/SkipsModelValidations:
   Exclude:
     - "test/**/*"

@@ -44,17 +44,41 @@ module MoneyAttribute
       end
 
       # Plucks money-aware amounts from the current relation.
+      #
+      #   Offer.pluck_amount(:price)
+      #   # => [Mint::Money(10.0, 'EUR'), Mint::Money(20.0, 'USD')]
+      #
+      # @param attrs [Array<Symbol>] one or more registered money attribute names
+      # @return [Array<Mint::Money>] for a single attribute
+      # @return [Array<Array>] for multiple attributes, one row array per attribute
+      # @raise [ArgumentError] if any attribute is not a registered money attribute
       def pluck_amount(*attrs)
         all.pluck_amount(*attrs)
       end
 
-      # Picks money-aware amounts from the current relation.
+      # Picks a single money-aware value from the current relation.
+      #
+      #   Offer.pick_amount(:price)
+      #   # => Mint::Money(10.0, 'EUR')
+      #
+      # @param attrs [Array<Symbol>] one or more registered money attribute names
+      # @return [Mint::Money, Array, nil] Money for a single attribute, row array for multiple, nil if empty
+      # @raise [ArgumentError] if any attribute is not a registered money attribute
       def pick_amount(*attrs)
         all.pick_amount(*attrs)
       end
 
-      # Sums money-aware amounts from the current relation.
-      delegate :sum_amount, to: :all
+      # Sums money-aware amounts, grouping by currency for composite attributes.
+      #
+      #   Offer.sum_amount(:price)
+      #   # => [Mint::Money(30.0, 'EUR'), Mint::Money(50.0, 'USD')]
+      #
+      # @param attr [Symbol] a registered money attribute name
+      # @return [Array<Mint::Money>] one Money per currency (or one for single-column attributes)
+      # @raise [ArgumentError] if the attribute is not a registered money attribute
+      def sum_amount(attr)
+        all.sum_amount(attr)
+      end
     end
   end
 

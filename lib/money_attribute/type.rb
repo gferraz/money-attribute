@@ -5,18 +5,18 @@ module MoneyAttribute
   class Type < ActiveRecord::Type::Value
     # Initializes the type with the backing column type.
     def initialize(column_type: ActiveRecord::Type::Decimal.new)
-      @integer_column = column_type.is_a?(ActiveRecord::Type::Integer)
+      if column_type.is_a?(ActiveRecord::Type::Integer)
+        @deserializer = :from_subunits
+        @serializer = :subunits
+      else
+        @deserializer = :from
+        @serializer = :to_d
+      end
       super()
     end
 
     # Casts string input into a `Money` value.
-    def cast(value)
-      if value.is_a?(String)
-        Mint::Money.parse(value, MoneyAttribute.default_currency)
-      else
-        super
-      end
-    end
+    def cast(value) = value.is_a?(String) ? Money.parse(value, MoneyAttribute.default_currency) : super
 
     # Validates that the value is compatible with the fixed currency type.
     def assert_valid_value(value)
@@ -34,24 +34,10 @@ module MoneyAttribute
     end
 
     # Deserializes the database value into a `Money` value.
-    def deserialize(value)
-      return nil unless value
-
-      currency = MoneyAttribute.default_currency
-
-      if @integer_column
-        Mint::Money.from_subunits(value, currency)
-      else
-        Mint::Money.from(value, currency)
-      end
-    end
+    def deserialize(value) = value && Money.public_send(@deserializer, value, MoneyAttribute.default_currency)
 
     # Serializes a `Money` value into the column representation.
-    def serialize(value)
-      return nil unless value
-
-      @integer_column ? value.subunits : value.to_d
-    end
+    def serialize(value) = value&.public_send(@serializer)
   end
 end
 

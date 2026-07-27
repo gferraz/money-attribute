@@ -33,6 +33,12 @@ module MoneyAttribute
       def money_attribute_specs
         REGISTRY.fetch_or_store(self) { {} }
       end
+
+      # Returns true when the named column stores integer subunits (integer or bigint).
+      def integer_column?(column_name)
+        col = columns.find { |c| c.name == column_name }
+        %i[integer bigint].include?(col&.type)
+      end
     end
   end
 end

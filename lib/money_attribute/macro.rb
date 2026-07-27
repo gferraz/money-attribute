@@ -39,7 +39,7 @@ module MoneyAttribute
           kind: :composite,
           amount_col: mapping[:amount],
           currency_col: mapping[:currency],
-          amount_type: amount_column_type(mapping[:amount])
+          amount_type: integer_column?(mapping[:amount]) ? :integer : :decimal
         )
       end
 
@@ -52,12 +52,6 @@ module MoneyAttribute
               "Could not find columns for :#{name} money attribute. " \
               "Expected: #{mapping.values.join(', ')}, " \
               "Found: #{attribute_names.join(', ')}"
-      end
-
-      # Returns the storage type for the amount column.
-      def amount_column_type(column_name)
-        column = columns.find { |c| c.name == column_name }
-        %i[integer bigint].include?(column&.type) ? :integer : :decimal
       end
     end
 

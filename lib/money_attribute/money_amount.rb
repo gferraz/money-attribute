@@ -35,12 +35,6 @@ module MoneyAttribute
       def detect_column_type(name)
         integer_column?(name) ? ActiveRecord::Type::Integer.new : ActiveRecord::Type::Decimal.new
       end
-
-      # Returns true when the column stores integer subunits.
-      def integer_column?(column_name)
-        col = columns.find { |c| c.name == column_name }
-        %i[integer bigint].include?(col&.type)
-      end
     end
   end
 end

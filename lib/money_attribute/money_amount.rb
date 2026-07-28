@@ -16,9 +16,15 @@ module MoneyAttribute
                 "Add a column named '#{name}' or use a different accessor name."
         end
 
-        amount_type = %i[integer bigint].include?(column.type) ? :integer : :decimal
+        if %i[integer bigint].include?(column.type)
+          amount_type = :integer
+          type_class = IntegerAmountType
+        else
+          amount_type = :decimal
+          type_class = DecimalAmountType
+        end
 
-        attribute(name, MoneyAttribute::Type.new(column_type: amount_type))
+        attribute(name, type_class.new)
         normalizes(name, with: Converter.default)
         register_money_attribute_spec(name, kind: :single, amount_col: name, amount_type: amount_type)
       end

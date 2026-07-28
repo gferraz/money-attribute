@@ -43,7 +43,6 @@ module MoneyAttribute
           currency_col: mapping[:currency],
           amount_type: %i[integer bigint].include?(column.type) ? :integer : :decimal
         )
-
       end
 
       # Raises when the resolved columns are not present on the model.

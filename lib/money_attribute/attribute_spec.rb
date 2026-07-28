@@ -53,6 +53,7 @@ module MoneyAttribute
     def normalize_query_value(value)
       return value unless integer_amount?
       return value.subunits if value.is_a?(Mint::Money)
+
       value
     end
   end

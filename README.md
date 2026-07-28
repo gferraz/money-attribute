@@ -3,7 +3,7 @@
 [![CI](https://github.com/gferraz/money-attribute/actions/workflows/ci.yml/badge.svg)](https://github.com/gferraz/money-attribute/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/money_attribute.svg)](https://badge.fury.io/rb/money_attribute)
 
-Store and read Active Record attributes as `Mint::Money` objects with no manual serialization.
+Store and read Active Record attributes as `Money` objects with no manual serialization.
 
 `money_attribute` uses two DB columns (amount + currency) for per-row multi-currency data. A simpler `money_amount` variant is also available for fixed-currency models (see [note](#single-column-mode-money_amount-fixed-currency)).
 
@@ -32,8 +32,7 @@ p.price * 2 # => [USD 24.88]
 - [Convenience methods](#convenience-methods)
 - [Form helpers](#form-helpers)
 - [Roadmap](#roadmap)
-- [Development & Contributing](#development)
-- [License](#license)
+- [Development](#development)
 
 ## Quick start
 
@@ -62,13 +61,13 @@ class Product < ApplicationRecord
 end
 ```
 
-That's it. `Product.new(price: 12.dollars).price` is a `Mint::Money`.
+That's it. `Product.new(price: 12.dollars).price` is a `Money`.
 
 ## Why MoneyAttribute?
 
-- **No serialization boilerplate** — declare once, read/write `Mint::Money` everywhere.
+- **No serialization boilerplate** — declare once, read/write `Money` everywhere.
 - **Integer or decimal columns** — auto-detects the column type and adjusts serialization (e.g. integer stores cents, decimal stores unit value).
-- **Normalizes everything** — pass a number, string, or `Mint::Money`; always get a `Mint::Money` back.
+- **Normalizes everything** — pass a number, string, or `Money`; always get a `Money` back.
 - **Currency enforcement** — fixed-currency attributes reject wrong currencies at assignment time.
 - **Built on Rails primitives** — uses `ActiveRecord::Type`, `composed_of`, and `normalizes` under the hood. No monkey-patching of core classes.
 
@@ -93,7 +92,7 @@ For a detailed side-by-side comparison, see [COMPARISON.md](COMPARISON.md).
 
 - Ruby 3.3+
 - Rails 7.1.3.2+
-- [Minting](https://github.com/gferraz/minting) 2.0+
+- [Minting](https://github.com/gferraz/minting) 2.1+
 
 ## Installation
 
@@ -197,7 +196,7 @@ I18n.locale = :'pt-BR'
 Money.from(1234.56, 'USD').to_s  # => "$1.234,56"
 ```
 
-The locale backend reads `number.currency.format` from your I18n translations and maps Rails format syntax (`%n` for amount, `%u` for unit) to `Mint::Money#to_s`. If the translation key is missing (no locale file for that language), it falls back to hardcoded defaults (`.` decimal, `,` thousand, `%<symbol>s%<amount>f` format).
+The locale backend reads `number.currency.format` from your I18n translations and maps Rails format syntax (`%n` for amount, `%u` for unit) to `Money#to_s`. If the translation key is missing (no locale file for that language), it falls back to hardcoded defaults (`.` decimal, `,` thousand, `%<symbol>s%<amount>f` format).
 
 You can configure per-sign formatting by adding `positive`, `negative`, and `zero` keys to your locale:
 
@@ -392,7 +391,7 @@ Offer.create!(price: 50.dollars)
 Offer.where_amount(price: 10..50)           # => both records
 ```
 
-For integer (subunit) columns, pass `Mint::Money` objects directly — subunit conversion is handled automatically:
+For integer (subunit) columns, pass `Money` objects directly — subunit conversion is handled automatically:
 
 ```ruby
 FinancialTransaction.where_amount(amount: [10.dollars, 10.yens])
@@ -456,7 +455,7 @@ SimpleOffer.sum_amount(:price)
 # => [BRL 60.00]  (single-column always returns one Money)
 
 Offer.none.sum_amount(:price)
-# => [Mint::Money(0, 'BRL')]  (empty result returns zero Money)
+# => [BRL 0.00]  (empty result returns zero Money)
 ```
 
 ### Notes
@@ -491,7 +490,7 @@ MoneyAttribute adds `money_field` and `money_amount_field` to Rails form builder
 
 ### Single-column mode — `money_amount` (fixed-currency)
 
-`money_amount` wraps a numeric column as `Mint::Money` using the application's default currency. No per-row currency. A lighter alternative when you don't need multi-currency support.
+`money_amount` wraps a numeric column as `Money` using the application's default currency. No per-row currency. A lighter alternative when you don't need multi-currency support.
 
 The accessor name must match the column name. `money_amount` does not support custom column mapping.
 
@@ -505,9 +504,9 @@ The accessor name must match the column name. `money_amount` does not support cu
 Default column: `decimal(20,4)`. The top-level `type:` shortcut selects the column type:
 
 ```ruby
-t.money_amount :price                       # decimal(20,4)
+t.money_amount :price                               # decimal(20,4)
 t.money_amount :btc_balance, type: :crypto_decimal  # decimal(36,18)
-t.money_amount :qty,        type: :fiat_integer     # bigint
+t.money_amount :qty,         type: :fiat_integer    # bigint
 ```
 
 #### Naming
@@ -564,8 +563,4 @@ The dummy Rails app under `test/dummy` exercises the engine in a full Rails envi
 
 ## Contributing
 
-Bug reports and pull requests welcome at [gferraz/money-attribute](https://github.com/gferraz/money-attribute).
-
-## License
-
-[MIT](MIT-LICENSE)
+Bug reports welcome at [gferraz/money-attribute](https://github.com/gferraz/money-attribute).

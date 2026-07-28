@@ -13,9 +13,16 @@ module MoneyAttribute
     def configure = yield config
 
     # Returns the current request or default currency as a resolved currency.
+    # Memoized per-thread — within a request, Current.currency is stable.
     def default_currency
-      currency = MoneyAttribute::Current.currency.presence || config.default_currency
-      Money::Currency.resolve!(currency)
+      code = MoneyAttribute::Current.currency.presence || config.default_currency
+
+      last_code, last_currency = Thread.current[:money_attribute_default_currency]
+      return last_currency if last_code == code
+
+      currency = Money::Currency.resolve!(code)
+      Thread.current[:money_attribute_default_currency] = [code, currency]
+      currency
     end
   end
 

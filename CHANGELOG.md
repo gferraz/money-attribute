@@ -2,8 +2,33 @@
 
 ## [1.2.0] (Unreleased)
 
-### Documentation
-- **Comparison updated** — Corrected "Parse error control" row: Minting returns nil on invalid strings, `ArgumentError` only for type/currency violations.
+### New features
+- **Query helpers** — `where_amount`, `where_currency`, `order_by_amount`, `pluck_amount`, `pick_amount`, and `sum_amount` added to `ActiveRecord::Base` and `ActiveRecord::Relation`. Composite attributes decompose to backing columns; single-column attributes delegate to native AR. All helpers use keyword hash syntax.
+- **Single-column integer queries** — `where_amount`, `order_by_amount`, `pluck_amount`, `pick_amount`, and `sum_amount` work correctly with `money_amount` backed by `bigint` columns (subunit storage).
+
+### Improvements
+- **Type split** — `MoneyAttribute::Type` replaced with `IntegerAmountType` and `DecimalAmountType`. Eliminates branching and `public_send` dynamic dispatch in serialize/deserialize paths.
+- **Default currency memoized** — `MoneyAttribute.default_currency` caches the last resolved currency in a thread-local variable. Avoids redundant `Currency.resolve!` calls within a request.
+- **Lock-free registry reads** — `money_attribute_spec` uses `Concurrent::Map#[]` (lock-free read) instead of `fetch_or_store`. `fetch_or_store` stays on the write path (class-load time only).
+- **`integer_column?` deduplicated** — Extracted to `AttributeSpecRegistry`, shared between `MoneyAmount` and `Macro`.
+- **`build_money` deduplicated** — Delegates to `constructor.call(amount, currency)` instead of duplicating currency resolution logic.
+- **`columns` memoized** — `AttributeSpec#columns` uses `@columns ||= (...).freeze` to avoid per-call array allocation.
+- **Query YARD docs** — `pluck_amount`, `pick_amount`, and `sum_amount` documented with `@param`, `@return`, and `@raise` tags.
+- **`Rails/Delegate` disabled** — Moved from inline `rubocop:disable` to `.rubocop.yml` config.
+- **SimpleCov** — Added to test suite; coverage ~94%.
+- **Documentation** — Added `doc/MONEY_AMOUNT.md` and `doc/QUERY_HELPERS.md`.
+
+### Bug fixes
+- **`where_amount` crash on integer columns** — Fixed by using `arel_table[col]` to bypass `composed_of` decomposition. Raw arel column nodes pass through AR's native Type serialization.
+- **Exclusive range handling** — `AmountCondition` uses `gteq`/`lt` instead of `between` for exclusive end ranges.
+- **`sum_amount` empty composite** — Returns `[Money(0, default_currency)]` instead of `[0]`.
+- **`where_amount` double-conversion** — `AmountCondition#normalize_amount_value` only pre-normalizes for composite attributes; single-column attributes pass Money objects through directly.
+- **Cursor pattern unified** — Shared `extract_pick_value` in `QueryHelpers`, used by both `pluck.rb` and `pick.rb`.
+
+### Tests
+- **15 test files**, **265 tests**, **556 assertions**, 0 failures.
+- Added `composite_integer_query_test.rb`, `single_integer_query_test.rb`, `variant_input_type_test.rb`.
+- Migration output suppressed during tests via `MuteMigrations` module.
 
 ## [1.1.1] (2026-07-24)
 

@@ -5,7 +5,7 @@
 
 Store and read Active Record attributes as `Mint::Money` objects with no manual serialization.
 
-`money_attribute` uses two DB columns (amount + currency) for per-row multi-currency data. A simpler `money_amount` variant is also available for fixed-currency models (see [note](#single-column-mode--money_amount-fixed-currency)).
+`money_attribute` uses two DB columns (amount + currency) for per-row multi-currency data. A simpler `money_amount` variant is also available for fixed-currency models (see [note](#single-column-mode-money_amount-fixed-currency)).
 
 ```ruby
 class Product < ApplicationRecord
@@ -313,7 +313,7 @@ end
 | 3 | `name == 'amount'` AND `currency` column exists | `amount` + `currency` |
 | 4 | None of the above | `<name>_amount` + `<name>_currency` (convention) |
 
-Step 4 raises `ArgumentError` if the convention columns don't exist. For single-column fixed-currency attributes, see [`money_amount`](#single-column-mode--money_amount-fixed-currency).
+Step 4 raises `ArgumentError` if the convention columns don't exist. For single-column fixed-currency attributes, see [`money_amount`](#single-column-mode-money_amount-fixed-currency).
 
 **Example**
 

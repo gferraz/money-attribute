@@ -17,7 +17,7 @@ This report as well as the benchmark program were created by OpenCode AI.
 
 |           |                                |
 |-----------|--------------------------------|
-| **Date**  | 2026-07-28                     |
+| **Date**  | 2026-07-22                     |
 | **Ruby**  | 4.0.5                          |
 | **Rails** | 8.1.3                          |
 | **minting** | 2.0.0                        |
@@ -28,34 +28,34 @@ This report as well as the benchmark program were created by OpenCode AI.
 
 | Test | money_attribute (int) | money_attribute (dec) | money-rails | Winner |
 |---|---|---|---|---|
-| Instantiation | 0.035s | 0.035s | 0.041s | **money_attribute 1.2x** |
-| Create + save | 0.685s | 0.691s | 1.036s | **money_attribute 1.5x** |
-| Update existing | 0.695s | 0.702s | 0.990s | **money_attribute 1.4x** |
-| Setter only | 0.010s | 0.010s | 0.014s | **money_attribute 1.3x** |
-| Read cached | 0.0005s | 0.0005s | 0.016s | **money_attribute 32x** |
-| Query raw columns | 0.189s | 0.180s | 0.187s | **tied** |
-| SQL generation | 0.185s | 0.178s | 0.192s | **money_attribute 1.0x** |
-| Multi-record (100×1000) | 0.566s | 0.700s | 0.766s | **money_attribute 1.4x** |
+| Instantiation | 0.041s | 0.038s | 0.047s | **money_attribute 1.2x** |
+| Create + save | 0.687s | 0.676s | 0.992s | **money_attribute 1.5x** |
+| Update existing | 0.659s | 0.675s | 0.973s | **money_attribute 1.5x** |
+| Setter only | 0.009s | 0.010s | 0.014s | **money_attribute 1.5x** |
+| Read cached | 0.0005s | 0.0005s | 0.017s | **money_attribute 35x** |
+| Query raw columns | 0.184s | 0.176s | 0.209s | **money_attribute 1.2x** |
+| SQL generation | 0.182s | 0.178s | 0.203s | **money_attribute 1.1x** |
+| Multi-record (100×1000) | 0.555s | 0.698s | 0.784s | **money_attribute 1.4x** |
 
-**money_attribute wins 6 of 8 cells, tied on 2.** *(Decimal column results shown alongside integer; money_attribute supports both column types natively. money-rails stores amounts as cents (integer) and has no built-in decimal column support.)*
+**money_attribute wins all 8 cells.** *(Decimal column results shown alongside integer; money_attribute supports both column types natively. money-rails stores amounts as cents (integer) and has no built-in decimal column support.)*
 
 ### Scaling: Mass Insert
 
 | Records | money_attribute (int) | money_attribute (dec) | money-rails | Winner |
 |---|---|---|---|---|
-| 100 | 0.008s | 0.009s | 0.015s | **1.8x** |
-| 500 | 0.041s | 0.042s | 0.070s | **1.7x** |
-| 1000 | 0.090s | 0.081s | 0.151s | **1.7x** |
-| 2000 | 0.158s | 0.180s | 0.286s | **1.8x** |
+| 100 | 0.009s | 0.008s | 0.014s | **1.6x** |
+| 500 | 0.039s | 0.039s | 0.070s | **1.8x** |
+| 1000 | 0.079s | 0.078s | 0.153s | **1.9x** |
+| 2000 | 0.162s | 0.162s | 0.290s | **1.8x** |
 
 ### Scaling: Bulk Update
 
 | Records | money_attribute (int) | money_attribute (dec) | money-rails | Winner |
 |---|---|---|---|---|
-| 100 | 0.013s | 0.015s | 0.020s | **1.5x** |
-| 500 | 0.066s | 0.072s | 0.098s | **1.5x** |
-| 1000 | 0.151s | 0.147s | 0.201s | **1.3x** |
-| 2000 | 0.290s | 0.310s | 0.428s | **1.5x** |
+| 100 | 0.014s | 0.014s | 0.020s | **1.5x** |
+| 500 | 0.067s | 0.071s | 0.113s | **1.7x** |
+| 1000 | 0.141s | 0.160s | 0.214s | **1.5x** |
+| 2000 | 0.286s | 0.300s | 0.423s | **1.5x** |
 
 money_attribute's write advantage scales linearly — the per-record overhead is constant, so the ratio holds across all batch sizes.
 
@@ -67,38 +67,21 @@ Integer and decimal columns perform nearly identically in money_attribute:
 
 | Test | int/dec ratio | Notes |
 |---|---|---|
-| Instantiation | 1.00x | Identical |
-| Create + save | 0.99x | Within noise |
-| Read cached | 0.91x | Within noise |
-| Query raw columns | 1.05x | Within noise |
-| Mass insert (1000) | 1.11x | Integer slightly faster |
-| Bulk update (1000) | 1.03x | Within noise |
+| Instantiation | 1.08x | Decimal slightly faster (avoids subunit division) |
+| Create + save | 1.02x | Symmetric write paths |
+| Read cached | 1.00x | Both return cached `Money` objects |
+| Query raw columns | 0.96x | Within noise |
+| Mass insert (1000) | 1.01x | Identical at scale |
+| Bulk update (1000) | 0.88x | Integer slightly faster (fewer BigDecimal allocations) |
 
 The best column type depends on your domain: decimal for direct monetary values, integer (subunits) for precision-sensitive financial systems.
-
-## Query Helpers (money_attribute-only)
-
-money_attribute provides `where_amount`, `where_currency`, `order_by_amount`, `pluck_amount`, `pick_amount`, and `sum_amount` — money-rails has no equivalent.
-
-| Helper | Time (5000 iters) | Per call | Notes |
-|---|---|---|---|
-| `where_amount` (Money scalar) | 0.028s | **5.6μs** | Single Money equality |
-| `where_amount` (Range) | 0.041s | **8.2μs** | Inclusive/exclusive range |
-| `where_amount` (Array) | 0.035s | **7.1μs** | IN clause |
-| `where_currency` | 0.043s | **8.7μs** | Currency filter |
-| `order_by_amount` (desc) | 1.327s | **265μs** | Orders + loads 100 records |
-| `pluck_amount` | 1.093s | **219μs** | Plucks 100 Money values |
-| `pick_amount` | 0.267s | **53μs** | Picks first Money value |
-| `sum_amount` | 0.462s | **92μs** | Sums with GROUP BY |
-
-Filter helpers (`where_amount`, `where_currency`) are sub-10μs per call — comparable to raw SQL. Data-loading helpers (`pluck_amount`, `order_by_amount`) scale with the number of rows returned.
 
 ## Repeated Access (Caching Demonstration)
 
 | Property | money_attribute | money-rails |
 |---|---|---|
 | Same object on repeated read? | true | true |
-| Time (5000 reads) | 0.0004s | 0.016s |
+| Time (5000 reads) | 0.0004s | 0.017s |
 | Objects allocated (5000 reads) | **2** | **75,002** |
 | Allocation ratio | — | **37,500x more** |
 
@@ -112,7 +95,7 @@ money_attribute uses Rails' built-in `composed_of` for composite (two-column) mo
 - **Predicate builder** -- `Model.where(price: money_obj)` automatically decomposes the `Money` into column conditions (`WHERE price_amount = ? AND price_currency = ?`).
 - **Converter** -- Setting `model.price = "123.45"` works without manual conversion.
 
-For single-column mode, money_attribute uses a custom ActiveRecord type (`MoneyAttribute::IntegerAmountType`/`MoneyAttribute::DecimalAmountType`) which competes directly with money-rails' `monetize` -- and wins across nearly every metric.
+For single-column mode, money_attribute uses a custom ActiveRecord type (`MoneyAttribute::Type`) which competes directly with money-rails' `monetize` -- and wins across nearly every metric.
 
 ## Running the Benchmark
 

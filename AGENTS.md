@@ -32,15 +32,15 @@ Key findings (integer column, 5000 iters unless noted):
 
 | Test | money_attribute | money-rails | ratio |
 |---|---|---|---|
-| Instantiation | 0.041s | 0.045s | **0.9×** |
-| Create+save | 0.664s | 1.015s | **0.7×** |
-| Update existing (2 values) | 0.684s | 0.981s | **0.7×** |
-| Setter only | 0.009s | 0.014s | **0.6×** |
-| Read cached | 0.0005s | 0.018s | **38×** |
-| Query raw columns | 0.200s | 0.212s | **0.9×** |
-| SQL generation | 0.189s | 0.243s | **0.8×** |
-| Multi-record (100×1000) | 0.588s | 0.923s | **0.6×** |
-| Repeated access | 0.0005s | 0.017s | **34×** |
+| Instantiation | 0.035s | 0.041s | **0.9×** |
+| Create+save | 0.685s | 1.036s | **0.7×** |
+| Update existing (2 values) | 0.695s | 0.990s | **0.7×** |
+| Setter only | 0.010s | 0.014s | **0.7×** |
+| Read cached | 0.0005s | 0.016s | **32×** |
+| Query raw columns | 0.189s | 0.187s | **1.0×** |
+| SQL generation | 0.185s | 0.192s | **1.0×** |
+| Multi-record (100×1000) | 0.566s | 0.766s | **0.7×** |
+| Repeated access | 0.0004s | 0.016s | **37×** |
 | Allocations (×5000) | 2 | 75,002 | — |
 
 ### Scaling (mass insert and bulk update)
@@ -51,28 +51,28 @@ Ratio stays constant across all batch sizes — overhead is purely per-record, n
 
 | Size | money_attribute int | money_attribute dec | money-rails | ratio |
 |---|---|---|---|---|
-| 100 | 0.008s | 0.009s | 0.014s | **0.6×** |
-| 500 | 0.039s | 0.041s | 0.073s | **0.5×** |
-| 1000 | 0.076s | 0.081s | 0.135s | **0.6×** |
-| 2000 | 0.157s | 0.169s | 0.278s | **0.6×** |
+| 100 | 0.008s | 0.009s | 0.015s | **0.5×** |
+| 500 | 0.041s | 0.042s | 0.070s | **0.6×** |
+| 1000 | 0.090s | 0.081s | 0.151s | **0.6×** |
+| 2000 | 0.158s | 0.180s | 0.286s | **0.6×** |
 
 **Bulk update (Model.update, N records, alternating values):**
 
 | Size | money_attribute int | money_attribute dec | money-rails | ratio |
 |---|---|---|---|---|
-| 100 | 0.013s | 0.014s | 0.021s | **0.6×** |
-| 500 | 0.080s | 0.073s | 0.111s | **0.7×** |
-| 1000 | 0.145s | 0.145s | 0.207s | **0.7×** |
-| 2000 | 0.285s | 0.295s | 0.419s | **0.7×** |
+| 100 | 0.013s | 0.015s | 0.020s | **0.7×** |
+| 500 | 0.066s | 0.072s | 0.098s | **0.7×** |
+| 1000 | 0.151s | 0.147s | 0.201s | **0.8×** |
+| 2000 | 0.290s | 0.310s | 0.428s | **0.7×** |
 
-money_attribute's main advantages: **zero-allocation caching** (34-38× reader speed), **1.7× faster inserts**, **1.4× faster bulk updates**, support for **Money-object queries** via composed_of decomposition (money-rails cannot decompose `Money` in WHERE clauses).
+money_attribute's main advantages: **zero-allocation caching** (32-37× reader speed), **1.7× faster inserts**, **1.4× faster bulk updates**, support for **Money-object queries** via composed_of decomposition (money-rails cannot decompose `Money` in WHERE clauses).
 
 ## Tests
 
 - **Framework:** Minitest via `ActiveSupport::TestCase` (no RSpec), fixtures loaded automatically
 - Dummy Rails app at `test/dummy/` — migrate before running (`rake test` does this); SQLite3 DB at `test/dummy/storage/test.sqlite3`
 - **15** test files in `test/money_attribute/`
-- **198** tests, **585** assertions, all passing
+- **265** tests, **556** assertions, all passing
 - Dummy app initializer sets `default_currency = 'BRL'` — test expectations assume BRL, not USD
 - Config-mutating tests: use `with_money_attribute_config` (in `rails_test.rb:215`), which saves/restores config and re-registers currencies
 - RuboCop enforces `Minitest/MultipleAssertions: max 4` — warns on 5+ assertions; runs in CI

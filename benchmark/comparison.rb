@@ -378,6 +378,54 @@ def benchmark_caching
   puts
 end
 
+def benchmark_query_helpers
+  return unless BENCH_SIDE == 'minting'
+
+  puts '-' * 60
+  puts 'Query helpers (money_attribute-only — money-rails has no equivalent)'
+  puts '-' * 60
+
+  records = Array.new(100) { MintingComposite.create!(price: $money) }
+  dec_records = Array.new(100) { MintingCompositeDecimal.create!(price: $money) }
+
+  Benchmark.bm(40) do |x|
+    x.report('where_amount (Money scalar):') do
+      ITERATIONS.times { MintingComposite.where_amount(price: $money) }
+    end
+
+    x.report('where_amount (Range):') do
+      ITERATIONS.times { MintingComposite.where_amount(price: $money..Mint::Money.from(2000, 'USD')) }
+    end
+
+    x.report('where_amount (Array):') do
+      ITERATIONS.times { MintingComposite.where_amount(price: [$money, Mint::Money.from(999, 'USD')]) }
+    end
+
+    x.report('where_currency:') do
+      ITERATIONS.times { MintingComposite.where_currency(price: 'USD') }
+    end
+
+    x.report('order_by_amount (desc):') do
+      ITERATIONS.times { MintingComposite.order_by_amount(price: :desc).load }
+    end
+
+    x.report('pluck_amount:') do
+      ITERATIONS.times { MintingComposite.pluck_amount(:price) }
+    end
+
+    x.report('pick_amount:') do
+      ITERATIONS.times { MintingComposite.pick_amount(:price) }
+    end
+
+    x.report('sum_amount:') do
+      ITERATIONS.times { MintingComposite.sum_amount(:price) }
+    end
+  end
+
+  MintingComposite.where(id: records.map(&:id)).delete_all
+  MintingCompositeDecimal.where(id: dec_records.map(&:id)).delete_all
+end
+
 def benchmark_scaling
   puts
   puts '─' * 60
@@ -452,6 +500,7 @@ begin
   benchmark_sql_generation
   benchmark_multi_record
   benchmark_arithmetic
+  benchmark_query_helpers
   benchmark_caching
   benchmark_scaling
 rescue StandardError => e

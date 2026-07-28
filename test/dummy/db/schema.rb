@@ -12,13 +12,13 @@
 
 ActiveRecord::Schema[8.1].define(version: 2026_06_19_000003) do
   create_table "financial_transactions", force: :cascade do |t|
-    t.integer "amount"
+    t.bigint "amount"
     t.datetime "created_at", null: false
     t.string "currency", limit: 3
     t.string "currency_code"
     t.datetime "date"
     t.string "description"
-    t.integer "discount"
+    t.bigint "discount"
     t.string "discount_currency", limit: 3
     t.decimal "price_amount"
     t.string "price_currency"

@@ -74,7 +74,7 @@ class RailsTest < ActiveSupport::TestCase
     Mint.locale_backend = lambda {
       { decimal: ',', thousand: '.', format: '%<symbol>s %<amount>f' }
     }
-    money = Mint.money(1234.56, 'USD')
+    money = Money.from(1234.56, 'USD')
 
     assert_equal '$ 1.234,56', money.to_s
   end
@@ -133,9 +133,9 @@ class RailsTest < ActiveSupport::TestCase
       }
     }
 
-    positive = Mint.money(10.00, 'USD')
-    negative = Mint.money(-10.00, 'USD')
-    zero     = Mint.money(0, 'USD')
+    positive = Money.from(10.00, 'USD')
+    negative = Money.from(-10.00, 'USD')
+    zero     = Money.from(0, 'USD')
 
     assert_equal '$10.00', positive.to_s
     assert_equal '($10.00)', negative.to_s
@@ -161,9 +161,9 @@ class RailsTest < ActiveSupport::TestCase
       }
     }
 
-    assert_equal '[$10.00]',   Mint.money(10.00, 'USD').to_s
-    assert_equal '($10.00)',   Mint.money(-10.00, 'USD').to_s
-    assert_equal '[$0.00]',    Mint.money(0, 'USD').to_s
+    assert_equal '[$10.00]',   Money.from(10.00, 'USD').to_s
+    assert_equal '($10.00)',   Money.from(-10.00, 'USD').to_s
+    assert_equal '[$0.00]',    Money.from(0, 'USD').to_s
   end
 
   test 'fresh Config has defaults' do
@@ -203,7 +203,7 @@ class RailsTest < ActiveSupport::TestCase
     with_money_attribute_config(added_currencies: [
                                   { currency: 'CFGC', subunit: 2, symbol: 'C' }
                                 ]) do
-      money = Mint.money(42.50, 'CFGC')
+      money = Money.from(42.50, 'CFGC')
 
       assert_in_delta(42.50, money.amount)
       assert_equal 'CFGC', money.currency.code

@@ -87,7 +87,7 @@ class CurrentTest < ActiveSupport::TestCase
   end
 
   test 'Type uses per-request currency' do
-    type = MoneyAttribute::Type.new(column_type: ActiveRecord::Type::Decimal.new)
+    type = MoneyAttribute::DecimalAmountType.new
     MoneyAttribute::Current.currency = 'CHF'
     money = type.cast('100')
 
@@ -97,7 +97,7 @@ class CurrentTest < ActiveSupport::TestCase
   end
 
   test 'Type uses static currency when provided' do
-    type = MoneyAttribute::Type.new(column_type: ActiveRecord::Type::Decimal.new)
+    type = MoneyAttribute::DecimalAmountType.new
     money = type.cast('100')
 
     assert_equal MoneyAttribute.default_currency, money.currency

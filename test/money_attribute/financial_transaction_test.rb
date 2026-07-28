@@ -130,7 +130,7 @@ class FinancialTransactionTest < ActiveSupport::TestCase
   end
 
   test 'tax uses bigint column storing fractional (cents)' do
-    transaction = FinancialTransaction.create!(tax: 12.34.to_money('BRL'))
+    transaction = FinancialTransaction.create!(tax: 12.34.reais)
 
     assert_equal 1234, FinancialTransaction.connection.select_all(
       'SELECT tax FROM financial_transactions WHERE id = ?', 'SQL', [transaction.id]

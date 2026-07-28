@@ -7,6 +7,7 @@ module MoneyAttribute
   # controller (or a before_action) to override the configured default for that request.
   # Automatically reset after each request by MoneyAttribute::Middleware.
   class Current < ::ActiveSupport::CurrentAttributes
+    # @return [String, nil] per-request ISO 4217 currency code override.
     attribute :currency
   end
 end

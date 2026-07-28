@@ -18,7 +18,7 @@ class CompositeMoneyAttributeTest < ActiveSupport::TestCase
   test 'aggregated money attribute parses any amount to the default currency' do
     offer = Offer.new(price: '12')
 
-    assert_equal Mint.money(12, MoneyAttribute.default_currency), offer.price
+    assert_equal Money.from(12, MoneyAttribute.default_currency), offer.price
     assert_equal 12, offer.price_amount
     assert_equal MoneyAttribute.default_currency.code, offer.price_currency
   end

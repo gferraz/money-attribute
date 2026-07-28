@@ -61,6 +61,16 @@ class MoneyAttributeTest < ActiveSupport::TestCase
     assert_nil converter.call(nil)
   end
 
+  test 'default converter is reused' do
+    assert_same MoneyAttribute::Converter.default, MoneyAttribute::Converter.default
+  end
+
+  test 'composite constructor is reused for the same amount shape' do
+    spec = FinancialTransaction.money_attribute_spec(:amount)
+
+    assert_same spec.constructor, spec.constructor
+  end
+
   test 'Numeric#to_money without currency uses default' do
     default = MoneyAttribute.default_currency
     money = 42.to_money

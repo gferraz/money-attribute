@@ -6,30 +6,27 @@ module MoneyAttribute
     extend ActiveSupport::Concern
 
     class_methods do
+      # Declares a fixed-currency money attribute backed by a single column.
       def money_amount(name)
-        name = name.to_s
+        column = column_for_attribute(name)
 
-        assert_column_exists!(name)
+        unless column
+          raise ArgumentError,
+                "Column '#{name}' does not exist on this table. " \
+                "Add a column named '#{name}' or use a different accessor name."
+        end
 
-        column_type = detect_column_type(name)
+        if %i[integer bigint].include?(column.type)
+          amount_type = :integer
+          type_class = IntegerAmountType
+        else
+          amount_type = :decimal
+          type_class = DecimalAmountType
+        end
 
-        attribute(name.to_sym, MoneyAttribute::Type.new(column_type:))
-        normalizes(name.to_sym, with: Converter.new)
-      end
-
-      private
-
-      def assert_column_exists!(name)
-        return if attribute_names.include?(name)
-
-        raise ArgumentError,
-              "Column '#{name}' does not exist on this table. " \
-              "Add a column named '#{name}' or use a different accessor name."
-      end
-
-      def detect_column_type(name)
-        col = columns.find { |c| c.name == name }
-        %i[integer bigint].include?(col&.type) ? ActiveRecord::Type::Integer.new : ActiveRecord::Type::Decimal.new
+        attribute(name, type_class.new)
+        normalizes(name, with: Converter.default)
+        register_money_attribute_spec(name, kind: :single, amount_col: name, amount_type: amount_type)
       end
     end
   end

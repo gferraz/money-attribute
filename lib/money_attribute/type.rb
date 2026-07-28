@@ -1,21 +1,19 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  # Type
-  class Type < ActiveRecord::Type::Value
-    def initialize(column_type: ActiveRecord::Type::Decimal.new)
-      @integer_column = column_type.is_a?(ActiveRecord::Type::Integer)
-      super()
-    end
+  # Base type for money amount attributes. Handles casting and validation.
+  class AmountType < ActiveRecord::Type::Value
+    # Casts string input into a +Mint::Money+ value.
+    #
+    # @param value [String, Numeric, Mint::Money, nil] the input value
+    # @return [Mint::Money, Numeric, nil] a Money value for strings, otherwise delegates to super
+    def cast(value) = value.is_a?(String) ? Money.parse(value, MoneyAttribute.default_currency) : super
 
-    def cast(value)
-      if value.is_a?(String)
-        Mint::Money.parse(value, MoneyAttribute.default_currency)
-      else
-        super
-      end
-    end
-
+    # Validates that the value is compatible with the fixed currency type.
+    #
+    # @param value [Object] the value to validate
+    # @return [void]
+    # @raise [ArgumentError] when the value has a mismatched currency or is an unsupported type
     def assert_valid_value(value)
       case value
       when NilClass, Numeric, String then return
@@ -29,24 +27,36 @@ module MoneyAttribute
       end
       raise ArgumentError, message
     end
+  end
 
-    def deserialize(value)
-      return nil unless value
+  # Type for integer columns storing subunits (e.g. cents).
+  class IntegerAmountType < AmountType
+    # Deserializes a subunit integer into a +Mint::Money+ value.
+    #
+    # @param value [Integer, nil] the raw database value
+    # @return [Mint::Money, nil]
+    def deserialize(value) = value && Money.from_subunits(value, MoneyAttribute.default_currency)
 
-      currency = MoneyAttribute.default_currency
+    # Serializes a +Mint::Money+ value into subunits.
+    #
+    # @param value [Mint::Money, nil]
+    # @return [Integer, nil]
+    def serialize(value) = value&.subunits
+  end
 
-      if @integer_column
-        Mint::Money.from_subunits(value, currency)
-      else
-        Mint::Money.from(value, currency)
-      end
-    end
+  # Type for decimal columns storing unit values (e.g. 12.34).
+  class DecimalAmountType < AmountType
+    # Deserializes a decimal value into a +Mint::Money+ value.
+    #
+    # @param value [BigDecimal, nil] the raw database value
+    # @return [Mint::Money, nil]
+    def deserialize(value) = value && Money.from(value, MoneyAttribute.default_currency)
 
-    def serialize(value)
-      return nil unless value
-
-      @integer_column ? value.subunits : value.to_d
-    end
+    # Serializes a +Mint::Money+ value into a decimal.
+    #
+    # @param value [Mint::Money, nil]
+    # @return [BigDecimal, nil]
+    def serialize(value) = value&.to_d
   end
 end
 

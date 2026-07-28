@@ -24,7 +24,7 @@ module MoneyAttribute
 
       # Raises if the column does not exist on the model.
       def assert_column_exists!(name)
-        return if attribute_names.include?(name)
+        return if attribute_method?(name)
 
         raise ArgumentError,
               "Column '#{name}' does not exist on this table. " \

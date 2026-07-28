@@ -21,11 +21,12 @@ module MoneyAttribute
 
       # Returns the default amount/currency mapping for the attribute name.
       def default_mapping(name)
-        columns = attribute_names
+        name = name.to_s
+        names = column_names
 
-        if columns.include?("#{name}_currency") && columns.include?(name)
+        if names.include?("#{name}_currency") && names.include?(name)
           { amount: name, currency: "#{name}_currency" }
-        elsif name == 'amount' && columns.include?('currency')
+        elsif name == 'amount' && names.include?('currency')
           { amount: name, currency: 'currency' }
         else
           { amount: "#{name}_amount", currency: "#{name}_currency" }
@@ -34,18 +35,20 @@ module MoneyAttribute
 
       # Registers the composite money attribute spec for the model.
       def register_composite_spec(name, mapping)
+        column = column_for_attribute(mapping[:amount])
         register_money_attribute_spec(
           name,
           kind: :composite,
           amount_col: mapping[:amount],
           currency_col: mapping[:currency],
-          amount_type: integer_column?(mapping[:amount]) ? :integer : :decimal
+          amount_type: %i[integer bigint].include?(column.type) ? :integer : :decimal
         )
+
       end
 
       # Raises when the resolved columns are not present on the model.
       def assert_columns_exist!(name, mapping)
-        missing = mapping.values - attribute_names
+        missing = mapping.values - column_names
         return if missing.empty?
 
         raise ArgumentError,
@@ -58,11 +61,10 @@ module MoneyAttribute
     class_methods do
       # Declares a composite money attribute on the model.
       def money_attribute(name, mapping: {})
-        name = name.to_s
         mapping = resolve_mapping(name, mapping)
         spec = register_composite_spec(name, mapping)
 
-        composed_of(name.to_sym, {
+        composed_of(name, {
                       allow_nil: true,
                       class_name: 'Mint::Money',
                       constructor: spec.constructor,

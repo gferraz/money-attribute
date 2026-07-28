@@ -4,8 +4,8 @@ module MoneyAttribute
   # Type
   class Type < ActiveRecord::Type::Value
     # Initializes the type with the backing column type.
-    def initialize(column_type: ActiveRecord::Type::Decimal.new)
-      if column_type.is_a?(ActiveRecord::Type::Integer)
+    def initialize(column_type: :decimal)
+      if column_type == :integer
         @deserializer = :from_subunits
         @serializer = :subunits
       else

@@ -17,6 +17,7 @@
 - **`Rails/Delegate` disabled** — Moved from inline `rubocop:disable` to `.rubocop.yml` config.
 - **SimpleCov** — Added to test suite; coverage ~94%.
 - **Documentation** — Added `doc/MONEY_AMOUNT.md` and `doc/QUERY_HELPERS.md`.
+- **Benchmark report** — money_attribute wins 6/8 core cells (tied on 2), 32-37× faster cached reads, 2 allocations vs 75,002. See [BENCHMARKS-2026-07-28.md](BENCHMARKS-2026-07-28.md).
 
 ### Bug fixes
 - **`where_amount` crash on integer columns** — Fixed by using `arel_table[col]` to bypass `composed_of` decomposition. Raw arel column nodes pass through AR's native Type serialization.

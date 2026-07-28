@@ -70,8 +70,8 @@ class WhereAmountTest < ActiveSupport::TestCase
   test 'where_amount generates correct SQL for composite' do
     sql = Offer.where_amount(price: 10..100).to_sql
 
-    assert_includes sql, '"offers"."price_amount" >= 10.0'
-    assert_includes sql, '"offers"."price_amount" <= 100.0'
+    assert_match(/price_amount["`]?\s*>=\s*10\.0/, sql)
+    assert_match(/price_amount["`]?\s*<=\s*100\.0/, sql)
   end
 
   test 'where_amount with Money on integer (subunit) composite column' do

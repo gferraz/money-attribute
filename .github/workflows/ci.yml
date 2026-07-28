@@ -43,7 +43,6 @@ jobs:
 
     env:
       DATABASE_ADAPTER: postgresql
-      BUNDLE_WITH: postgresql
       PGHOST: localhost
       PGPORT: 5432
       PGUSER: postgres
@@ -76,7 +75,6 @@ jobs:
 
     env:
       DATABASE_ADAPTER: mysql2
-      BUNDLE_WITH: mysql
       MYSQL_HOST: 127.0.0.1
       MYSQL_PORT: 3306
       MYSQL_USER: root

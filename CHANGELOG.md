@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.0] (Unreleased)
+## [1.2.0] (2026-07-28)
 
 ### New features
 - **Query helpers** — `where_amount`, `where_currency`, `order_by_amount`, `pluck_amount`, `pick_amount`, and `sum_amount` added to `ActiveRecord::Base` and `ActiveRecord::Relation`. Composite attributes decompose to backing columns; single-column attributes delegate to native AR. All helpers use keyword hash syntax.

@@ -26,7 +26,7 @@ module MoneyAttribute
 
       # Returns the registered money attribute spec for the given name.
       def money_attribute_spec(name)
-        money_attribute_specs[name.to_s]
+        REGISTRY[self]&.fetch(name.to_s, nil)
       end
 
       # Returns the registry hash for the current model class.

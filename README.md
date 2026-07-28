@@ -313,7 +313,7 @@ end
 | 3 | `name == 'amount'` AND `currency` column exists | `amount` + `currency` |
 | 4 | None of the above | `<name>_amount` + `<name>_currency` (convention) |
 
-Step 4 raises `ArgumentError` if the convention columns don't exist. For single-column fixed-currency attributes, see [`money_amount`](#single-column-mode--money_amount).
+Step 4 raises `ArgumentError` if the convention columns don't exist. For single-column fixed-currency attributes, see [`money_amount`](#single-column-mode--money_amount-fixed-currency).
 
 **Example**
 

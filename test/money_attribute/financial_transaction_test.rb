@@ -132,9 +132,9 @@ class FinancialTransactionTest < ActiveSupport::TestCase
   test 'tax uses bigint column storing fractional (cents)' do
     transaction = FinancialTransaction.create!(tax: 12.34.reais)
 
-    assert_equal 1234, FinancialTransaction.connection.select_all(
-      'SELECT tax FROM financial_transactions WHERE id = ?', 'SQL', [transaction.id]
-    ).first['tax']
+    assert_equal 1234, FinancialTransaction.connection.select_value(
+      "SELECT tax FROM financial_transactions WHERE id = #{FinancialTransaction.connection.quote(transaction.id)}"
+    )
   end
 
   test 'column inference is independent of money_attribute declaration order' do

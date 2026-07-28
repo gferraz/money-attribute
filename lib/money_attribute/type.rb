@@ -35,7 +35,7 @@ module MoneyAttribute
     #
     # @param value [Integer, nil] the raw database value
     # @return [Mint::Money, nil]
-    def deserialize(value) = value && Money.from_subunits(value, MoneyAttribute.default_currency)
+    def deserialize(value) = value && Money.from_subunits(value.to_i, MoneyAttribute.default_currency)
 
     # Serializes a +Mint::Money+ value into subunits.
     #

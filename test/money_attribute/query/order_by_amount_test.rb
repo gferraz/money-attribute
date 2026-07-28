@@ -55,7 +55,8 @@ class OrderByAmountTest < ActiveSupport::TestCase
   test 'order_by_amount generates correct SQL for composite' do
     sql = Offer.order_by_amount(price: :desc).to_sql
 
-    assert_includes sql, 'ORDER BY "offers"."price_currency" ASC, "offers"."price_amount" DESC'
+    assert_match(/price_currency["`]?\s+ASC/, sql)
+    assert_match(/price_amount["`]?\s+DESC/, sql)
   end
 
   test 'order_by_amount raises on non-money attribute' do

@@ -8,6 +8,8 @@ gemspec
 
 gem 'minting'
 
+gem 'mysql2'
+gem 'pg'
 gem 'puma'
 gem 'sqlite3', '>= 2.0'
 

@@ -20,15 +20,18 @@ module MoneyAttribute
       register_custom_currencies!
     end
 
+    # Configures Mint to use the Rails locale currency format.
     def self.setup_locale_backend!
       ::Mint.locale_backend = method(:build_locale_format).to_proc
     end
 
+    # Builds the locale-aware currency formatting hash.
     def self.build_locale_format
       fmt = I18n.t('number.currency.format', default: {})
       { decimal: fmt[:separator], thousand: fmt[:delimiter], format: build_format(fmt) }
     end
 
+    # Builds the final currency format string or hash for Mint.
     def self.build_format(fmt)
       if %i[positive negative zero].any? { |k| fmt.key?(k) }
         build_hash_format(fmt)
@@ -37,6 +40,7 @@ module MoneyAttribute
       end
     end
 
+    # Builds a per-sign currency format hash.
     def self.build_hash_format(fmt)
       {
         positive: translate_format(fmt[:positive] || fmt[:format]),
@@ -45,10 +49,12 @@ module MoneyAttribute
       }
     end
 
+    # Translates Rails currency placeholders into Mint placeholders.
     def self.translate_format(str)
       str.to_s.gsub('%n', '%<amount>f').gsub('%u', '%<symbol>s')
     end
 
+    # Registers custom currencies configured by the application.
     def self.register_custom_currencies!
       Array(MoneyAttribute.config.added_currencies).each do |currency_data|
         if currency_data.respond_to?(:values_at)

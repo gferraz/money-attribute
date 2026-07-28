@@ -16,11 +16,39 @@ end
 
 desc 'Migrate test database'
 task :test_db_migrate do # rubocop:disable Rails/RakeEnvironment
-  sh({ 'RAILS_ENV' => 'test' }, 'bin/rails', 'db:migrate', chdir: 'test/dummy')
+  sh({ 'RAILS_ENV' => 'test' }, 'bin/rails', 'db:migrate', chdir: 'test/dummy', %i[out err] => File::NULL)
 end
 
 desc 'Run tests (migrates test DB first)'
 task test: %i[test_db_migrate test_run]
+
+# --- Adapter-specific tasks ---
+
+%w[postgresql mysql2].each do |adapter|
+  namespace :test do
+    desc "Migrate test database (#{adapter})"
+    task "db_migrate:#{adapter}" do # rubocop:disable Rails/RakeEnvironment
+      sh({ 'RAILS_ENV' => 'test', 'DATABASE_ADAPTER' => adapter },
+         'bin/rails', 'db:migrate', chdir: 'test/dummy', %i[out err] => File::NULL)
+    end
+
+    desc "Run tests against #{adapter}"
+    task adapter do # rubocop:disable Rails/RakeEnvironment
+      Rake::Task[:"test:db_migrate:#{adapter}"].invoke
+      sh({ 'DATABASE_ADAPTER' => adapter }, 'bundle', 'exec', 'rake', 'test_run')
+    end
+  end
+end
+
+desc 'Run tests against all adapters (sqlite3, postgresql, mysql2)'
+task 'test:all' do # rubocop:disable Rails/RakeEnvironment
+  Rake::Task[:test].invoke
+  %w[postgresql mysql2].each do |adapter|
+    Rake::Task[:"test:#{adapter}"].invoke
+  end
+end
+
+# --- Benchmark ---
 
 desc 'Run money_attribute vs money-rails benchmark'
 task bench: :test_db_migrate do

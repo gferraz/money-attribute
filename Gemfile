@@ -8,12 +8,18 @@ gemspec
 
 gem 'minting'
 
+gem 'mysql2'
+gem 'pg'
 gem 'puma'
 gem 'sqlite3', '>= 2.0'
 
 # Start debugger with binding.b [https://github.com/ruby/debug]
 # gem "debug", ">= 1.0.0"
 #
+group :development, :test do
+  gem 'simplecov', require: false
+end
+
 group :development do
   gem 'rubocop'
   gem 'rubocop-minitest'

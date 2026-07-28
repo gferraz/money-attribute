@@ -5,7 +5,7 @@
 
 Store and read Active Record attributes as `Mint::Money` objects with no manual serialization.
 
-`money_attribute` uses two DB columns (amount + currency) for per-row multi-currency data. A simpler `money_amount` variant is also available for fixed-currency models (see [note](#single-column-mode--money_amount-fixed-currency)).
+`money_attribute` uses two DB columns (amount + currency) for per-row multi-currency data. A simpler `money_amount` variant is also available for fixed-currency models (see [note](#single-column-mode-money_amount-fixed-currency)).
 
 ```ruby
 class Product < ApplicationRecord
@@ -188,13 +188,13 @@ MoneyAttribute integrates with Rails I18n to automatically format money amounts 
 
 With `I18n.locale` set to `:en`:
 ```ruby
-Mint.money(1234.56, 'USD').to_s  # => "$1,234.56"
+Money.from(1234.56, 'USD').to_s  # => "$1,234.56"
 ```
 
 Switch to `:'pt-BR'` and the separators change automatically (requires [`rails-i18n`](https://github.com/svenfuchs/rails-i18n) or your own locale file):
 ```ruby
 I18n.locale = :'pt-BR'
-Mint.money(1234.56, 'USD').to_s  # => "$1.234,56"
+Money.from(1234.56, 'USD').to_s  # => "$1.234,56"
 ```
 
 The locale backend reads `number.currency.format` from your I18n translations and maps Rails format syntax (`%n` for amount, `%u` for unit) to `Mint::Money#to_s`. If the translation key is missing (no locale file for that language), it falls back to hardcoded defaults (`.` decimal, `,` thousand, `%<symbol>s%<amount>f` format).
@@ -218,9 +218,9 @@ en:
 When any of `positive`, `negative`, or `zero` is present, a Hash format is built. Missing keys fall back to `format`:
 
 ```ruby
-Mint.money(1234.56, 'USD').to_s  # => "$1,234.56"
-Mint.money(-1234.56, 'USD').to_s # => "($1,234.56)"
-Mint.money(0, 'USD').to_s        # => "--"
+Money.from(1234.56, 'USD').to_s  # => "$1,234.56"
+Money.from(-1234.56, 'USD').to_s # => "($1,234.56)"
+Money.from(0, 'USD').to_s        # => "--"
 ```
 
 If none of those keys are set, `format` is used as a plain string (simple formatting).
@@ -313,7 +313,7 @@ end
 | 3 | `name == 'amount'` AND `currency` column exists | `amount` + `currency` |
 | 4 | None of the above | `<name>_amount` + `<name>_currency` (convention) |
 
-Step 4 raises `ArgumentError` if the convention columns don't exist. For single-column fixed-currency attributes, see [`money_amount`](#single-column-mode--money_amount).
+Step 4 raises `ArgumentError` if the convention columns don't exist. For single-column fixed-currency attributes, see [`money_amount`](#single-column-mode-money_amount-fixed-currency).
 
 **Example**
 
@@ -343,6 +343,8 @@ end
 
 ## Querying
 
+### Rails-native queries
+
 Multi-currency (`money_attribute`) attributes support equality queries via `composed_of`:
 
 ```ruby
@@ -356,7 +358,110 @@ Offer.where(price_amount: 10..20, price_currency: 'EUR')
 Offer.where('price_amount > ? AND price_currency = ?', 10, 'EUR')
 ```
 
-For fixed-currency (`money_amount`) attributes, see the [single-column section](#single-column-mode--money_amount).
+Fixed-currency (`money_amount`) attributes support full Rails-native querying through the custom type — equality, IN, BETWEEN, ordering, and aggregation all work:
+
+```ruby
+Product.where(price: 10.to_money('USD'))                        # equality
+Product.where(price: [10.to_money('USD'), 20.to_money('USD')]) # IN
+Product.where(price: 10.to_money('USD')..20.to_money('USD'))   # BETWEEN
+Product.order(price: :desc)                                     # ordering
+Product.where(price: 10.to_money('USD')).sum(:price)            # aggregation
+```
+
+### Money-aware query helpers
+
+For multi-currency attributes, manually decomposing columns is tedious. The query helpers handle this automatically — just pass Money objects:
+
+#### `where_amount`
+
+Filters by amount value. Accepts a scalar, Range, or Array.
+
+```ruby
+Offer.where_amount(price: 10)               # equality (any currency)
+Offer.where_amount(price: [10, 30])         # IN — matches EUR 10, USD 30
+Offer.where_amount(price: 10..100)          # BETWEEN (inclusive)
+Offer.where_amount(price: 10...100)         # BETWEEN (exclusive upper bound)
+```
+
+Ranges work across currencies — `10..50` matches EUR 10 and USD 50:
+
+```ruby
+Offer.create!(price: 10.euros)
+Offer.create!(price: 50.dollars)
+
+Offer.where_amount(price: 10..50)           # => both records
+```
+
+For integer (subunit) columns, pass `Mint::Money` objects directly — subunit conversion is handled automatically:
+
+```ruby
+FinancialTransaction.where_amount(amount: [10.dollars, 10.yens])
+FinancialTransaction.where_amount(amount: 10.dollars..100.dollars)
+```
+
+For decimal columns, raw numbers work:
+
+```ruby
+SimpleOffer.where_amount(price: 50)
+SimpleOffer.where_amount(price: 10..100)
+```
+
+#### `where_currency`
+
+Filters by currency code. Composite attributes only — raises `ArgumentError` for single-column attributes.
+
+```ruby
+Offer.where_currency(price: 'EUR')
+Offer.where_currency(price: 10.euros.currency)  # also accepts Currency object
+```
+
+#### `order_by_amount`
+
+Orders by amount. Composite attributes sort by currency ASC first, then amount. Single-column attributes sort by amount only.
+
+```ruby
+Offer.order_by_amount(price: :asc)   # EUR 10, EUR 100, USD 50
+Offer.order_by_amount(price: :desc)  # EUR 100, EUR 10, USD 50
+Offer.order_by_amount(price: nil)    # defaults to :asc
+```
+
+#### `pluck_amount`
+
+Returns money-aware amounts. Follows Rails' `pluck` arity — one attribute returns flat values, multiple attributes return row arrays.
+
+```ruby
+Offer.pluck_amount(:price)                  # => [EUR 10.00, USD 20.00]
+Offer.pluck_amount(:amount, :discount)      # => [[USD 100.00, EUR 20.00], ...]
+```
+
+#### `pick_amount`
+
+Returns a single money-aware value. Follows Rails' `pick` arity.
+
+```ruby
+Offer.pick_amount(:price)                   # => EUR 10.00
+Offer.pick_amount(:amount, :discount)       # => [USD 100.00, EUR 20.00]
+Offer.none.pick_amount(:price)              # => nil
+```
+
+#### `sum_amount`
+
+Sums amounts grouped by currency for composite attributes. Accepts a single attribute name only.
+
+```ruby
+Offer.sum_amount(:price)
+# => [EUR 30.00, USD 70.00]  (one Money per currency, sorted by code)
+
+SimpleOffer.sum_amount(:price)
+# => [BRL 60.00]  (single-column always returns one Money)
+
+Offer.none.sum_amount(:price)
+# => [Mint::Money(0, 'BRL')]  (empty result returns zero Money)
+```
+
+### Notes
+
+All query helpers raise `ArgumentError` for non-money attributes. Internally, money attribute metadata is registered per model class. The same attribute name can be used safely in different models, but subclasses do not automatically inherit a parent model's registered money attributes.
 
 ## Convenience methods
 
@@ -368,7 +473,7 @@ MoneyAttribute adds small helpers on `Numeric` and `String`:
 12.euros              # => [EUR 12.00]
 ```
 
-> If you prefer not to extend core classes, use `Mint.money(12, 'USD')` instead.
+> If you prefer not to extend core classes, use `Money.from(12, 'USD')` instead.
 
 ## Form helpers
 
@@ -387,6 +492,8 @@ MoneyAttribute adds `money_field` and `money_amount_field` to Rails form builder
 ### Single-column mode — `money_amount` (fixed-currency)
 
 `money_amount` wraps a numeric column as `Mint::Money` using the application's default currency. No per-row currency. A lighter alternative when you don't need multi-currency support.
+
+The accessor name must match the column name. `money_amount` does not support custom column mapping.
 
 #### Migration helpers
 
@@ -438,15 +545,7 @@ money_amount :price
 
 #### Querying
 
-Fixed-currency attributes support Rails-native querying through the custom type:
-
-```ruby
-Product.where(price: 10.to_money('USD'))                        # equality
-Product.where(price: [10.to_money('USD'), 20.to_money('USD')]) # IN
-Product.where(price: 10.to_money('USD')..20.to_money('USD'))   # BETWEEN
-Product.order(price: :desc)                                     # ordering
-Product.where(price: 10.to_money('USD')).sum(:price)            # aggregation
-```
+Fixed-currency attributes support full Rails-native querying — see [Querying](#querying) for examples.
 
 ## Roadmap
 

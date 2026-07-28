@@ -9,18 +9,18 @@ class SimpleMoneyAttributeTest < ActiveSupport::TestCase
   end
 
   test 'money attribute updates mapped attributes' do
-    offer = SimpleOffer.new(price: 12.to_money('BRL'), discount: 15)
+    offer = SimpleOffer.new(price: 12.reais, discount: 15)
 
-    assert_equal 12.to_money('BRL'), offer.price
-    assert_equal 15.to_money('BRL'), offer.discount
+    assert_equal 12.reais, offer.price
+    assert_equal 15.reais, offer.discount
 
-    assert_raises(ArgumentError) { SimpleOffer.new(price: 12.to_money('BRL'), discount: 15.euros) }
+    assert_raises(ArgumentError) { SimpleOffer.new(price: 12.reais, discount: 15.euros) }
   end
 
   test 'money attribute parses any amount to the default currency' do
     offer = SimpleOffer.new(price: '12')
 
-    assert_equal 12.to_money('BRL'), offer.price
+    assert_equal 12.reais, offer.price
   end
 
   test 'money attribute allows nil values' do
@@ -31,10 +31,10 @@ class SimpleMoneyAttributeTest < ActiveSupport::TestCase
   end
 
   test 'money attribute is saved correctly' do
-    offer = SimpleOffer.new(price: 15.to_money('BRL'), discount: 45.01)
+    offer = SimpleOffer.new(price: 15.reais, discount: 45.01)
     offer.save!
 
-    found = SimpleOffer.where(price: 15.to_money('BRL')).first
+    found = SimpleOffer.where(price: 15.reais).first
 
     assert_equal offer.price, found.price
     assert_equal offer.discount, found.discount
@@ -58,24 +58,24 @@ class SimpleMoneyAttributeTest < ActiveSupport::TestCase
   test 'single-column money attribute normalizes string inputs' do
     offer = SimpleOffer.new(price: '12.50')
 
-    assert_equal 12.50.to_money('BRL'), offer.price
+    assert_equal 12.50.reais, offer.price
   end
 
   test 'single-column money attribute accepts zero' do
-    offer = SimpleOffer.new(price: 0.to_money('BRL'))
+    offer = SimpleOffer.new(price: 0.reais)
 
-    assert_equal 0.to_money('BRL'), offer.price
+    assert_equal 0.reais, offer.price
     offer.save!
 
-    assert_equal 0.to_money('BRL'), offer.reload.price
+    assert_equal 0.reais, offer.reload.price
   end
 
   test 'single-column money attribute accepts negative values' do
-    offer = SimpleOffer.new(price: -5.50.to_money('BRL'))
+    offer = SimpleOffer.new(price: -5.50.reais)
 
-    assert_equal(-5.50.to_money('BRL'), offer.price)
+    assert_equal(-5.50.reais, offer.price)
     offer.save!
 
-    assert_equal(-5.50.to_money('BRL'), offer.reload.price)
+    assert_equal(-5.50.reais, offer.reload.price)
   end
 end

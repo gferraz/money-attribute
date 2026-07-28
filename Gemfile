@@ -11,6 +11,13 @@ gem 'minting'
 gem 'puma'
 gem 'sqlite3', '>= 2.0'
 
+case ENV.fetch('DATABASE_ADAPTER', 'sqlite3')
+when 'postgresql'
+  gem 'pg'
+when 'mysql2'
+  gem 'mysql2'
+end
+
 # Start debugger with binding.b [https://github.com/ruby/debug]
 # gem "debug", ">= 1.0.0"
 #

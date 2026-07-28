@@ -11,8 +11,62 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ruby: ["3.3", "3.4", "4.0"]
+        include:
+          - ruby: "3.3"
+            adapter: sqlite3
+          - ruby: "3.4"
+            adapter: sqlite3
+          - ruby: "4.0"
+            adapter: sqlite3
+          - ruby: "3.4"
+            adapter: postgresql
+            bundle_with: postgresql
+          - ruby: "3.4"
+            adapter: mysql2
+            bundle_with: mysql
       fail-fast: false
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: money_attribute_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        if: ${{ matrix.adapter == 'postgresql' }}
+
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: money_attribute_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        if: ${{ matrix.adapter == 'mysql2' }}
+
+    env:
+      DATABASE_ADAPTER: ${{ matrix.adapter }}
+      BUNDLE_WITH: ${{ matrix.bundle_with || '' }}
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
 
     steps:
       - uses: actions/checkout@v4

@@ -23,6 +23,10 @@ module MoneyAttribute
 
     class_methods do
       # Filters by currency for one or more money attributes.
+      #
+      # @param conditions [Hash{Symbol => String}] attribute name to currency code
+      # @return [ActiveRecord::Relation]
+      # @raise [ArgumentError] if the attribute is not a composite money attribute
       def where_currency(conditions)
         scope = all
         conditions.each { |attr, value| scope = scope.resolve_currency_condition(attr, value) }
@@ -30,6 +34,15 @@ module MoneyAttribute
       end
 
       # Filters by amount for one or more money attributes.
+      #
+      # Accepts +Mint::Money+ objects, numeric values (decimal columns), Ranges, or Arrays.
+      #
+      #   Offer.where_amount(price: 10.dollars..100.dollars)
+      #   Offer.where_amount(total: [10, 20, 30])
+      #
+      # @param conditions [Hash{Symbol => Numeric, Range, Array}] attribute name to filter value
+      # @return [ActiveRecord::Relation]
+      # @raise [ArgumentError] if the attribute is not a registered money attribute
       def where_amount(conditions)
         scope = all
         conditions.each { |attr, value| scope = scope.resolve_amount_condition(attr, value) }
@@ -37,6 +50,12 @@ module MoneyAttribute
       end
 
       # Orders by amount for one or more money attributes.
+      #
+      # Composite attributes sort by currency ASC first, then amount.
+      #
+      # @param conditions [Hash{Symbol => Symbol}] attribute name to +:asc+ or +:desc+
+      # @return [ActiveRecord::Relation]
+      # @raise [ArgumentError] if the attribute is not a registered money attribute
       def order_by_amount(conditions)
         scope = all
         conditions.each { |attr, dir| scope = scope.resolve_amount_order(attr, dir || :asc) }
@@ -83,6 +102,7 @@ module MoneyAttribute
   end
 
   # Internal methods mixed into ActiveRecord::Relation for query building.
+  # Includes helpers for filtering, ordering, plucking, picking, and summing money attributes.
   module QueryMethods
     include QueryHelpers
     include CurrencyCondition

@@ -1,5 +1,15 @@
 # frozen_string_literal: true
 
+# MoneyAttribute provides ActiveRecord integrations for the Minting money gem.
+#
+# Two storage modes:
+#
+# - +money_attribute :price+ — composite (amount + currency columns)
+# - +money_amount :price+    — single column (fixed currency)
+#
+# @see MoneyAttribute::Macro
+# @see MoneyAttribute::MoneyAmount
+
 require 'minting'
 require 'money_attribute/core_ext/numeric'
 require 'money_attribute/core_ext/string'

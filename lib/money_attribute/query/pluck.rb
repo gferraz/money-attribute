@@ -4,6 +4,11 @@ module MoneyAttribute
   # Plucks amount values from money-aware attributes.
   module PluckAmount
     # Plucks money-aware amounts for one or more attributes.
+    #
+    # @param attrs [Array<Symbol>] one or more registered money attribute names
+    # @return [Array<Mint::Money>] for a single attribute
+    # @return [Array<Array>] for multiple attributes, one row array per attribute
+    # @raise [ArgumentError] if any attribute is not a registered money attribute
     def pluck_amount(*attrs)
       raise ArgumentError, 'No attribute specified' if attrs.empty?
 

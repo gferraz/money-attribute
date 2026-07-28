@@ -19,6 +19,10 @@ module MoneyAttribute
   #
   module SumAmount
     # Sums money-aware amounts for a single attribute.
+    #
+    # @param attr [Symbol] a registered money attribute name
+    # @return [Array<Mint::Money>] one Money per currency (or one for single-column attributes)
+    # @raise [ArgumentError] if the attribute is not a registered money attribute
     def sum_amount(attr)
       raise ArgumentError, 'No attribute specified' if attr.nil?
 

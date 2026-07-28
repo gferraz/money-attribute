@@ -1,22 +1,7 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  # Sums amount columns and returns `Array<Mint::Money>`.
-  #
-  # Composite attributes use SQL GROUP BY on the currency column and sort by
-  # currency code for deterministic results:
-  #
-  #   Offer.sum_amount(:price)
-  #   # => [Mint::Money(30.0, 'EUR'), Mint::Money(50.0, 'USD')]
-  #
-  #   Offer.where_currency(price: 'EUR').sum_amount(:price)
-  #   # => [Mint::Money(30.0, 'EUR')]
-  #
-  # Single-column attributes wrap with default currency:
-  #
-  #   SimpleOffer.sum_amount(:price)
-  #   # => [Mint::Money(60.0, 'BRL')]
-  #
+  # :nodoc:
   module SumAmount
     # Sums money-aware amounts for a single attribute.
     #

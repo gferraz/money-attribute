@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  # Plucks amount values from money-aware attributes.
+  # :nodoc:
   module PluckAmount
     # Plucks money-aware amounts for one or more attributes.
     #

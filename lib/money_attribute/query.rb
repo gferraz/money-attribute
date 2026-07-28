@@ -101,8 +101,7 @@ module MoneyAttribute
     end
   end
 
-  # Internal methods mixed into ActiveRecord::Relation for query building.
-  # Includes helpers for filtering, ordering, plucking, picking, and summing money attributes.
+  # :nodoc:
   module QueryMethods
     include QueryHelpers
     include CurrencyCondition

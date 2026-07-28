@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  # Picks a single amount value from a money-aware attribute.
+  # :nodoc:
   module PickAmount
     # Picks money-aware amounts for one or more attributes.
     #

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  # Resolves +where_amount+ conditions to amount column queries.
+  # :nodoc:
   module AmountCondition
     # Builds an amount filter for the registered money attribute.
     #

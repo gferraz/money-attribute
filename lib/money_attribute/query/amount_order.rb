@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  # Resolves +order_by_amount+ to ordered queries (currency ASC, amount direction).
+  # :nodoc:
   module AmountOrder
     # Builds an amount ordering for the registered money attribute.
     #

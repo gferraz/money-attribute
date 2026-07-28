@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  # Shared helpers for money attribute query modules.
+  # :nodoc:
   module QueryHelpers
     # Returns the registered money attribute spec or raises when missing.
     #

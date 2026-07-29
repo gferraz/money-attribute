@@ -43,7 +43,26 @@ Key findings (integer column, 5000 iters unless noted):
 | Repeated access | 0.0004s | 0.016s | **37×** |
 | Allocations (×5000) | 2 | 75,002 | — |
 
-### Scaling (mass insert and bulk update)
+**Query helpers (5000 iters, 100 records):**
+
+| Benchmark | Time |
+|---|---|
+| `where_amount` (hash scalar) | 0.032s |
+| `where_amount` (hash Range) | 0.038s |
+| `where_amount` (hash Array) | 0.037s |
+| `where_amount` (String `<`) | 0.062s |
+| `where_amount` (String AND) | 0.081s |
+| `where_amount` (String NOT) | 0.063s |
+| `where_amount` (String IS NULL) | 0.055s |
+| `where_currency` | 0.044s |
+| `order_by_amount` | 1.435s |
+| `pluck_amount` | 1.082s |
+| `pick_amount` | 0.275s |
+| `sum_amount` | 0.476s |
+
+String-form `where_amount` is ~2× slower than hash form (SQL parsing + attribute substitution overhead), but still fast at 0.06s for 5000 iterations.
+
+**Scaling (mass insert and bulk update)**
 
 Ratio stays constant across all batch sizes — overhead is purely per-record, not per-batch.
 
@@ -71,8 +90,8 @@ money_attribute's main advantages: **zero-allocation caching** (32-37× reader s
 
 - **Framework:** Minitest via `ActiveSupport::TestCase` (no RSpec), fixtures loaded automatically
 - Dummy Rails app at `test/dummy/` — migrate before running (`rake test` does this); SQLite3 DB at `test/dummy/storage/test.sqlite3`
-- **15** test files in `test/money_attribute/`
-- **265** tests, **556** assertions, all passing
+- **20** test files in `test/money_attribute/`
+- **297** tests, **596** assertions, all passing
 - Dummy app initializer sets `default_currency = 'BRL'` — test expectations assume BRL, not USD
 - Config-mutating tests: use `with_money_attribute_config` (in `rails_test.rb:215`), which saves/restores config and re-registers currencies
 - RuboCop enforces `Minitest/MultipleAssertions: max 4` — warns on 5+ assertions; runs in CI
@@ -101,7 +120,7 @@ money_attribute's main advantages: **zero-allocation caching** (32-37× reader s
 - Using `money_attribute` when only a single column exists raises with a hint to use `money_amount`
 - `money_attribute` never uses `type:` top-level option — use `amount: { type: }` instead
 - Custom currency registration: `MoneyAttribute::Railtie.register_custom_currencies!`
-- **Query helpers:** `MoneyAttribute::Query` module, included in `ActiveRecord::Base` (class methods) and `ActiveRecord::Relation` (scope methods). Provides `where_currency`, `where_amount`, `order_by_amount`, `pluck_amount`, `pick_amount`, and `sum_amount`. All use keyword hash syntax. `pluck_amount` and `pick_amount` follow Rails arity: one attribute returns a single-column result, multiple attributes return row arrays. Composite attributes decompose to backing columns; single-column delegates to native AR. `sum_amount` accepts attribute names only (no currency parameter); composite attributes use SQL `GROUP BY` on the currency column, returning `Hash{String => Mint::Money}` when multiple currencies exist, single `Mint::Money` when one. Single-column attributes always return `Mint::Money`. Query logic split across `query/*.rb` sub-modules.
+- **Query helpers:** `MoneyAttribute::Query` module, included in `ActiveRecord::Base` (class methods) and `ActiveRecord::Relation` (scope methods). Provides `where_currency`, `where_amount`, `order_by_amount`, `pluck_amount`, `pick_amount`, and `sum_amount`. `where_amount` accepts a hash (keyword syntax) or a SQL string with `?` placeholders (only the attribute name, `and`, `or`, `not`, `is`, `null` allowed as identifiers). `pluck_amount` and `pick_amount` follow Rails arity: one attribute returns a single-column result, multiple attributes return row arrays. Composite attributes decompose to backing columns; single-column delegates to native AR. `sum_amount` accepts attribute names only (no currency parameter); composite attributes use SQL `GROUP BY` on the currency column, returning `Hash{String => Mint::Money}` when multiple currencies exist, single `Mint::Money` when one. Single-column attributes always return `Mint::Money`. Query logic split across `query/*.rb` sub-modules.
 
 ## Migration helpers
 

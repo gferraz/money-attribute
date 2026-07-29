@@ -11,7 +11,7 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.1].define(version: 2026_06_19_000003) do
-  create_table "financial_transactions", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+  create_table "financial_transactions", force: :cascade do |t|
     t.bigint "amount"
     t.datetime "created_at", null: false
     t.string "currency", limit: 3
@@ -27,7 +27,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_000003) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "offers", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+  create_table "offers", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "date"
     t.decimal "price_amount", precision: 20, scale: 4
@@ -36,7 +36,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_000003) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "simple_offers", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+  create_table "simple_offers", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "date"
     t.decimal "discount", precision: 20, scale: 4
@@ -45,7 +45,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_000003) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "test_composite", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+  create_table "test_composite", force: :cascade do |t|
     t.integer "price_cents"
     t.string "price_currency"
   end

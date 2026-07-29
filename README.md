@@ -303,16 +303,24 @@ end
 
 ## Column resolution
 
-`money_attribute :name` is always composite. It resolves columns in this order:
+`money_attribute :name` is always composite. Columns are resolved in two phases:
 
-| Step | Condition | Columns used |
-|---|---|---|
-| 1 | `mapping:` provided | As specified (missing keys fall back to `<name>_amount` / `<name>_currency`) |
-| 2 | `name_currency` column exists AND `name` column exists | `name` + `name_currency` |
-| 3 | `name == 'amount'` AND `currency` column exists | `amount` + `currency` |
-| 4 | None of the above | `<name>_amount` + `<name>_currency` (convention) |
+**Phase 1 — Default mapping** is determined by which columns exist:
 
-Step 4 raises `ArgumentError` if the convention columns don't exist. For single-column fixed-currency attributes, see [`money_amount`](#single-column-mode-money_amount-fixed-currency).
+| Condition | Default columns |
+|---|---|
+| `name_currency` exists AND `name` exists | `name` + `name_currency` |
+| `name == 'amount'` AND `currency` exists | `amount` + `currency` |
+| Otherwise | `<name>_amount` + `<name>_currency` |
+
+**Phase 2 — Override** via `mapping:` is merged on top of the default. Missing keys inherit from the default mapping:
+
+```ruby
+money_attribute :total, mapping: { amount: :total_amount }
+# currency falls back to default => :total_currency
+```
+
+Raises `ArgumentError` if the resolved columns don't exist. For single-column fixed-currency attributes, see [`money_amount`](#single-column-mode-money_amount-fixed-currency).
 
 **Example**
 

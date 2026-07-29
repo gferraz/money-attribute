@@ -15,16 +15,35 @@ module MoneyAttribute
       spec
     end
 
+    # Extracts money values for all specs from a single result row.
+    #
+    # @param row [Array] the flat row from +pluck+ or +pick+
+    # @param specs [Array<AttributeSpec>] the money attribute specs
+    # @return [Array] the extracted money values
+    def extract_money_row(row, specs)
+      cursor = 0
+
+      specs.map do |spec|
+        value, cursor = extract_attribute_value(row, spec, cursor)
+        value
+      end
+    end
+
+    private
+
     # Extracts a single value from a flat row at the given cursor position.
     #
     # @param row [Array] the flat row from +pluck+ or +pick+
     # @param spec [AttributeSpec] the money attribute spec
     # @param cursor [Integer] current position in the row array
     # @return [Array(Object, Integer)] the extracted value and updated cursor
-    def extract_pick_value(row, spec, cursor)
-      return [row[cursor], cursor + 1] if spec.single?
-
-      [spec.build_money(row[cursor], row[cursor + 1]), cursor + 2]
+    # @api private
+    def extract_attribute_value(row, spec, cursor)
+      if spec.single?
+        [row[cursor], cursor + 1]
+      else
+        [spec.build_money(row[cursor], row[cursor + 1]), cursor + 2]
+      end
     end
   end
 end

@@ -25,19 +25,7 @@ module MoneyAttribute
     def pluck_single_amount(spec)
       return pluck(spec.amount_column) if spec.single?
 
-      pluck(spec.amount_column, spec.currency_column).map do |amount, currency|
-        spec.build_money(amount, currency)
-      end
-    end
-
-    # Rebuilds a result row for multi-attribute plucks.
-    def extract_money_row(row, specs)
-      cursor = 0
-
-      specs.map do |spec|
-        value, cursor = extract_pick_value(row, spec, cursor)
-        value
-      end
+      pluck(spec.amount_column, spec.currency_column).map { |amount, currency| spec.build_money(amount, currency) }
     end
   end
 end

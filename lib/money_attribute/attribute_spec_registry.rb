@@ -14,16 +14,16 @@ module MoneyAttribute
       #
       # @param name [Symbol, String] the attribute name
       # @param kind [Symbol] +:composite+ or +:single+
-      # @param amount_col [Symbol, String] the amount column name
-      # @param currency_col [Symbol, String, nil] the currency column name (composite only)
+      # @param amount_column [Symbol, String] the amount column name
+      # @param currency_column [Symbol, String, nil] the currency column name (composite only)
       # @param amount_type [Symbol, nil] +:integer+ or +:decimal+
       # @return [AttributeSpec]
-      def register_money_attribute_spec(name, kind:, amount_col:, currency_col: nil, amount_type: nil)
+      def register_money_attribute_spec(name, kind:, amount_column:, currency_column: nil, amount_type: nil)
         spec = MoneyAttribute::AttributeSpec.new(
           name: name.to_s,
           kind: kind,
-          amount_col: amount_col.to_s,
-          currency_col: currency_col&.to_s,
+          amount_column: amount_column.to_s,
+          currency_column: currency_column&.to_s,
           amount_type: amount_type
         )
 

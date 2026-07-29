@@ -17,7 +17,7 @@ module MoneyAttribute
       end
 
       code = currency.is_a?(Mint::Currency) ? currency.code : currency.to_s
-      where(spec.currency_col => code)
+      where(spec.currency_column => code)
     end
   end
 end

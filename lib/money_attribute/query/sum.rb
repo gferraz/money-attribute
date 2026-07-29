@@ -23,7 +23,7 @@ module MoneyAttribute
 
     # Sums a composite attribute grouped by currency.
     def resolve_composite_sum(spec)
-      totals = group(spec.currency_col).sum(spec.amount_col)
+      totals = group(spec.currency_column).sum(spec.amount_column)
       return [spec.build_money(0, MoneyAttribute.default_currency)] if totals.empty?
 
       totals.map { |code, amount| spec.build_money(amount, code) }
@@ -32,7 +32,7 @@ module MoneyAttribute
 
     # Sums a fixed-currency single-column attribute.
     def resolve_single_sum(spec)
-      total = sum(spec.amount_col)
+      total = sum(spec.amount_column)
 
       [spec.build_money(total, MoneyAttribute.default_currency)]
     end

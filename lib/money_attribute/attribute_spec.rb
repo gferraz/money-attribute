@@ -21,7 +21,7 @@ module MoneyAttribute
   #
   # Created by +money_attribute+ or +money_amount+ and stored in the class-level registry.
   # Used by query helpers to resolve column names, build Money values, and generate SQL.
-  AttributeSpec = Struct.new(:name, :kind, :amount_col, :currency_col, :amount_type, keyword_init: true) do
+  AttributeSpec = Struct.new(:name, :kind, :amount_column, :currency_column, :amount_type, keyword_init: true) do
     # @return [Boolean] +true+ when the spec describes a two-column (amount + currency) attribute.
     def composite? = kind == :composite
 
@@ -32,7 +32,7 @@ module MoneyAttribute
     #
     # @return [Array<String>] two-element array for composite, one-element for single.
     def columns
-      @columns ||= (composite? ? [amount_col, currency_col] : [amount_col]).freeze
+      @columns ||= (composite? ? [amount_column, currency_column] : [amount_column]).freeze
     end
 
     # @return [Boolean] +true+ when the amount column stores subunits (bigint).
@@ -42,7 +42,7 @@ module MoneyAttribute
     def amount_extractor = integer_amount? ? :subunits : :to_d
 
     # @return [Hash{String => Symbol}] mapping suitable for +composed_of+.
-    def composed_of_mapping = { amount_col => amount_extractor, currency_col => :currency_code }
+    def composed_of_mapping = { amount_column => amount_extractor, currency_column => :currency_code }
 
     # @return [Proc] the constructor lambda used by +composed_of+ to instantiate Money values.
     def constructor

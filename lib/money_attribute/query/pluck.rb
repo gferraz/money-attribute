@@ -23,9 +23,9 @@ module MoneyAttribute
 
     # Plucks a single money-aware attribute and returns money values.
     def pluck_single_amount(spec)
-      return pluck(spec.amount_col) if spec.single?
+      return pluck(spec.amount_column) if spec.single?
 
-      pluck(spec.amount_col, spec.currency_col).map do |amount, currency|
+      pluck(spec.amount_column, spec.currency_column).map do |amount, currency|
         spec.build_money(amount, currency)
       end
     end

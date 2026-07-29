@@ -46,8 +46,8 @@ module MoneyAttribute
         register_money_attribute_spec(
           name,
           kind: :composite,
-          amount_col: mapping[:amount],
-          currency_col: mapping[:currency],
+          amount_column: mapping[:amount],
+          currency_column: mapping[:currency],
           amount_type: %i[integer bigint].include?(amount_column.type) ? :integer : :decimal
         )
       end

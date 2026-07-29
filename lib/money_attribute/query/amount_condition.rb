@@ -11,7 +11,7 @@ module MoneyAttribute
     # @raise [ArgumentError] if the attribute is not a registered money attribute
     def resolve_amount_condition(attr, value)
       spec = money_attribute_spec!(attr)
-      col = arel_table[spec.amount_col]
+      col = arel_table[spec.amount_column]
 
       where(build_amount_predicate(col, spec, value))
     end

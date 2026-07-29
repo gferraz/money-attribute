@@ -30,7 +30,7 @@ module MoneyAttribute
 
         attribute(name, type_class.new)
         normalizes(name, with: Converter.default)
-        register_money_attribute_spec(name, kind: :single, amount_col: name, amount_type: amount_type)
+        register_money_attribute_spec(name, kind: :single, amount_column: name, amount_type: amount_type)
       end
     end
   end

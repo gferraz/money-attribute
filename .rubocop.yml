@@ -19,6 +19,9 @@ AllCops:
 Layout/LineLength:
   Max: 120
 
+Metrics/BlockLength:
+  Max: 30
+
 Metrics/MethodLength:
   Max: 30
 
@@ -28,6 +31,16 @@ Metrics/ClassLength:
 Minitest/MultipleAssertions:
   Max: 4
 
+Rails/Delegate:
+  Enabled: false
+
+Rails/RakeEnvironment:
+  Enabled: false
+
+Rails/SkipsModelValidations:
+  Exclude:
+    - "test/**/*"
+    -
 Style/Documentation:
   Exclude:
     - "lib/generators/money_attribute/initializer_generator.rb"
@@ -37,10 +50,3 @@ Style/Documentation:
 
 Style/FrozenStringLiteralComment:
   EnforcedStyle: always
-
-Rails/Delegate:
-  Enabled: false
-
-Rails/SkipsModelValidations:
-  Exclude:
-    - "test/**/*"

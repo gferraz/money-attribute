@@ -174,4 +174,22 @@ class CompositeMoneyAttributeTest < ActiveSupport::TestCase
     assert_equal 'USD', offer.price.currency_code
     assert_in_delta BigDecimal('99999999999999.9999'), offer.price.amount
   end
+
+  test 'money_attribute raises on non-numeric amount column' do
+    assert_raises(ArgumentError, match: /must be a numeric type/) do
+      Class.new(ApplicationRecord) do
+        self.table_name = 'offers'
+        money_attribute :x, mapping: { amount: :product, currency: :price_currency }
+      end
+    end
+  end
+
+  test 'money_attribute raises on non-string currency column' do
+    assert_raises(ArgumentError, match: /must be a string type/) do
+      Class.new(ApplicationRecord) do
+        self.table_name = 'offers'
+        money_attribute :x, mapping: { amount: :price_amount, currency: :date }
+      end
+    end
+  end
 end

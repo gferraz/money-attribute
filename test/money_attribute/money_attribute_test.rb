@@ -113,4 +113,13 @@ class MoneyAttributeTest < ActiveSupport::TestCase
     assert_equal 'EUR', money.currency.code
     assert_in_delta 12.50, money.amount
   end
+
+  test 'money_amount raises on non-numeric column' do
+    assert_raises(ArgumentError, match: /must be a numeric type/) do
+      Class.new(ApplicationRecord) do
+        self.table_name = 'simple_offers'
+        money_amount :product
+      end
+    end
+  end
 end

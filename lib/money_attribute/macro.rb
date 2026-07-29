@@ -7,6 +7,8 @@ module MoneyAttribute
 
     # :nodoc:
     module CompositeClassMethods
+      include ColumnTypeValidations
+
       # Normalizes the requested mapping by applying conventions and overrides.
       def resolve_mapping(name, mapping_override)
         override = mapping_override.compact
@@ -35,13 +37,18 @@ module MoneyAttribute
 
       # Registers the composite money attribute spec for the model.
       def register_composite_spec(name, mapping)
-        column = column_for_attribute(mapping[:amount])
+        amount_column = column_for_attribute(mapping[:amount])
+        currency_column = column_for_attribute(mapping[:currency])
+
+        assert_valid_amount_column!(name, mapping[:amount], amount_column)
+        assert_valid_currency_column!(name, mapping[:currency], currency_column)
+
         register_money_attribute_spec(
           name,
           kind: :composite,
           amount_col: mapping[:amount],
           currency_col: mapping[:currency],
-          amount_type: %i[integer bigint].include?(column.type) ? :integer : :decimal
+          amount_type: %i[integer bigint].include?(amount_column.type) ? :integer : :decimal
         )
       end
 

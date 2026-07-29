@@ -6,6 +6,8 @@ module MoneyAttribute
     extend ActiveSupport::Concern
 
     class_methods do
+      include ColumnTypeValidations
+
       # Declares a fixed-currency money attribute backed by a single column.
       def money_amount(name)
         column = column_for_attribute(name)
@@ -15,6 +17,8 @@ module MoneyAttribute
                 "Column '#{name}' does not exist on this table. " \
                 "Add a column named '#{name}' or use a different accessor name."
         end
+
+        assert_valid_amount_column!(name, name, column)
 
         if %i[integer bigint].include?(column.type)
           amount_type = :integer

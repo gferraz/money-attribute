@@ -388,17 +388,37 @@ def benchmark_query_helpers
   records = Array.new(100) { MintingComposite.create!(price: $money) }
   dec_records = Array.new(100) { MintingCompositeDecimal.create!(price: $money) }
 
+  money_2000 = Mint::Money.from(2000, CURRENCY_CODE)
+  money_1000 = Mint::Money.from(1000, CURRENCY_CODE)
+  money_9999 = Mint::Money.from(9999, CURRENCY_CODE)
+
   Benchmark.bm(40) do |x|
-    x.report('where_amount (Money scalar):') do
+    x.report('where_amount (hash scalar):') do
       ITERATIONS.times { MintingComposite.where_amount(price: $money) }
     end
 
-    x.report('where_amount (Range):') do
-      ITERATIONS.times { MintingComposite.where_amount(price: $money..Mint::Money.from(2000, 'USD')) }
+    x.report('where_amount (hash Range):') do
+      ITERATIONS.times { MintingComposite.where_amount(price: $money..money_2000) }
     end
 
-    x.report('where_amount (Array):') do
+    x.report('where_amount (hash Array):') do
       ITERATIONS.times { MintingComposite.where_amount(price: [$money, Mint::Money.from(999, 'USD')]) }
+    end
+
+    x.report('where_amount (String <):') do
+      ITERATIONS.times { MintingComposite.where_amount('price < ?', money_2000) }
+    end
+
+    x.report('where_amount (String AND):') do
+      ITERATIONS.times { MintingComposite.where_amount('price >= ? AND price <= ?', money_1000, money_2000) }
+    end
+
+    x.report('where_amount (String NOT):') do
+      ITERATIONS.times { MintingComposite.where_amount('NOT price = ?', money_9999) }
+    end
+
+    x.report('where_amount (String IS NULL):') do
+      ITERATIONS.times { MintingComposite.where_amount('price IS NULL') }
     end
 
     x.report('where_currency:') do
@@ -409,11 +429,11 @@ def benchmark_query_helpers
       ITERATIONS.times { MintingComposite.order_by_amount(price: :desc).load }
     end
 
-    x.report('pluck_amount:') do
+    x.report('pluck_amount single:') do
       ITERATIONS.times { MintingComposite.pluck_amount(:price) }
     end
 
-    x.report('pick_amount:') do
+    x.report('pick_amount single:') do
       ITERATIONS.times { MintingComposite.pick_amount(:price) }
     end
 
@@ -436,7 +456,7 @@ def benchmark_scaling
     puts
     puts 'size     int insert         int update         dec insert         dec update        '
 
-    [100, 500, 1000, 2000].each do |n|
+    [100, 1000, 10_000, 100_000].each do |n|
       records_i = Array.new(n) { MintingComposite.new(price: $money) }
       t_ins_i = Benchmark.measure { MintingComposite.transaction { records_i.each(&:save!) } }
 
@@ -461,7 +481,7 @@ def benchmark_scaling
     puts
     puts 'size     mr insert          mr update         '
 
-    [100, 500, 1000, 2000].each do |n|
+    [100, 1000, 10_000, 100_000].each do |n|
       records = Array.new(n) { MoneyRailsComposite.new(price: $money) }
       t_ins = Benchmark.measure { MoneyRailsComposite.transaction { records.each(&:save!) } }
 

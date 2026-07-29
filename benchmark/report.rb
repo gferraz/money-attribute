@@ -61,6 +61,7 @@ SECTION_HEADERS = {
   /SQL generation/ => :sql_gen,
   /multi-record/ => :multi_record,
   /Arithmetic/ => :arithmetic,
+  /Query helpers/ => :query_helpers,
   /Repeated access|caching/ => :caching,
   /Scaling/ => :scaling
 }.freeze
@@ -242,7 +243,21 @@ report << "| Variant | money_attribute |\n"
 report << "|---|---|\n"
 report << "| integer column | #{fmt(m_arith)} |\n\n"
 
-# 11. Caching
+# 11. Query helpers
+
+qh_m = minting.dig(:bm, :query_helpers) || {}
+
+unless qh_m.empty?
+  report << "## Query helpers (money_attribute only)\n\n"
+  report << "| Benchmark | Time |\n"
+  report << "|---|---|\n"
+  qh_m.each do |label, vals|
+    report << "| #{label} | #{fmt(vals[:real])} |\n"
+  end
+  report << "\n"
+end
+
+# 12. Caching
 m_int_same = minting.dig(:identity, 'money_attribute composite int')
 m_dec_same = minting.dig(:identity, 'money_attribute composite dec')
 mr_same    = rails.dig(:identity, 'money-rails composite int')
@@ -260,7 +275,7 @@ report << "| Same object on repeated read? | #{m_int_same} | #{m_dec_same} | #{m
 report << "| Repeated read ×5000 | #{fmt(m_cache_i)} | #{fmt(m_cache_d)} | #{fmt(mr_cache)} |\n"
 report << "| Objects allocated (×5000 reads) | #{m_alloc_i} | #{m_alloc_d} | #{mr_alloc} |\n\n"
 
-# 12. Scaling
+# 13. Scaling
 mint_ins = minting.dig(:scaling, :insert) || []
 mint_up  = minting.dig(:scaling, :update) || []
 mr_ins   = rails.dig(:scaling, :insert) || []
@@ -302,6 +317,7 @@ report << "- Both sides pass a Money object through the attribute setter\n"
 report << "- Each side runs in a separate process (no gem conflict)\n"
 report << "- Minimal environment (no full Rails app boot)\n"
 
-report_path = File.join(RESULTS_DIR, 'benchmark_report.md')
+report_name = "benchmark-report-#{Data.today}.md"
+report_path = File.join(RESULTS_DIR, report_name)
 File.write(report_path, report)
 puts "Report written to #{report_path}"

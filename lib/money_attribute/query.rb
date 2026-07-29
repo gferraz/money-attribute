@@ -35,18 +35,21 @@ module MoneyAttribute
 
       # Filters by amount for one or more money attributes.
       #
-      # Accepts +Mint::Money+ objects, numeric values (decimal columns), Ranges, or Arrays.
+      # Accepts a hash of conditions or a SQL string with +?+ placeholders.
+      # Hash: +{ attr: value }+, supports +Mint::Money+, +Range+, +Array+.
+      # SQL: only money attribute names, +and+, +or+, +not+, +is+, +null+.
       #
-      #   Offer.where_amount(price: 10.dollars..100.dollars)
-      #   Offer.where_amount(total: [10, 20, 30])
-      #
-      # @param conditions [Hash{Symbol => Numeric, Range, Array}] attribute name to filter value
+      # @param args [Array] a condition hash, or a SQL string with bind values
       # @return [ActiveRecord::Relation]
-      # @raise [ArgumentError] if the attribute is not a registered money attribute
-      def where_amount(conditions)
-        scope = all
-        conditions.each { |attr, value| scope = scope.resolve_amount_condition(attr, value) }
-        scope
+      # @raise [ArgumentError] if an identifier is not a registered money attribute
+      def where_amount(*args)
+        if args.first.is_a?(Hash)
+          scope = all
+          args.first.each { |attr, value| scope = scope.resolve_amount_condition(attr, value) }
+          scope
+        else
+          all.resolve_amount_condition_from_sql(*args)
+        end
       end
 
       # Orders by amount for one or more money attributes.

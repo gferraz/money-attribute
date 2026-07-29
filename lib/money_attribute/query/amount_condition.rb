@@ -3,6 +3,8 @@
 module MoneyAttribute
   # :nodoc:
   module AmountCondition
+    ALLOWED_KEYWORDS = %w[and or not is null].to_set.freeze
+
     # Builds an amount filter for the registered money attribute.
     #
     # @param attr [Symbol] the money attribute name
@@ -14,6 +16,28 @@ module MoneyAttribute
       col = arel_table[spec.amount_column]
 
       where(build_amount_predicate(col, spec, value))
+    end
+
+    # Builds an amount filter using a SQL string with +?+ placeholders.
+    #
+    # Only money attribute names, +and+, +or+, +not+, +is+, and +null+ are
+    # allowed as identifiers.  +Mint::Money+ bind values are decomposed to
+    # raw storage values automatically.
+    #
+    # @param sql [String] SQL fragment using attribute names and +?+ placeholders
+    # @param values [Array] bind values
+    # @return [ActiveRecord::Relation]
+    # @raise [ArgumentError] on unknown identifiers or placeholder mismatch
+    def resolve_amount_condition_from_sql(sql, *values)
+      specs = klass.money_attribute_specs
+      attr_names = specs.keys.to_set.freeze
+
+      validate_sql_identifiers!(sql, attr_names)
+      value_specs = map_placeholders_to_specs(sql, attr_names, specs)
+      decomposed = decompose_values(values, value_specs)
+      substituted = substitute_attribute_names(sql, specs)
+
+      where(substituted, *decomposed)
     end
 
     private
@@ -43,6 +67,76 @@ module MoneyAttribute
       return value unless spec.composite?
 
       spec.normalize_query_value(value)
+    end
+
+    # Validates that every word in the SQL is a registered attribute name or an
+    # allowed keyword.
+    def validate_sql_identifiers!(sql, attr_names)
+      sql.scan(/\b[a-z_]\w*\b/i).each do |word|
+        next if attr_names.include?(word.downcase) || ALLOWED_KEYWORDS.include?(word.downcase)
+
+        raise ArgumentError, "'#{word}' is not a money attribute on #{klass.name}"
+      end
+    end
+
+    # Matches each +?+ placeholder to the nearest preceding money attribute name
+    # and returns the corresponding spec.
+    def map_placeholders_to_specs(sql, attr_names, specs)
+      ref_pattern = /\b(#{attr_names.map { |n| Regexp.escape(n) }.join('|')})\b/i
+
+      placeholder_positions(sql).map { |pos| spec_at_position(sql, pos, ref_pattern, specs) }
+    end
+
+    # Returns character positions of each +?+ in the SQL.
+    def placeholder_positions(sql)
+      positions = []
+      offset = 0
+
+      while (idx = sql.index('?', offset))
+        positions << idx
+        offset = idx + 1
+      end
+
+      positions
+    end
+
+    # Returns the spec for the +?+ at the given position.
+    def spec_at_position(sql, pos, ref_pattern, specs)
+      preceding = sql[0...pos]
+      matched = preceding.scan(ref_pattern).flatten.compact
+
+      raise ArgumentError, "No money attribute found before '?' in: #{sql.inspect}" if matched.empty?
+
+      specs[matched.last.downcase]
+    end
+
+    # Decomposes +Mint::Money+ bind values to raw storage values using their
+    # positional specs.  Unlike +normalize_query_value+ (which relies on the
+    # custom type for single-column attributes), this always decomposes since
+    # raw SQL bind parameters don't resolve custom types.
+    def decompose_values(values, value_specs)
+      if values.size != value_specs.size
+        raise ArgumentError, "Expected #{value_specs.size} bind value(s), got #{values.size}"
+      end
+
+      values.zip(value_specs).map do |val, spec|
+        if val.is_a?(Mint::Money)
+          spec.integer_amount? ? val.subunits : val.to_d
+        else
+          val
+        end
+      end
+    end
+
+    # Replaces attribute names with their backing amount column names in the SQL.
+    def substitute_attribute_names(sql, specs)
+      substituted = sql.dup
+      specs.each_value do |spec|
+        next if spec.name == spec.amount_column
+
+        substituted.gsub!(/\b#{Regexp.escape(spec.name)}\b/i) { spec.amount_column }
+      end
+      substituted
     end
   end
 end

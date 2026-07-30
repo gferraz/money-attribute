@@ -3,10 +3,19 @@
 ## [Unreleased]
 
 ### Improvements
+- **Optimizations** — `composed_of_mapping` memoized with freezing in `AttributeSpec`. `money_attribute_names_set` and `money_attribute_name_pattern` cached via `Concurrent::Map` in `AttributeSpecRegistry`. SQL attribute substitution switched to single-pass gsub with combined regex + lookup hash. Fix: `specs_to_substitute` reject restored (stray `#` bypassed filtering).
+- **Profiling** — `stackprof` added to Gemfile (dev/test). `benchmark/profile.rb` created with 6 modes: `string_query|pluck|read_cached|multi_record|arithmetic|all`. Rake task `bench:profile` added (`MODE=string_query`).
+- **Column type validations** — New `MoneyAttribute::ColumnTypeValidations` module validates amount column type in `money_attribute` and `money_amount` macros, raising on unsupported types.
+- **`currency_col` → `currency_column`** — Renamed across all source files for consistency (attribute_spec, registry, macro, migration helpers, queries).
+- **Query helpers refactored** — `extract_pick_value` extracted to `QueryHelpers`, used by both `pluck.rb` and `pick.rb`. `sum_amount` and `order_by_amount` use `currency_column` consistently.
 - **Benchmark files split by side** — `comparison.rb` extracted into `minting.rb`, `plain.rb`, `money_rails.rb` with shared helpers in `suite.rb`. Each side is self-contained with no `BENCH_SIDE` conditionals. `comparison.rb` kept as thin dispatcher for backward compat.
 - **Format benchmark** — New section comparing `Money.format` vs `number_to_currency` across 7 variants (default, no symbol, comma decimal, no delimiter, wide symbol) with 3 amount sizes. `Money.format` is 5–18× faster.
 - **BENCHMARKS.md** — Added format benchmark results table.
 - **Report** — Format benchmark section rendered in generated markdown report.
+- **RuboCop** — Configuration updated; `test/dummy/` excluded.
+
+### Tests
+- **279 new string query tests** — `where_amount_string_test.rb` covers SQL string syntax with all operators (=, <, >, AND, OR, NOT, IS NULL), bound parameters, Money and scalar values.
 
 ## [1.2.0] (2026-07-28)
 

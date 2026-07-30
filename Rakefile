@@ -79,3 +79,9 @@ desc 'Generate consolidated benchmark report (markdown)'
 task 'bench:report' do
   ruby 'benchmark/report.rb'
 end
+
+desc 'Profile hot paths with stackprof (MODE=string_query|pluck|read_cached|multi_record|arithmetic|all)'
+task 'bench:profile' do
+  mode = ENV['MODE'] || 'all'
+  sh({ 'RAILS_ENV' => 'test' }, 'bundle', 'exec', 'ruby', 'benchmark/profile.rb', mode)
+end

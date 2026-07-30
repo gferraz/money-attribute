@@ -139,7 +139,7 @@ module MoneyAttribute
     end
 
     def specs_to_substitute(specs)
-      specs.values#.reject { |s| s.name == s.amount_column }
+      specs.values.reject { |s| s.name == s.amount_column }
     end
   end
 end

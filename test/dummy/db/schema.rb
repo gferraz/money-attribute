@@ -27,6 +27,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_000003) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "minting_composite", force: :cascade do |t|
+    t.integer "price_amount"
+    t.string "price_currency"
+  end
+
+  create_table "minting_composite_decimal", force: :cascade do |t|
+    t.decimal "price_amount"
+    t.string "price_currency"
+  end
+
   create_table "offers", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "date"

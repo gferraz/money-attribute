@@ -18,6 +18,7 @@ gem 'sqlite3', '>= 2.0'
 #
 group :development, :test do
   gem 'simplecov', require: false
+  gem 'stackprof', require: false
 end
 
 group :development do

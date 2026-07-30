@@ -5,9 +5,8 @@ This file collects practical ways to make `money_attribute` more useful while al
 ## Completed
 
 1. ~~Add richer query helpers for common money use cases.~~ ✅ Implemented.
-   - `where_money(price: value)` — supports `Mint::Money`, `Range`, `Array`, and `nil`.
    - `where_currency(price: 'EUR')` — filter by currency only (composite attributes).
-   - `where_amount(price: 10..100)` — filter by amount only, any currency (raw numbers).
+   - `where_amount(price: 10.euros..100.euros)` — filter by amount only, any currency (raw numbers).
    - `order_by_amount(price: :desc)` — sorts by currency ASC then amount direction.
    - `sum_amount(:price)` — composite attributes: returns `Hash{String => Mint::Money}` when multiple currencies exist, single `Mint::Money` when one. Single-column attributes: always returns `Mint::Money`.
    - All use keyword hash syntax, available as class methods and relation methods.

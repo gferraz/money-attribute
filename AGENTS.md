@@ -11,7 +11,8 @@ bundle exec rake           # run tests only (default task, no migration)
 bundle exec rake test      # migrate test DB + run tests
 bundle exec rake test_run  # run tests only (same as default)
 bundle exec rake test_db_migrate  # migrate test DB only
-bundle exec rake bench     # money_attribute vs money-rails benchmark (money-rails side uses Gemfile.benchmark to avoid gem conflict)
+bundle exec rake bench     # 3-sided benchmark: money_attribute vs plain Rails vs money-rails (money-rails side uses Gemfile.benchmark to avoid gem conflict)
+bundle exec rake bench:report  # generate consolidated markdown report from benchmark output
 bundle exec rubocop        # lint (runs in CI; 0 offenses as of 1.1.0)
 ```
 
@@ -19,48 +20,49 @@ Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.
 
 ## Benchmark
 
-Run via `rake bench` — spawns two processes (one per gem stack) to avoid gem conflicts:
+Run via `rake bench` — spawns three processes (one per gem stack) to avoid gem conflicts:
 
 1. `BENCH_SIDE=minting` — uses money_attribute + minting gems
-2. `BENCH_SIDE=money_rails BUNDLE_GEMFILE=Gemfile.benchmark` — uses money-rails + money gems
+2. `BENCH_SIDE=plain` — plain ActiveRecord (raw columns, no monetization)
+3. `BENCH_SIDE=money_rails BUNDLE_GEMFILE=Gemfile.benchmark` — uses money-rails + money gems
 
-Both sides use the same minimal environment: `require 'rails'`, `require 'active_record'`, direct SQLite connection to `test/dummy/storage/test.sqlite3` (no full Rails app boot). Fair comparison.
+All sides use the same minimal environment: `require 'rails'`, `require 'active_record'`, direct SQLite connection to `test/dummy/storage/test.sqlite3` (no full Rails app boot). Fair comparison.
 
-Query sections use **raw column values** on both sides — money-rails cannot decompose `Money` objects in `find_by`. Section 5 (money_attribute only) separately benchmarks composed_of decomposition of `Mint::Money` objects.
+Query sections use **raw column values** on all sides — money-rails cannot decompose `Money` objects in `find_by`. Section 5 (money_attribute only) separately benchmarks composed_of decomposition of `Mint::Money` objects.
 
 Key findings (integer column, 5000 iters unless noted):
 
-| Test | money_attribute | money-rails | ratio |
-|---|---|---|---|
-| Instantiation | 0.035s | 0.041s | **0.9×** |
-| Create+save | 0.685s | 1.036s | **0.7×** |
-| Update existing (2 values) | 0.695s | 0.990s | **0.7×** |
-| Setter only | 0.010s | 0.014s | **0.7×** |
-| Read cached | 0.0005s | 0.016s | **32×** |
-| Query raw columns | 0.189s | 0.187s | **1.0×** |
-| SQL generation | 0.185s | 0.192s | **1.0×** |
-| Multi-record (100×1000) | 0.566s | 0.766s | **0.7×** |
-| Repeated access | 0.0004s | 0.016s | **37×** |
-| Allocations (×5000) | 2 | 75,002 | — |
+| Test | money_attribute | plain Rails | money-rails | ma / plain |
+|---|---|---|---|---|
+| Instantiation | 0.042s | 0.033s | 0.043s | **1.3×** |
+| Create+save | 0.690s | 0.693s | 1.061s | **1.0×** (write-dominated) |
+| Update existing (2 values) | 0.673s | 0.685s | 0.997s | **1.0×** (write-dominated) |
+| Setter only | 0.010s | 0.002s | 0.016s | **5.3×** (conversion cost) |
+| Read cached | 0.0005s | 0.0008s | 0.016s | **0.6×** (caching wins) |
+| Query raw columns | 0.197s | 0.184s | 0.199s | **1.1×** |
+| SQL generation | 0.190s | 0.183s | 0.197s | **1.0×** |
+| Multi-record (100×1000) | 0.584s | 0.287s | 0.842s | **2.0×** (composed_of overhead on 100K reads) |
+| Repeated access | 0.0004s | 0.0008s | 0.018s | **0.6×** (caching wins) |
+| Allocations (×5000) | 2 | 2 | 75,002 | — |
 
 **Query helpers (5000 iters, 100 records):**
 
-| Benchmark | Time |
-|---|---|
-| `where_amount` (hash scalar) | 0.032s |
-| `where_amount` (hash Range) | 0.038s |
-| `where_amount` (hash Array) | 0.037s |
-| `where_amount` (String `<`) | 0.062s |
-| `where_amount` (String AND) | 0.081s |
-| `where_amount` (String NOT) | 0.063s |
-| `where_amount` (String IS NULL) | 0.055s |
-| `where_currency` | 0.044s |
-| `order_by_amount` | 1.435s |
-| `pluck_amount` | 1.082s |
-| `pick_amount` | 0.275s |
-| `sum_amount` | 0.476s |
+| Benchmark | money_attribute | plain Rails | ma / plain |
+|---|---|---|---|
+| `where_amount` (hash scalar) | 0.027s | 0.074s | **0.4×** |
+| `where_amount` (hash Range) | 0.034s | 0.100s | **0.3×** |
+| `where_amount` (hash Array) | 0.035s | 0.057s | **0.6×** |
+| `where_amount` (String `<`) | 0.060s | 0.017s | **3.6×** |
+| `where_amount` (String AND) | 0.080s | 0.018s | **4.4×** |
+| `where_amount` (String NOT) | 0.063s | 0.018s | **3.5×** |
+| `where_amount` (String IS NULL) | 0.055s | 0.017s | **3.2×** |
+| `where_currency` | 0.042s | 0.040s | **1.1×** |
+| `order_by_amount` (desc) | 1.263s | 1.155s | **1.1×** |
+| `pluck_amount` single | 1.044s | 0.291s | **3.6×** |
+| `pick_amount` single | 0.257s | 0.205s | **1.3×** |
+| `sum_amount` | 0.449s | 0.429s | **1.0×** |
 
-String-form `where_amount` is ~2× slower than hash form (SQL parsing + attribute substitution overhead), but still fast at 0.06s for 5000 iterations.
+money_attribute's hash-form queries are 1.6-3× **faster** than raw `where` (decomposition via composed_of is cheap, and raw hash construction is slower). String-form queries are 3-4× slower due to SQL parsing + attribute substitution. `pluck_amount` is 3.6× slower because it composes Money objects from raw pluck values.
 
 **Scaling (mass insert and bulk update)**
 
@@ -84,7 +86,7 @@ Ratio stays constant across all batch sizes — overhead is purely per-record, n
 | 1000 | 0.151s | 0.147s | 0.201s | **0.8×** |
 | 2000 | 0.290s | 0.310s | 0.428s | **0.7×** |
 
-money_attribute's main advantages: **zero-allocation caching** (32-37× reader speed), **1.7× faster inserts**, **1.4× faster bulk updates**, support for **Money-object queries** via composed_of decomposition (money-rails cannot decompose `Money` in WHERE clauses).
+money_attribute's main advantages: **zero-allocation caching** (0.6× ma/plain ratio — faster than plain Rails), **1.7× faster inserts**, **1.4× faster bulk updates**, support for **Money-object queries** via composed_of decomposition (money-rails cannot decompose `Money` in WHERE clauses).
 
 ## Tests
 

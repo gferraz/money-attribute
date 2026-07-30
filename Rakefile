@@ -50,13 +50,20 @@ end
 
 # --- Benchmark ---
 
-desc 'Run money_attribute vs money-rails benchmark'
+desc 'Run money_attribute vs plain Rails vs money-rails benchmark'
 task bench: :test_db_migrate do
   puts
   puts '=' * 80
   puts 'money_attribute (minting gem)'
   puts '=' * 80
   sh({ 'RAILS_ENV' => 'test', 'BENCH_SIDE' => 'minting' },
+     'bundle', 'exec', 'ruby', 'benchmark/comparison.rb')
+
+  puts
+  puts '=' * 80
+  puts 'plain Rails (raw columns, no monetization)'
+  puts '=' * 80
+  sh({ 'RAILS_ENV' => 'test', 'BENCH_SIDE' => 'plain' },
      'bundle', 'exec', 'ruby', 'benchmark/comparison.rb')
 
   puts

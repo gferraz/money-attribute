@@ -114,6 +114,22 @@ money_attribute uses Rails' built-in `composed_of` for composite (two-column) mo
 
 For single-column mode, money_attribute uses a custom ActiveRecord type (`MoneyAttribute::IntegerAmountType`/`MoneyAttribute::DecimalAmountType`) which competes directly with money-rails' `monetize` -- and wins across nearly every metric.
 
+## Format Benchmark: Money.format vs number_to_currency
+
+Benchmark comparing `Mint::Money#format` against Rails' `number_to_currency` helper with 10 000 iterations per variant.
+
+| Variant | Money.format | number_to_currency | ratio |
+|---|---|---|---|
+| small default | 0.036s | 0.375s | 10.5× faster |
+| large default | 0.050s | 0.398s | 8.0× faster |
+| huge default | 0.061s | 0.398s | 6.5× faster |
+| no symbol | 0.082s | 0.396s | 4.8× faster |
+| comma dec | 0.053s | 0.374s | 7.1× faster |
+| no delim | 0.021s | 0.373s | 18.1× faster |
+| wide symbol | 0.049s | 0.371s | 7.5× faster |
+
+`Money.format` is **5–18× faster** than `number_to_currency` across all variants. The widest gap is the "no delimiter" variant (18.1×) since `Money.format` simply skips thousands grouping, while `number_to_currency` still runs its full formatting pipeline with `delimiter: ''`.
+
 ## Running the Benchmark
 
 ```sh

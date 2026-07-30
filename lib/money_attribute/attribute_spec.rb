@@ -42,7 +42,9 @@ module MoneyAttribute
     def amount_extractor = integer_amount? ? :subunits : :to_d
 
     # @return [Hash{String => Symbol}] mapping suitable for +composed_of+.
-    def composed_of_mapping = { amount_column => amount_extractor, currency_column => :currency_code }
+    def composed_of_mapping
+      @composed_of_mapping ||= { amount_column => amount_extractor, currency_column => :currency_code }.freeze
+    end
 
     # @return [Proc] the constructor lambda used by +composed_of+ to instantiate Money values.
     def constructor

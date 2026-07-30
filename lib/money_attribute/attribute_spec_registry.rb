@@ -8,6 +8,7 @@ module MoneyAttribute
     extend ActiveSupport::Concern
 
     REGISTRY = Concurrent::Map.new
+    PATTERNS = Concurrent::Map.new
 
     class_methods do
       # Registers a money attribute spec for the current model class.
@@ -44,6 +45,23 @@ module MoneyAttribute
       # @return [Hash{String => AttributeSpec}]
       def money_attribute_specs
         REGISTRY.fetch_or_store(self) { {} }
+      end
+
+      # Returns a frozen Set of registered money attribute names.
+      #
+      # @return [Set<String>]
+      def money_attribute_names_set
+        PATTERNS.fetch_or_store(:"#{self}_name_set") { money_attribute_specs.keys.to_set.freeze }
+      end
+
+      # Returns a pre-compiled regex matching any registered money attribute name.
+      #
+      # @return [Regexp]
+      def money_attribute_name_pattern
+        PATTERNS.fetch_or_store(:"#{self}_name_pattern") do
+          names = money_attribute_specs.keys.map { |n| Regexp.escape(n) }
+          /\b(#{names.join('|')})\b/i
+        end
       end
     end
   end

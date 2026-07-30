@@ -30,10 +30,10 @@ module MoneyAttribute
     # @raise [ArgumentError] on unknown identifiers or placeholder mismatch
     def resolve_amount_condition_from_sql(sql, *values)
       specs = klass.money_attribute_specs
-      attr_names = specs.keys.to_set.freeze
+      attr_names = klass.money_attribute_names_set
 
       validate_sql_identifiers!(sql, attr_names)
-      value_specs = map_placeholders_to_specs(sql, attr_names, specs)
+      value_specs = map_placeholders_to_specs(sql, specs)
       decomposed = decompose_values(values, value_specs)
       substituted = substitute_attribute_names(sql, specs)
 
@@ -81,8 +81,8 @@ module MoneyAttribute
 
     # Matches each +?+ placeholder to the nearest preceding money attribute name
     # and returns the corresponding spec.
-    def map_placeholders_to_specs(sql, attr_names, specs)
-      ref_pattern = /\b(#{attr_names.map { |n| Regexp.escape(n) }.join('|')})\b/i
+    def map_placeholders_to_specs(sql, specs)
+      ref_pattern = klass.money_attribute_name_pattern
 
       placeholder_positions(sql).map { |pos| spec_at_position(sql, pos, ref_pattern, specs) }
     end
@@ -130,13 +130,16 @@ module MoneyAttribute
 
     # Replaces attribute names with their backing amount column names in the SQL.
     def substitute_attribute_names(sql, specs)
-      substituted = sql.dup
-      specs.each_value do |spec|
-        next if spec.name == spec.amount_column
+      to_sub = specs_to_substitute(specs)
+      return sql if to_sub.empty?
 
-        substituted.gsub!(/\b#{Regexp.escape(spec.name)}\b/i) { spec.amount_column }
-      end
-      substituted
+      lookup = to_sub.to_h { |s| [s.name.downcase, s.amount_column] }
+      pattern = /\b(#{to_sub.map { |s| Regexp.escape(s.name) }.join('|')})\b/i
+      sql.gsub(pattern) { |match| lookup[match.downcase] }
+    end
+
+    def specs_to_substitute(specs)
+      specs.values#.reject { |s| s.name == s.amount_column }
     end
   end
 end

@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Improvements
+- **Benchmark files split by side** — `comparison.rb` extracted into `minting.rb`, `plain.rb`, `money_rails.rb` with shared helpers in `suite.rb`. Each side is self-contained with no `BENCH_SIDE` conditionals. `comparison.rb` kept as thin dispatcher for backward compat.
+- **Format benchmark** — New section comparing `Money.format` vs `number_to_currency` across 7 variants (default, no symbol, comma decimal, no delimiter, wide symbol) with 3 amount sizes. `Money.format` is 5–18× faster.
+- **BENCHMARKS.md** — Added format benchmark results table.
+- **Report** — Format benchmark section rendered in generated markdown report.
+
 ## [1.2.0] (2026-07-28)
 
 ### New features

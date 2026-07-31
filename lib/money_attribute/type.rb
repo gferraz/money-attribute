@@ -50,7 +50,7 @@ module MoneyAttribute
     #
     # @param value [BigDecimal, nil] the raw database value
     # @return [Mint::Money, nil]
-    def deserialize(value) = value && Money.from(value, MoneyAttribute.default_currency)
+    def deserialize(value) = value&.to_money(MoneyAttribute.default_currency)
 
     # Serializes a +Mint::Money+ value into a decimal.
     #

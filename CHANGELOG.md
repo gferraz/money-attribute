@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.3.0] (2026-07-31)
 
 ### Improvements
 - **Optimizations** — `composed_of_mapping` memoized with freezing in `AttributeSpec`. `money_attribute_names_set` and `money_attribute_name_pattern` cached via `Concurrent::Map` in `AttributeSpecRegistry`. SQL attribute substitution switched to single-pass gsub with combined regex + lookup hash. Fix: `specs_to_substitute` reject restored (stray `#` bypassed filtering).
@@ -8,11 +8,13 @@
 - **Column type validations** — New `MoneyAttribute::ColumnTypeValidations` module validates amount column type in `money_attribute` and `money_amount` macros, raising on unsupported types.
 - **`currency_col` → `currency_column`** — Renamed across all source files for consistency (attribute_spec, registry, macro, migration helpers, queries).
 - **Query helpers refactored** — `extract_pick_value` extracted to `QueryHelpers`, used by both `pluck.rb` and `pick.rb`. `sum_amount` and `order_by_amount` use `currency_column` consistently.
+- **`to_money` used internally** — `DecimalAmountType#deserialize` uses `value&.to_money` instead of `Money.from`.
 - **Benchmark files split by side** — `comparison.rb` extracted into `minting.rb`, `plain.rb`, `money_rails.rb` with shared helpers in `suite.rb`. Each side is self-contained with no `BENCH_SIDE` conditionals. `comparison.rb` kept as thin dispatcher for backward compat.
 - **Format benchmark** — New section comparing `Money.format` vs `number_to_currency` across 7 variants (default, no symbol, comma decimal, no delimiter, wide symbol) with 3 amount sizes. `Money.format` is 5–18× faster.
 - **BENCHMARKS.md** — Added format benchmark results table.
 - **Report** — Format benchmark section rendered in generated markdown report.
 - **RuboCop** — Configuration updated; `test/dummy/` excluded.
+- **API documentation** — Full YARD docs added across the library. Public API documented with `@param`/`@option`/`@return`/`@raise`/`@example` tags; internal methods and modules marked `@api private`. Migration helpers, form helpers, query sub-modules, railtie, converter, macro, and column type validations covered.
 
 ### Tests
 - **279 new string query tests** — `where_amount_string_test.rb` covers SQL string syntax with all operators (=, <, >, AND, OR, NOT, IS NULL), bound parameters, Money and scalar values.

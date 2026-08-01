@@ -1,6 +1,7 @@
 # Changelog
 
-## [1.3.0] (2026-07-31)
+## [1.2.1] (2026-07-31)
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v1.2.0...v1.2.1)
 
 ### Improvements
 - **Optimizations** — `composed_of_mapping` memoized with freezing in `AttributeSpec`. `money_attribute_names_set` and `money_attribute_name_pattern` cached via `Concurrent::Map` in `AttributeSpecRegistry`. SQL attribute substitution switched to single-pass gsub with combined regex + lookup hash. Fix: `specs_to_substitute` reject restored (stray `#` bypassed filtering).
@@ -20,6 +21,7 @@
 - **279 new string query tests** — `where_amount_string_test.rb` covers SQL string syntax with all operators (=, <, >, AND, OR, NOT, IS NULL), bound parameters, Money and scalar values.
 
 ## [1.2.0] (2026-07-28)
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v1.1.1...v1.2.0)
 
 ### New features
 - **Query helpers** — `where_amount`, `where_currency`, `order_by_amount`, `pluck_amount`, `pick_amount`, and `sum_amount` added to `ActiveRecord::Base` and `ActiveRecord::Relation`. Composite attributes decompose to backing columns; single-column attributes delegate to native AR. All helpers use keyword hash syntax.
@@ -51,6 +53,7 @@
 - Migration output suppressed during tests via `MuteMigrations` module.
 
 ## [1.1.1] (2026-07-24)
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v1.1.0...v1.1.1)
 
 ### New features
 - **Per-request currency** — `MoneyAttribute::Current` (ActiveSupport::CurrentAttributes) overrides `default_currency` at runtime. Set `MoneyAttribute::Current.currency` in a `before_action`; falls back to `config.default_currency` when not set. Rails' built-in Executor middleware auto-resets after each request.
@@ -60,6 +63,8 @@
 - **`default_currency` simplified** — Removed unnecessary `defined?` guard; uses `presence` for concise fallback.
 
 ## [1.1.0] (2026-07-22)
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v1.1.0...v1.1.1)
+
 
 ### Improvements
 - **minting 2.0.0 compatibility** — `to_fs(:currency)` replaced with `to_fs` in form builder helpers and tests; minting 2.0's default format (`%<symbol>s%<amount>f`) produces identical output.
@@ -68,6 +73,7 @@
 - **Benchmark report updated** — money_attribute wins all 8 core cells and all scaling tests against money-rails.
 
 ## [1.0.0] (2026-07-06)
+[Full Changelog](https://github.com/gferraz/money-attribute/compare/v0.14.15...v1.0.0)
 
 ### Stable release
 

@@ -21,6 +21,8 @@ module MoneyAttribute
   #
   # Created by +money_attribute+ or +money_amount+ and stored in the class-level registry.
   # Used by query helpers to resolve column names, build Money values, and generate SQL.
+  #
+  # @api private
   AttributeSpec = Struct.new(:name, :kind, :amount_column, :currency_column, :amount_type, keyword_init: true) do
     # @return [Boolean] +true+ when the spec describes a two-column (amount + currency) attribute.
     def composite? = kind == :composite
@@ -56,6 +58,7 @@ module MoneyAttribute
     # @param amount [Integer, BigDecimal, nil] the raw column value
     # @param currency [String, Mint::Currency, nil] the currency code or object
     # @return [Mint::Money, nil] the resolved money value, or nil when amount is nil
+    # @api private
     def build_money(amount, currency)
       return unless amount
       return amount if amount.is_a?(Mint::Money)
@@ -70,6 +73,7 @@ module MoneyAttribute
     #
     # @param value [Mint::Money, Numeric] the query value
     # @return [Integer, BigDecimal, Mint::Money] the normalized value
+    # @api private
     def normalize_query_value(value)
       return value unless integer_amount?
       return value.subunits if value.is_a?(Mint::Money)

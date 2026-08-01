@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  # :nodoc:
+  # Internal pluck resolution for the +pluck_amount+ query helper.
+  #
+  # @api private
   module PluckAmount
     # Plucks money-aware amounts for one or more attributes.
     #
@@ -9,6 +11,7 @@ module MoneyAttribute
     # @return [Array<Mint::Money>] for a single attribute
     # @return [Array<Array>] for multiple attributes, one row array per attribute
     # @raise [ArgumentError] if any attribute is not a registered money attribute
+    # @api private
     def pluck_amount(*attrs)
       raise ArgumentError, 'No attribute specified' if attrs.empty?
 
@@ -22,6 +25,11 @@ module MoneyAttribute
     private
 
     # Plucks a single money-aware attribute and returns money values.
+    #
+    # @param spec [AttributeSpec] the money attribute spec
+    # @return [Array] raw values for single-column attributes, composed
+    #   +Mint::Money+ values for composite attributes
+    # @api private
     def pluck_single_amount(spec)
       return pluck(spec.amount_column) if spec.single?
 

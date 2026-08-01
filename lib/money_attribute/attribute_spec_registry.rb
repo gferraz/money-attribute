@@ -4,6 +4,11 @@ require 'concurrent/map'
 
 module MoneyAttribute
   # Stores money attribute metadata on the model class.
+  #
+  # Holds a per-model registry of {AttributeSpec} objects plus derived caches
+  # (name set, regex patterns) populated lazily on first access.
+  #
+  # @api private
   module AttributeSpecRegistry
     extend ActiveSupport::Concern
 
@@ -19,6 +24,7 @@ module MoneyAttribute
       # @param currency_column [Symbol, String, nil] the currency column name (composite only)
       # @param amount_type [Symbol, nil] +:integer+ or +:decimal+
       # @return [AttributeSpec]
+      # @api private
       def register_money_attribute_spec(name, kind:, amount_column:, currency_column: nil, amount_type: nil)
         spec = MoneyAttribute::AttributeSpec.new(
           name: name.to_s,
@@ -36,6 +42,7 @@ module MoneyAttribute
       #
       # @param name [Symbol, String] the attribute name
       # @return [AttributeSpec, nil]
+      # @api private
       def money_attribute_spec(name)
         REGISTRY[self]&.fetch(name.to_s, nil)
       end
@@ -43,6 +50,7 @@ module MoneyAttribute
       # Returns the registry hash for the current model class.
       #
       # @return [Hash{String => AttributeSpec}]
+      # @api private
       def money_attribute_specs
         REGISTRY.fetch_or_store(self) { {} }
       end
@@ -50,6 +58,7 @@ module MoneyAttribute
       # Returns a frozen Set of registered money attribute names.
       #
       # @return [Set<String>]
+      # @api private
       def money_attribute_names_set
         PATTERNS.fetch_or_store(:"#{self}_name_set") { money_attribute_specs.keys.to_set.freeze }
       end
@@ -57,6 +66,7 @@ module MoneyAttribute
       # Returns a pre-compiled regex matching any registered money attribute name.
       #
       # @return [Regexp]
+      # @api private
       def money_attribute_name_pattern
         PATTERNS.fetch_or_store(:"#{self}_name_pattern") do
           names = money_attribute_specs.keys.map { |n| Regexp.escape(n) }

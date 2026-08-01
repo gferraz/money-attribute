@@ -1,13 +1,16 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  # :nodoc:
+  # Internal helpers shared by the query sub-modules.
+  #
+  # @api private
   module QueryHelpers
     # Returns the registered money attribute spec or raises when missing.
     #
     # @param attr [Symbol, String] the money attribute name
     # @return [AttributeSpec]
     # @raise [ArgumentError] if the attribute is not registered
+    # @api private
     def money_attribute_spec!(attr)
       spec = klass.money_attribute_spec(attr)
       raise ArgumentError, "#{attr} is not a money attribute on #{klass.name}" unless spec
@@ -20,6 +23,7 @@ module MoneyAttribute
     # @param row [Array] the flat row from +pluck+ or +pick+
     # @param specs [Array<AttributeSpec>] the money attribute specs
     # @return [Array] the extracted money values
+    # @api private
     def extract_money_row(row, specs)
       cursor = 0
 

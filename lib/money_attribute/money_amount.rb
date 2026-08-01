@@ -1,7 +1,17 @@
 # frozen_string_literal: true
 
 module MoneyAttribute
-  # :nodoc:
+  # Declares fixed-currency money attributes on Active Record models.
+  #
+  # Provides the +money_amount+ class method which wires a single backing
+  # column to a +Mint::Money+ value object using a custom attribute type and a
+  # normalizer. The application default currency (or {Current} per-request
+  # override) applies to all rows.
+  #
+  # @example
+  #   class SimpleOffer < ApplicationRecord
+  #     money_amount :price
+  #   end
   module MoneyAmount
     extend ActiveSupport::Concern
 
@@ -9,6 +19,20 @@ module MoneyAttribute
       include ColumnTypeValidations
 
       # Declares a fixed-currency money attribute backed by a single column.
+      #
+      # The column type determines the storage unit: integer/bigint stores
+      # subunits, decimal stores the unit value. No currency column is created —
+      # the application default currency applies to every row.
+      #
+      # @param name [Symbol, String] the money attribute accessor name
+      # @return [void]
+      # @raise [ArgumentError] if the column does not exist or has an
+      #   unsupported type
+      #
+      # @example
+      #   class SimpleOffer < ApplicationRecord
+      #     money_amount :price
+      #   end
       def money_amount(name)
         column = column_for_attribute(name)
 

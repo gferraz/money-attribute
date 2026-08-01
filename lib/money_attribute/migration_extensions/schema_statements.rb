@@ -22,7 +22,6 @@ module MoneyAttribute
     #       add_money_amount :products, :discount, type: :fiat_integer
     #     end
     #   end
-    # @api private
     module SchemaStatements
       include Helper
 

@@ -104,7 +104,9 @@ module MoneyAttribute
     end
   end
 
-  # :nodoc:
+  # Internal mixin combining all query sub-modules onto relations.
+  #
+  # @api private
   module QueryMethods
     include QueryHelpers
     include CurrencyCondition

@@ -11,16 +11,20 @@ bundle exec rake           # run tests only (default task, no migration)
 bundle exec rake test      # migrate test DB + run tests
 bundle exec rake test_run  # run tests only (same as default)
 bundle exec rake test_db_migrate  # migrate test DB only
+bundle exec rake test:all  # sqlite3 + postgresql + mysql2 (pg/mysql need local services; see DATABASE_ADAPTER)
+bundle exec rake test:postgresql  # migrate + run against postgresql
+bundle exec rake test:mysql2      # migrate + run against mysql2
 bundle exec rake bench     # 3-sided benchmark: money_attribute vs plain Rails vs money-rails (money-rails side uses Gemfile.benchmark to avoid gem conflict)
 bundle exec rake bench:report  # generate consolidated markdown report from benchmark output
-bundle exec rubocop        # lint (runs in CI; 0 offenses as of 1.1.0)
+bundle exec rake bench:profile MODE=string_query  # stackprof profiling (modes: string_query|pluck|read_cached|multi_record|arithmetic|all)
+bundle exec rubocop        # lint (runs in CI; 0 offenses as of 1.2.1)
 ```
 
 Single test: `bundle exec ruby -Itest test/money_attribute/money_attribute_test.rb`
 
 ## Benchmark
 
-Run via `rake bench` — spawns three processes (one per gem stack) to avoid gem conflicts:
+Run via `rake bench` (depends on `test_db_migrate`) — spawns three processes (one per gem stack) to avoid gem conflicts. Dispatcher is `benchmark/comparison.rb`, side files `benchmark/{minting,plain,money_rails}.rb`:
 
 1. `BENCH_SIDE=minting` — uses money_attribute + minting gems
 2. `BENCH_SIDE=plain` — plain ActiveRecord (raw columns, no monetization)
@@ -28,65 +32,9 @@ Run via `rake bench` — spawns three processes (one per gem stack) to avoid gem
 
 All sides use the same minimal environment: `require 'rails'`, `require 'active_record'`, direct SQLite connection to `test/dummy/storage/test.sqlite3` (no full Rails app boot). Fair comparison.
 
-Query sections use **raw column values** on all sides — money-rails cannot decompose `Money` objects in `find_by`. Section 5 (money_attribute only) separately benchmarks composed_of decomposition of `Mint::Money` objects.
-
-Key findings (integer column, 5000 iters unless noted):
-
-| Test | money_attribute | plain Rails | money-rails | ma / plain |
-|---|---|---|---|---|
-| Instantiation | 0.042s | 0.033s | 0.043s | **1.3×** |
-| Create+save | 0.690s | 0.693s | 1.061s | **1.0×** (write-dominated) |
-| Update existing (2 values) | 0.673s | 0.685s | 0.997s | **1.0×** (write-dominated) |
-| Setter only | 0.010s | 0.002s | 0.016s | **5.3×** (conversion cost) |
-| Read cached | 0.0005s | 0.0008s | 0.016s | **0.6×** (caching wins) |
-| Query raw columns | 0.197s | 0.184s | 0.199s | **1.1×** |
-| SQL generation | 0.190s | 0.183s | 0.197s | **1.0×** |
-| Multi-record (100×1000) | 0.584s | 0.287s | 0.842s | **2.0×** (composed_of overhead on 100K reads) |
-| Repeated access | 0.0004s | 0.0008s | 0.018s | **0.6×** (caching wins) |
-| Allocations (×5000) | 2 | 2 | 75,002 | — |
-
-**Query helpers (5000 iters, 100 records):**
-
-| Benchmark | money_attribute | plain Rails | ma / plain |
-|---|---|---|---|
-| `where_amount` (hash scalar) | 0.027s | 0.074s | **0.4×** |
-| `where_amount` (hash Range) | 0.034s | 0.100s | **0.3×** |
-| `where_amount` (hash Array) | 0.035s | 0.057s | **0.6×** |
-| `where_amount` (String `<`) | 0.060s | 0.017s | **3.6×** |
-| `where_amount` (String AND) | 0.080s | 0.018s | **4.4×** |
-| `where_amount` (String NOT) | 0.063s | 0.018s | **3.5×** |
-| `where_amount` (String IS NULL) | 0.055s | 0.017s | **3.2×** |
-| `where_currency` | 0.042s | 0.040s | **1.1×** |
-| `order_by_amount` (desc) | 1.263s | 1.155s | **1.1×** |
-| `pluck_amount` single | 1.044s | 0.291s | **3.6×** |
-| `pick_amount` single | 0.257s | 0.205s | **1.3×** |
-| `sum_amount` | 0.449s | 0.429s | **1.0×** |
-
-money_attribute's hash-form queries are 1.6-3× **faster** than raw `where` (decomposition via composed_of is cheap, and raw hash construction is slower). String-form queries are 3-4× slower due to SQL parsing + attribute substitution. `pluck_amount` is 3.6× slower because it composes Money objects from raw pluck values.
-
-**Scaling (mass insert and bulk update)**
-
-Ratio stays constant across all batch sizes — overhead is purely per-record, not per-batch.
-
-**Mass insert (records × 1 transaction):**
-
-| Size | money_attribute int | money_attribute dec | money-rails | ratio |
-|---|---|---|---|---|
-| 100 | 0.008s | 0.009s | 0.015s | **0.5×** |
-| 500 | 0.041s | 0.042s | 0.070s | **0.6×** |
-| 1000 | 0.090s | 0.081s | 0.151s | **0.6×** |
-| 2000 | 0.158s | 0.180s | 0.286s | **0.6×** |
-
-**Bulk update (Model.update, N records, alternating values):**
-
-| Size | money_attribute int | money_attribute dec | money-rails | ratio |
-|---|---|---|---|---|
-| 100 | 0.013s | 0.015s | 0.020s | **0.7×** |
-| 500 | 0.066s | 0.072s | 0.098s | **0.7×** |
-| 1000 | 0.151s | 0.147s | 0.201s | **0.8×** |
-| 2000 | 0.290s | 0.310s | 0.428s | **0.7×** |
-
-money_attribute's main advantages: **zero-allocation caching** (0.6× ma/plain ratio — faster than plain Rails), **1.7× faster inserts**, **1.4× faster bulk updates**, support for **Money-object queries** via composed_of decomposition (money-rails cannot decompose `Money` in WHERE clauses).
+- Query sections use **raw column values** on all sides — money-rails cannot decompose `Money` objects in `find_by`. Section 5 (money_attribute only) separately benchmarks composed_of decomposition of `Mint::Money` objects.
+- Money-object queries via composed_of decomposition work in money_attribute (money-rails cannot decompose `Money` in WHERE clauses).
+- Full result tables live in `BENCHMARKS.md` and `benchmark/reports/` — regenerate via `rake bench:report`, don't hand-edit. `rake bench:profile MODE=...` uses stackprof (`benchmark/profile.rb`).
 
 ## Tests
 
@@ -95,9 +43,14 @@ money_attribute's main advantages: **zero-allocation caching** (0.6× ma/plain r
 - **20** test files in `test/money_attribute/`
 - **297** tests, **596** assertions, all passing
 - Dummy app initializer sets `default_currency = 'BRL'` — test expectations assume BRL, not USD
-- Config-mutating tests: use `with_money_attribute_config` (in `rails_test.rb:215`), which saves/restores config and re-registers currencies
+- Config-mutating tests: use `with_money_attribute_config` (in `rails_test.rb:229`), which saves/restores config and re-registers currencies
 - RuboCop enforces `Minitest/MultipleAssertions: max 4` — warns on 5+ assertions; runs in CI
 - `-rtest_helper.rb` is baked into Rakefile via `t.ruby_opts`
+
+## Reference docs
+
+- Deep-dive docs live in `doc/` (`MONEY_AMOUNT.md`, `QUERY_HELPERS.md`) — read them before touching those subsystems.
+- `doc/agents/AGENTS.md` is a **stale pre-rebrand file** (minting-rails era, wrong test paths) — ignore it; this file is canonical.
 
 ## Gotchas
 
@@ -157,13 +110,13 @@ Two separate helpers — one per storage mode:
 
 ## Style
 
-- RuboCop with minitest, performance, packaging, rake, rails, thread_safety plugins
-- `Layout/LineLength: 120`, `Metrics/MethodLength: 30`, `Style/FrozenStringLiteralComment: always`
-- `test/dummy/` and `benchmark/` excluded from RuboCop
+- RuboCop with minitest, performance, packaging, rake, rails, thread_safety plugins; `NewCops: enable`
+- `Layout/LineLength: 120`, `Metrics/MethodLength: 30`, `Metrics/ClassLength: 500`, `Style/FrozenStringLiteralComment: always`
+- `test/dummy/`, `benchmark/`, `vendor/` excluded from RuboCop
 - All source files have `# frozen_string_literal: true`
-- RuboCop runs in CI; 0 offenses as of 1.2.0
+- RuboCop runs in CI; 0 offenses as of 1.2.1
 
 ## Dependencies
 
-- Ruby >= 3.3 (`.tool-versions`: 4.0.5), Rails >= 7.1.3.2, minting >= 2.0.0
-- CI tests Ruby 3.3, 3.4, 4.0 (GitHub Actions, `bundler-cache: true`; RuboCop runs in CI)
+- Ruby >= 3.3 (`.tool-versions`: 4.0.6), Rails >= 7.1 (gemspec), minting >= 2.1 (gemspec)
+- CI runs 3 jobs: sqlite3 on Ruby 3.3/3.4/4.0 (includes RuboCop), plus postgresql and mysql2 jobs on Ruby 3.4 (each spins up a service container)

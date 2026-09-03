@@ -14,6 +14,7 @@ module MoneyAttribute
 
     REGISTRY = Concurrent::Map.new
     PATTERNS = Concurrent::Map.new
+    QUERY_PLANS = Concurrent::Map.new
 
     class_methods do
       # Registers a money attribute spec for the current model class.
@@ -35,6 +36,9 @@ module MoneyAttribute
         )
 
         money_attribute_specs[spec.name] = spec
+        PATTERNS.delete(:"#{self}_name_set")
+        PATTERNS.delete(:"#{self}_name_pattern")
+        QUERY_PLANS.delete(self)
         spec
       end
 
@@ -72,6 +76,16 @@ module MoneyAttribute
           names = money_attribute_specs.keys.map { |n| Regexp.escape(n) }
           /\b(#{names.join('|')})\b/i
         end
+      end
+    end
+
+    class_methods do
+      # Returns the compiled string-query cache for the current model class.
+      #
+      # @return [Concurrent::Map]
+      # @api private
+      def money_attribute_query_plan_cache
+        QUERY_PLANS.fetch_or_store(self) { Concurrent::Map.new }
       end
     end
   end

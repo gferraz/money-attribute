@@ -10,6 +10,7 @@ module MoneyAttribute
   # @api private
   module AmountCondition
     ALLOWED_KEYWORDS = %w[and or not is null].to_set.freeze
+    QueryPlan = Struct.new(:sql, :value_specs, keyword_init: true)
 
     # Builds an amount filter for the registered money attribute.
     #
@@ -37,15 +38,12 @@ module MoneyAttribute
     # @raise [ArgumentError] on unknown identifiers or placeholder mismatch
     # @api private
     def resolve_amount_condition_from_sql(sql, *values)
-      specs = klass.money_attribute_specs
-      attr_names = klass.money_attribute_names_set
+      plan = klass.money_attribute_query_plan_cache.fetch_or_store(sql) do
+        compile_query_plan(sql)
+      end
+      decomposed = decompose_values(values, plan.value_specs)
 
-      validate_sql_identifiers!(sql, attr_names)
-      value_specs = map_placeholders_to_specs(sql, specs)
-      decomposed = decompose_values(values, value_specs)
-      substituted = substitute_attribute_names(sql, specs)
-
-      where(substituted, *decomposed)
+      where(plan.sql, *decomposed)
     end
 
     private
@@ -56,6 +54,17 @@ module MoneyAttribute
     # @param spec [AttributeSpec] the money attribute spec
     # @param value [Mint::Money, Numeric, Range, Array] the filter value
     # @return [Arel::Nodes::Node] the predicate
+    # @api private
+    def compile_query_plan(sql)
+      specs = klass.money_attribute_specs
+      validate_sql_identifiers!(sql, klass.money_attribute_names_set)
+
+      QueryPlan.new(
+        sql: substitute_attribute_names(sql, specs),
+        value_specs: map_placeholders_to_specs(sql, specs).freeze
+      ).freeze
+    end
+
     # @api private
     def build_amount_predicate(col, spec, value)
       case value

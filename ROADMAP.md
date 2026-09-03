@@ -5,6 +5,7 @@
 ### 1. Optimize String `where_amount` Queries
 
 **Priority:** High
+**Status:** Implemented
 
 **Location:** `lib/money_attribute/query/amount_condition.rb:39-48`
 
@@ -23,6 +24,12 @@ equivalent plain SQL.
 **Approach:** Parse each SQL template once and cache a compiled query plan by
 model and SQL template. The plan should retain the substituted SQL and the
 attribute specs needed to decompose bind values.
+
+**Measured result:** The focused before/after benchmark improved relation
+construction by approximately 51% for one condition, 64% for the common
+two-condition template, and 79% for an eight-condition expression. Result
+loading and allocation benchmarks were unchanged within normal run-to-run
+noise.
 
 ### 2. Cache SQL Substitution Metadata
 

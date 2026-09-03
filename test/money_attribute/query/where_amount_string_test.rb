@@ -276,4 +276,16 @@ class WhereAmountStringTest < ActiveSupport::TestCase
 
     assert_equal [10.dollars], result.map(&:amount)
   end
+
+  test 'reuses the compiled plan for repeated SQL templates' do
+    sql = 'amount >= ? AND amount <= ?'
+    cache = FinancialTransaction.money_attribute_query_plan_cache
+    cache.delete(sql)
+
+    FinancialTransaction.where_amount(sql, 5.dollars, 10.dollars)
+    plan = cache.fetch(sql)
+    FinancialTransaction.where_amount(sql, 15.dollars, 20.dollars)
+
+    assert_same plan, cache.fetch(sql)
+  end
 end

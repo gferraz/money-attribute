@@ -85,3 +85,15 @@ task 'bench:profile' do
   mode = ENV['MODE'] || 'all'
   sh({ 'RAILS_ENV' => 'test' }, 'bundle', 'exec', 'ruby', 'benchmark/profile.rb', mode)
 end
+
+desc 'Run focused performance roadmap benchmarks'
+task 'bench:performance' do
+  sh({ 'RAILS_ENV' => 'test' }, 'bundle', 'exec', 'ruby', 'benchmark/performance.rb')
+end
+
+desc 'Compare two focused performance benchmark result files'
+task 'bench:performance:compare' do
+  baseline = ENV.fetch('BASELINE')
+  current = ENV.fetch('CURRENT')
+  sh 'bundle', 'exec', 'ruby', 'benchmark/compare_performance.rb', baseline, current
+end

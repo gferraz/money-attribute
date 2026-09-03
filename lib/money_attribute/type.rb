@@ -7,7 +7,11 @@ module MoneyAttribute
     #
     # @param value [String, Numeric, Mint::Money, nil] the input value
     # @return [Mint::Money, Numeric, nil] a Money value for strings, otherwise delegates to super
-    def cast(value) = value.is_a?(String) ? Money.parse(value, MoneyAttribute.default_currency) : super
+    def cast(value)
+      return Money.parse(value, default_currency: MoneyAttribute.default_currency) if value.is_a?(String)
+
+      super
+    end
 
     # Validates that the value is compatible with the fixed currency type.
     #

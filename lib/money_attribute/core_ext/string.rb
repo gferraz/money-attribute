@@ -14,5 +14,5 @@ class String
   # @raise [ArgumentError] if the string cannot be parsed
   # @example
   #   '12.34'.to_money('USD') # => Mint::Money(12.34, 'USD')
-  def to_money(currency = MoneyAttribute.default_currency) = Money.parse(self, currency)
+  def to_money(currency = MoneyAttribute.default_currency) = Money.parse(self, default_currency: currency)
 end

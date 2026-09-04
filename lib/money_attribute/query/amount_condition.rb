@@ -48,23 +48,27 @@ module MoneyAttribute
 
     private
 
+    # Compiles a string query into substituted SQL and bind metadata.
+    #
+    # @param sql [String] the SQL fragment
+    # @return [QueryPlan] the compiled query plan
+    # @api private
+    def compile_query_plan(sql)
+      specs = klass.money_attribute_specs
+      value_specs = parse_sql_value_specs(sql, specs)
+
+      QueryPlan.new(
+        sql: substitute_attribute_names(sql, specs),
+        value_specs: value_specs.freeze
+      ).freeze
+    end
+
     # Builds an Arel predicate for the given amount value.
     #
     # @param col [Arel::Attributes::Attribute] the amount column node
     # @param spec [AttributeSpec] the money attribute spec
     # @param value [Mint::Money, Numeric, Range, Array] the filter value
     # @return [Arel::Nodes::Node] the predicate
-    # @api private
-    def compile_query_plan(sql)
-      specs = klass.money_attribute_specs
-      validate_sql_identifiers!(sql, klass.money_attribute_names_set)
-
-      QueryPlan.new(
-        sql: substitute_attribute_names(sql, specs),
-        value_specs: map_placeholders_to_specs(sql, specs).freeze
-      ).freeze
-    end
-
     # @api private
     def build_amount_predicate(col, spec, value)
       case value
@@ -97,69 +101,34 @@ module MoneyAttribute
       spec.normalize_query_value(value)
     end
 
-    # Validates that every word in the SQL is a registered attribute name or an
-    # allowed keyword.
-    #
-    # @param sql [String] the SQL fragment
-    # @param attr_names [Set<String>] registered money attribute names
-    # @return [void]
-    # @raise [ArgumentError] on the first unknown identifier
-    # @api private
-    def validate_sql_identifiers!(sql, attr_names)
-      sql.scan(/\b[a-z_]\w*\b/i).each do |word|
-        next if attr_names.include?(word.downcase) || ALLOWED_KEYWORDS.include?(word.downcase)
-
-        raise ArgumentError, "'#{word}' is not a money attribute on #{klass.name}"
-      end
-    end
-
-    # Matches each +?+ placeholder to the nearest preceding money attribute name
-    # and returns the corresponding spec.
+    # Validates identifiers and associates placeholders with the nearest
+    # preceding money attribute in one left-to-right pass.
     #
     # @param sql [String] the SQL fragment
     # @param specs [Hash{String => AttributeSpec}] the money attribute specs
-    # @return [Array<AttributeSpec>] one spec per +?+ placeholder
-    # @raise [ArgumentError] if a placeholder has no preceding attribute name
+    # @return [Array<AttributeSpec>] one spec per bind value
+    # @raise [ArgumentError] on an unknown identifier or unassociated placeholder
     # @api private
-    def map_placeholders_to_specs(sql, specs)
-      ref_pattern = klass.money_attribute_name_pattern
+    def parse_sql_value_specs(sql, specs)
+      current_spec = nil
+      value_specs = []
 
-      placeholder_positions(sql).map { |pos| spec_at_position(sql, pos, ref_pattern, specs) }
-    end
+      sql.scan(/[a-z_]\w*|\?/i) do |token|
+        if token == '?'
+          raise ArgumentError, "No money attribute found before '?' in: #{sql.inspect}" unless current_spec
 
-    # Returns character positions of each +?+ in the SQL.
-    #
-    # @param sql [String] the SQL fragment
-    # @return [Array<Integer>] the positions of each +?+
-    # @api private
-    def placeholder_positions(sql)
-      positions = []
-      offset = 0
+          value_specs << current_spec
+          next
+        end
 
-      while (idx = sql.index('?', offset))
-        positions << idx
-        offset = idx + 1
+        word = token.downcase
+        next if ALLOWED_KEYWORDS.include?(word)
+
+        current_spec = specs[word]
+        raise ArgumentError, "'#{token}' is not a money attribute on #{klass.name}" unless current_spec
       end
 
-      positions
-    end
-
-    # Returns the spec for the +?+ at the given position.
-    #
-    # @param sql [String] the SQL fragment
-    # @param pos [Integer] position of the +?+
-    # @param ref_pattern [Regexp] pre-compiled attribute name pattern
-    # @param specs [Hash{String => AttributeSpec}] the money attribute specs
-    # @return [AttributeSpec] the spec for the nearest preceding attribute name
-    # @raise [ArgumentError] if no attribute name precedes the placeholder
-    # @api private
-    def spec_at_position(sql, pos, ref_pattern, specs)
-      preceding = sql[0...pos]
-      matched = preceding.scan(ref_pattern).flatten.compact
-
-      raise ArgumentError, "No money attribute found before '?' in: #{sql.inspect}" if matched.empty?
-
-      specs[matched.last.downcase]
+      value_specs
     end
 
     # Decomposes +Mint::Money+ bind values to raw storage values using their

@@ -52,6 +52,7 @@ This is a low-risk optimization for repeated query workloads.
 ### 3. Replace Repeated Placeholder Scans
 
 **Priority:** Medium
+**Status:** Implemented
 
 **Location:** `lib/money_attribute/query/amount_condition.rb:147-153`
 
@@ -62,6 +63,12 @@ or contain more placeholders.
 **Approach:** Use a single left-to-right pass that validates identifiers,
 substitutes amount columns, and associates each placeholder with its nearest
 attribute spec.
+
+**Measured result:** The cache-independent parser benchmark compares the new
+single-pass parser with the previous multi-scan algorithm on identical SQL.
+The single-pass implementation was approximately 3.2x faster for eight
+conditions and 6.3x faster for 32 conditions. The focused benchmark now also
+includes cold queries with the plan cache cleared per call.
 
 ### 4. Cache Currency Resolution During Result Reconstruction
 

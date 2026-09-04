@@ -149,7 +149,33 @@ class AddPriceToProducts < ActiveRecord::Migration[8.1]
 end
 ```
 
-### Naming
+### Default column names
+
+For `money_attribute :price`, the default columns are `price` for the amount
+and `price_currency` for the currency. The migration helper and model macro use
+the same mapping:
+
+```ruby
+create_table :products do |t|
+  t.money_attribute :price
+end
+
+class Product < ApplicationRecord
+  money_attribute :price
+end
+```
+
+This creates and maps to:
+
+```text
+price
+price_currency
+```
+
+The amount column defaults to `decimal(20,4)` and the currency column defaults
+to `string(16)`.
+
+### Naming options
 
 **`money_attribute` (composite):**
 
@@ -281,7 +307,7 @@ Order.new(total: 19.99.to_money('USD')).total_amount # => 1999
 
 ## Custom column names
 
-If your columns don't follow the `<name>_amount` / `<name>_currency` convention:
+If your columns do not follow the default mapping, use `mapping:`:
 
 ```ruby
 class Invoice < ApplicationRecord
@@ -312,6 +338,11 @@ end
 | `name_currency` exists AND `name` exists | `name` + `name_currency` |
 | `name == 'amount'` AND `currency` exists | `amount` + `currency` |
 | Otherwise | `<name>_amount` + `<name>_currency` |
+
+The first row is the canonical mapping used by the migration helpers. The
+final row supports existing schemas that use the `<name>_amount` /
+`<name>_currency` convention. For example, `money_attribute :price` also maps
+to `price_amount` + `price_currency` when those are the available columns.
 
 **Phase 2 — Override** via `mapping:` is merged on top of the default. Missing keys inherit from the default mapping:
 

@@ -80,6 +80,22 @@ module MoneyAttribute
     end
 
     class_methods do
+      # Returns whether the model has a registered money attribute.
+      #
+      # @param name [Symbol, String] the attribute name
+      # @return [Boolean]
+      def money_attribute?(name)
+        !money_attribute_spec(name).nil?
+      end
+
+      # Returns the storage mode for a registered money attribute.
+      #
+      # @param name [Symbol, String] the attribute name
+      # @return [Symbol, nil] +:composite+, +:single+, or +nil+
+      def money_attribute_kind(name)
+        money_attribute_spec(name)&.kind
+      end
+
       # Returns the compiled string-query cache for the current model class.
       #
       # @return [Concurrent::Map]

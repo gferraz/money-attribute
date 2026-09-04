@@ -19,6 +19,17 @@ class AttributeSpecRegistryTest < ActiveSupport::TestCase
     assert_equal %w[total_amount currency_code], spec.columns
   end
 
+  test 'introspects registered money attributes' do
+    assert FinancialTransaction.money_attribute?(:amount)
+    assert_equal :composite, FinancialTransaction.money_attribute_kind(:amount)
+    assert_equal :single, FinancialTransaction.money_attribute_kind(:tax)
+  end
+
+  test 'returns false and nil for an unregistered money attribute' do
+    assert_not FinancialTransaction.money_attribute?(:unknown)
+    assert_nil FinancialTransaction.money_attribute_kind(:unknown)
+  end
+
   test 'subclasses do not inherit registered money attribute specs automatically' do
     subclass = Class.new(FinancialTransaction)
 

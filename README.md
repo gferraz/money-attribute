@@ -506,6 +506,20 @@ Offer.none.sum_amount(:price)
 
 All query helpers raise `ArgumentError` for non-money attributes. Internally, money attribute metadata is registered per model class. The same attribute name can be used safely in different models, but subclasses do not automatically inherit a parent model's registered money attributes.
 
+### Introspection
+
+Use `money_attribute?` and `money_attribute_kind` when building generic model
+or form code:
+
+```ruby
+Product.money_attribute?(:price)       # => true
+Product.money_attribute_kind(:price)   # => :composite or :single
+Product.money_attribute?(:unknown)     # => false
+```
+
+`money_attribute_kind` returns `:composite` for `money_attribute`, `:single`
+for `money_amount`, and `nil` for undeclared attributes.
+
 ## Convenience methods
 
 MoneyAttribute adds small helpers on `Numeric` and `String`:
@@ -528,6 +542,32 @@ MoneyAttribute adds `money_field` to Rails form builders for composite money att
   <%= form.money_field :price %>       <!-- text input, e.g. "$1,234.56" -->
 <% end %>
 ```
+
+The field submits a locale-formatted string under the normal model parameter:
+
+```ruby
+# app/controllers/products_controller.rb
+def create
+  @product = Product.new(product_params)
+
+  if @product.save
+    redirect_to @product
+  else
+    render :new, status: :unprocessable_entity
+  end
+end
+
+private
+
+def product_params
+  params.require(:product).permit(:name, :price)
+end
+```
+
+The model normalizes the submitted string through `MoneyAttribute::Converter`.
+For a composite attribute, provide a separate currency input or set the
+currency explicitly when the form must accept a currency different from the
+configured default.
 
 ### Advanced: `money_amount` (single-column, fixed-currency)
 

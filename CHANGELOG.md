@@ -4,6 +4,7 @@
 [Full Changelog](https://github.com/gferraz/money-attribute/compare/v1.2.0...v1.2.1)
 
 ### Improvements
+- **Migration-style model mappings** — `money_attribute` now accepts nested `amount: { column: ... }` and `currency: { column: ... }` options, matching the migration helper syntax. The existing `mapping:` form remains supported, while migration-only options are rejected on model declarations.
 - **Optimizations** — `composed_of_mapping` memoized with freezing in `AttributeSpec`. `money_attribute_names_set` and `money_attribute_name_pattern` cached via `Concurrent::Map` in `AttributeSpecRegistry`. SQL attribute substitution switched to single-pass gsub with combined regex + lookup hash. Fix: `specs_to_substitute` reject restored (stray `#` bypassed filtering).
 - **Profiling** — `stackprof` added to Gemfile (dev/test). `benchmark/profile.rb` created with 6 modes: `string_query|pluck|read_cached|multi_record|arithmetic|all`. Rake task `bench:profile` added (`MODE=string_query`).
 - **Column type validations** — New `MoneyAttribute::ColumnTypeValidations` module validates amount column type in `money_attribute` and `money_amount` macros, raising on unsupported types.

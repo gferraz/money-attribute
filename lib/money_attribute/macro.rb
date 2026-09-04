@@ -98,6 +98,35 @@ module MoneyAttribute
               "Expected: #{mapping.values.join(', ')}, " \
               "Found: #{attribute_names.join(', ')}"
       end
+
+      # Normalizes migration-style column options to the legacy mapping format.
+      #
+      # @param mapping [Hash] the user-supplied +mapping:+ option
+      # @param amount [Hash, nil] migration-style amount options
+      # @param currency [Hash, nil] migration-style currency options
+      # @return [Hash] normalized column mapping
+      # @raise [ArgumentError] if options are ambiguous or unsupported
+      # @api private
+      def normalize_mapping(mapping, amount, currency)
+        mapping = mapping.compact
+        nested = { amount:, currency: }.compact
+        conflicts = mapping.keys & nested.keys
+        unless conflicts.empty?
+          raise ArgumentError, "Specify #{conflicts.join(', ')} using either mapping: or nested options, not both"
+        end
+
+        nested.each do |key, options|
+          mapping[key] = normalize_nested_column(key, options)
+        end
+
+        mapping
+      end
+
+      def normalize_nested_column(key, options)
+        return options[:column] if options.is_a?(Hash) && options.keys == [:column] && options[:column]
+
+        raise ArgumentError, "#{key}: must be a hash containing only a non-empty :column option"
+      end
     end
 
     class_methods do
@@ -109,6 +138,8 @@ module MoneyAttribute
       #
       # @param name [Symbol, String] the money attribute accessor name
       # @param mapping [Hash] custom column mapping (+:amount+, +:currency+)
+      # @param amount [Hash, nil] migration-style amount options (+:column+ only)
+      # @param currency [Hash, nil] migration-style currency options (+:column+ only)
       # @return [void]
       #
       # @example
@@ -116,7 +147,8 @@ module MoneyAttribute
       #     money_attribute :price
       #     money_attribute :price, mapping: { amount: :base_price, currency: :base_currency }
       #   end
-      def money_attribute(name, mapping: {})
+      def money_attribute(name, mapping: {}, amount: nil, currency: nil)
+        mapping = normalize_mapping(mapping, amount, currency)
         mapping = resolve_mapping(name, mapping)
         spec = register_composite_spec(name, mapping)
 

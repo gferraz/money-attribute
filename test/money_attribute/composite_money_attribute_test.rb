@@ -63,6 +63,50 @@ class CompositeMoneyAttributeTest < ActiveSupport::TestCase
     assert_equal 'EUR', offer.price_currency
   end
 
+  test 'composite money attribute accepts migration-style column options' do
+    mapped_offer = Class.new(ApplicationRecord) do
+      self.table_name = 'offers'
+
+      money_attribute :cost, amount: { column: :price_amount }, currency: { column: :price_currency }
+    end
+
+    offer = mapped_offer.new(cost: 19.euros)
+
+    assert_equal 19.euros, offer.cost
+    assert_equal 19, offer.price_amount
+    assert_equal 'EUR', offer.price_currency
+  end
+
+  test 'composite money attribute accepts partial migration-style mapping' do
+    mapped_offer = Class.new(ApplicationRecord) do
+      self.table_name = 'offers'
+
+      money_attribute :price, currency: { column: :price_currency }
+    end
+
+    assert_equal 19.euros, mapped_offer.new(price: 19.euros).price
+  end
+
+  test 'composite money attribute rejects conflicting mapping options' do
+    assert_raises(ArgumentError, match: /either mapping: or nested options/) do
+      Class.new(ApplicationRecord) do
+        self.table_name = 'offers'
+
+        money_attribute :price, mapping: { amount: :price_amount }, amount: { column: :price_amount }
+      end
+    end
+  end
+
+  test 'composite money attribute rejects migration-only nested options' do
+    assert_raises(ArgumentError, match: /only a non-empty :column option/) do
+      Class.new(ApplicationRecord) do
+        self.table_name = 'offers'
+
+        money_attribute :price, amount: { type: :fiat_integer }
+      end
+    end
+  end
+
   test 'composite money attribute reads from directly written columns' do
     offer = Offer.new(price_amount: 25, price_currency: 'EUR')
 

@@ -184,7 +184,7 @@ to `string(16)`.
 | `t.money_attribute :price` | `price` decimal(20,4) + `price_currency` string(16) | `money_attribute :price` |
 | `t.money_attribute :price_amount` | `price_amount` decimal(20,4) + `price_currency` string(16) | `money_attribute :price` |
 | `t.money_attribute :price, amount: { type: :fiat_integer }` | `price` bigint + `price_currency` string(16) | `money_attribute :price` |
-| `t.money_attribute :price, amount: { column: :a }, currency: { column: :c }` | `a` + `c` | `money_attribute :price, mapping: { amount: :a, currency: :c }` |
+| `t.money_attribute :price, amount: { column: :a }, currency: { column: :c }` | `a` + `c` | `money_attribute :price, amount: { column: :a }, currency: { column: :c }` |
 | `t.money_attribute :price, currency: { limit: 5 }` | `price` decimal(20,4) + `price_currency` string(5) | `money_attribute :price` |
 | `t.remove_money_attribute :price` | Removes `price` + `price_currency` | `money_attribute :price` |
 
@@ -307,25 +307,29 @@ Order.new(total: 19.99.to_money('USD')).total_amount # => 1999
 
 ## Custom column names
 
-If your columns do not follow the default mapping, use `mapping:`:
+If your columns do not follow the default mapping, use the same nested column
+options as the migration helper:
 
 ```ruby
 class Invoice < ApplicationRecord
-  money_attribute :total, mapping: {
-    amount:   :total_amount,
-    currency: :currency_code
-  }
+  money_attribute :total,
+    amount: { column: :total_amount },
+    currency: { column: :currency_code }
 end
 ```
 
-The mapping keys are `:amount` and `:currency`; values are your database column names. You can provide only one key — the other falls back to the `<name>_amount` / `<name>_currency` convention:
+You can provide only one nested option; the other falls back to the default
+mapping. The older `mapping:` syntax remains supported (but it will eventually be deprecated):
 
 ```ruby
 class Invoice < ApplicationRecord
-  money_attribute :total, mapping: { amount: :total_amount }
-  # currency column inferred as `total_currency`
+  money_attribute :total, amount: { column: :total_amount }
+  money_attribute :subtotal, mapping: { amount: :subtotal }
 end
 ```
+
+Model declarations accept only the nested `:column` option. Migration-only
+options such as `:type`, `:null`, and `:default` belong in the migration.
 
 ## Column resolution
 

@@ -388,7 +388,7 @@ end
 Multi-currency (`money_attribute`) attributes support equality queries via `composed_of`:
 
 ```ruby
-Offer.where(price: 10.to_money('EUR'))
+Offer.where(price: 10.euros)
 ```
 
 For comparisons, use the backing columns directly:
@@ -397,6 +397,26 @@ For comparisons, use the backing columns directly:
 Offer.where(price_amount: 10..20, price_currency: 'EUR')
 Offer.where('price_amount > ? AND price_currency = ?', 10, 'EUR')
 ```
+
+### Composite query matrix
+
+For `money_attribute`, use native Rails queries for simple equality. Use the
+money-aware helpers when working with `Money` objects or when you need an
+explicit currency filter alongside an amount query:
+
+| Operation | Native Rails | Money-aware helper |
+|---|---|---|
+| Equality | `where(price: 10.euros)` | `where_amount(price: 10.euros)` |
+| `IN` | Query backing columns directly | `where_amount(price: [10.euros, 20.euros])` |
+| Range/comparison | Query backing columns directly | `where_currency(price: 'EUR').where_amount(price: 10.euros..20.euros)` |
+| Currency filter | `where(price_currency: 'EUR')` | `where_currency(price: 'EUR')` |
+| Ordering | Query backing columns directly | `order_by_amount(price: :desc)` |
+| Pluck | Returns backing column values | `pluck_amount(:price)` returns `Money` |
+| Pick | Returns backing column values | `pick_amount(:price)` returns `Money` |
+| Sum | Group and sum backing columns directly | `sum_amount(:price)` groups by currency |
+
+`where_amount` accepts `Money` values and converts them to the backing amount
+unit. Pair it with `where_currency` when the currency must be constrained.
 
 ### Money-aware query helpers
 
@@ -407,33 +427,26 @@ For multi-currency attributes, manually decomposing columns is tedious. The quer
 Filters by amount value. Accepts a scalar, Range, or Array.
 
 ```ruby
-Offer.where_amount(price: 10)               # equality (any currency)
-Offer.where_amount(price: [10, 30])         # IN — matches EUR 10, USD 30
-Offer.where_amount(price: 10..100)          # BETWEEN (inclusive)
-Offer.where_amount(price: 10...100)         # BETWEEN (exclusive upper bound)
+Offer.where_amount(price: 10.euros)                    # equality
+Offer.where_amount(price: [10.euros, 30.euros])        # IN
+Offer.where_amount(price: 10.euros..100.euros)         # BETWEEN (inclusive)
+Offer.where_amount(price: 10.euros...100.euros)        # BETWEEN (exclusive upper bound)
 ```
 
-Ranges work across currencies — `10..50` matches EUR 10 and USD 50:
+For a currency-specific range, constrain the currency explicitly:
 
 ```ruby
 Offer.create!(price: 10.euros)
-Offer.create!(price: 50.dollars)
+Offer.create!(price: 50.euros)
 
-Offer.where_amount(price: 10..50)           # => both records
+Offer.where_currency(price: 'EUR').where_amount(price: 10.euros..50.euros) # => both records
 ```
 
 For integer (subunit) columns, pass `Money` objects directly — subunit conversion is handled automatically:
 
 ```ruby
-FinancialTransaction.where_amount(amount: [10.dollars, 10.yens])
+FinancialTransaction.where_amount(amount: [10.dollars, 20.dollars])
 FinancialTransaction.where_amount(amount: 10.dollars..100.dollars)
-```
-
-For decimal columns, raw numbers work:
-
-```ruby
-SimpleOffer.where_amount(price: 50)
-SimpleOffer.where_amount(price: 10..100)
 ```
 
 #### `where_currency`
@@ -578,7 +591,19 @@ money_amount :price
 
 #### Querying
 
-Fixed-currency attributes support full Rails-native querying — see [Querying](#querying) for examples.
+Fixed-currency attributes support full Rails-native querying. The helper methods
+are also available when a consistent query interface is useful:
+
+| Operation | Native Rails | Money-aware helper |
+|---|---|---|
+| Equality | `where(price: 10.reais)` | `where_amount(price: 10.reais)` |
+| `IN` | `where(price: [10.reais, 20.reais])` | `where_amount(price: [10.reais, 20.reais])` |
+| Range/comparison | `where(price: 10.reais..20.reais)` | `where_amount(price: 10.reais..20.reais)` |
+| Currency filter | Not applicable | Raises `ArgumentError` |
+| Ordering | `order(price: :desc)` | `order_by_amount(price: :desc)` |
+| Pluck | `pluck(:price)` | `pluck_amount(:price)` |
+| Pick | `pick(:price)` | `pick_amount(:price)` |
+| Sum | `sum(:price)` | `sum_amount(:price)` |
 
 ## Roadmap
 

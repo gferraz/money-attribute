@@ -107,6 +107,7 @@ depends on application query patterns.
 ### 6. Fix Derived Registry Cache Invalidation
 
 **Priority:** Low, with correctness implications
+**Status:** Implemented
 
 **Location:** `lib/money_attribute/attribute_spec_registry.rb:58-74`
 
@@ -117,6 +118,10 @@ new macro declaration on the same model, derived metadata can become stale.
 Invalidate or replace the derived caches whenever
 `register_money_attribute_spec` adds or replaces a spec. The same registry
 metadata cache can then support the string-query optimizations above.
+
+Regression tests now verify that late registrations refresh the derived name
+set and name pattern, and that re-registering an attribute clears compiled
+query plans.
 
 ## Already Performing Well
 

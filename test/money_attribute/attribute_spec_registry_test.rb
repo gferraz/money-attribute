@@ -52,4 +52,32 @@ class AttributeSpecRegistryTest < ActiveSupport::TestCase
 
     assert_same original, spec.build_money(original, 'USD')
   end
+
+  test 'invalidates derived caches when a new attribute is registered' do
+    model = Class.new(FinancialTransaction)
+    model.money_attribute_names_set
+    model.money_attribute_name_pattern
+
+    model.register_money_attribute_spec(:late_fee, kind: :single, amount_column: :late_fee, amount_type: :decimal)
+
+    assert_includes model.money_attribute_names_set, 'late_fee'
+    assert_match model.money_attribute_name_pattern, 'late_fee < ?'
+  end
+
+  test 'invalidates compiled query plans when an attribute is re-registered' do
+    model = Class.new(FinancialTransaction)
+    sql = 'amount > ?'
+    cache = model.money_attribute_query_plan_cache
+    cache[sql] = :stale
+
+    model.register_money_attribute_spec(
+      :amount,
+      kind: :composite,
+      amount_column: :amount,
+      currency_column: :currency,
+      amount_type: :integer
+    )
+
+    assert_empty model.money_attribute_query_plan_cache
+  end
 end

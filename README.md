@@ -5,7 +5,7 @@
 
 Store and read Active Record attributes as `Money` objects with no manual serialization.
 
-`money_attribute` uses two DB columns (amount + currency) for per-row multi-currency data. A simpler `money_amount` variant is also available for fixed-currency models (see [note](#single-column-mode-money_amount-fixed-currency)).
+`money_attribute` uses two DB columns (amount + currency) for per-row multi-currency data.
 
 ```ruby
 class Product < ApplicationRecord
@@ -68,16 +68,16 @@ That's it. `Product.new(price: 12.dollars).price` is a `Money`.
 - **No serialization boilerplate** — declare once, read/write `Money` everywhere.
 - **Integer or decimal columns** — auto-detects the column type and adjusts serialization (e.g. integer stores cents, decimal stores unit value).
 - **Normalizes everything** — pass a number, string, or `Money`; always get a `Money` back.
-- **Currency enforcement** — fixed-currency attributes reject wrong currencies at assignment time.
+- **Currency handling** — each record stores its own currency and accepts registered currencies at assignment time.
 - **Built on Rails primitives** — uses `ActiveRecord::Type`, `composed_of`, and `normalizes` under the hood. No monkey-patching of core classes.
 
 ### At a glance — vs money-rails
 
 | Feature | MoneyAttribute | money-rails |
 |---|---|---|
-| **Declare** | `t.money_attribute :price` / `money_attribute :price` or `t.money_amount :price` / `money_amount :price` | `monetize :price_cents` |
+| **Declare** | `t.money_attribute :price` / `money_attribute :price` | `monetize :price_cents` |
 | **Column types** | `integer`, `decimal`, `bigint` — auto-detected | `integer` cents only |
-| **Storage modes** | Composite (amount+currency), single column | Single cents column, composite (cents+currency) |
+| **Storage mode** | Composite (amount+currency) | Single cents column, composite (cents+currency) |
 | **Decimal columns** | Native — `t.decimal :price` | Not supported — must convert to cents manually |
 | **Multi-currency** | `money_attribute :price` (convention: `<name>_amount` + `<name>_currency`) | `monetize :price_cents, with_currency: :price_currency` |
 | **Rails integration** | `ActiveRecord::Type` + `composed_of` — no monkey-patches | `monetize` overrides reader/writer methods |
@@ -320,7 +320,7 @@ money_attribute :total, mapping: { amount: :total_amount }
 # currency falls back to default => :total_currency
 ```
 
-Raises `ArgumentError` if the resolved columns don't exist. For single-column fixed-currency attributes, see [`money_amount`](#single-column-mode-money_amount-fixed-currency).
+Raises `ArgumentError` if the resolved columns don't exist. For single-column fixed-currency attributes, see the [advanced `money_amount` section](#advanced-money_amount-single-column-fixed-currency).
 
 **Example**
 
@@ -332,7 +332,6 @@ create_table :financial_transactions do |t|
   t.string  :discount_currency, limit: 3
   t.decimal :price_amount
   t.string  :price_currency, limit: 3
-  t.bigint  :tax
   t.decimal :total_amount
   t.string  :currency_code, limit: 3
 end
@@ -344,7 +343,6 @@ class FinancialTransaction < ApplicationRecord
   money_attribute :discount                 # step 2: discount(int) + discount_currency
   money_attribute :price                    # step 4: price_amount + price_currency
   money_attribute :total, mapping: { amount: :total_amount, currency: :currency_code }  # step 1: explicit
-  money_amount  :tax                        # single-column, fixed-currency (uses default currency)
 end
 ```
 
@@ -363,16 +361,6 @@ For comparisons, use the backing columns directly:
 ```ruby
 Offer.where(price_amount: 10..20, price_currency: 'EUR')
 Offer.where('price_amount > ? AND price_currency = ?', 10, 'EUR')
-```
-
-Fixed-currency (`money_amount`) attributes support full Rails-native querying through the custom type — equality, IN, BETWEEN, ordering, and aggregation all work:
-
-```ruby
-Product.where(price: 10.to_money('USD'))                        # equality
-Product.where(price: [10.to_money('USD'), 20.to_money('USD')]) # IN
-Product.where(price: 10.to_money('USD')..20.to_money('USD'))   # BETWEEN
-Product.order(price: :desc)                                     # ordering
-Product.where(price: 10.to_money('USD')).sum(:price)            # aggregation
 ```
 
 ### Money-aware query helpers
@@ -484,23 +472,26 @@ MoneyAttribute adds small helpers on `Numeric` and `String`:
 
 ## Form helpers
 
-MoneyAttribute adds `money_field` and `money_amount_field` to Rails form builders. `money_field` renders a text input with the locale-formatted money string; `money_amount_field` renders a number input with the raw decimal value.
+MoneyAttribute adds `money_field` to Rails form builders for composite money attributes. It renders a text input with the locale-formatted money string.
 
 ```erb
 <%= form_with model: @product do |form| %>
   <%= form.label :price %>
   <%= form.money_field :price %>       <!-- text input, e.g. "$1,234.56" -->
-
-  <%= form.label :tax %>
-  <%= form.money_amount_field :tax %>  <!-- number input, e.g. "1234.56" -->
 <% end %>
 ```
 
-### Single-column mode — `money_amount` (fixed-currency)
+### Advanced: `money_amount` (single-column, fixed-currency)
 
-`money_amount` wraps a numeric column as `Money` using the application's default currency. No per-row currency. A lighter alternative when you don't need multi-currency support.
+`money_amount` is an advanced compatibility utility for schemas where one
+numeric column stores amounts in one fixed currency. It is not suitable for
+per-row or multi-currency data. New applications should normally use
+`money_attribute`.
 
 The accessor name must match the column name. `money_amount` does not support custom column mapping.
+
+Use `money_amount_field` when rendering a form for this mode; it renders a
+number input with the raw decimal value.
 
 #### Migration helpers
 
